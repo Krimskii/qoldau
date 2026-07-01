@@ -54,7 +54,16 @@ main          — стабильные релизы
 
 ## Current Version
 
-Текущая версия: **v0.3.10** (Asset system + local image upload)
+Текущая версия: **v0.3.11** (QA hotfix after asset/navigation review)
+
+### v0.3.11 — QA hotfix
+- **Asset rehydrate bug fixed** — custom assets теперь сохраняются после reload.
+- **Tutor BottomNav** — Голос вместо AI.
+- **CallMom SOS vs message** — «Написать сообщение» теперь создаёт `communication` event, не `sos`.
+- **CallMom contacts** — через IconRenderer, payload с assetId.
+- **ChildFavorites → Asset System** — карточки из cardConfigs, IconRenderer, payload с assetId.
+
+### v0.3.10 — Asset system
 
 ### v0.3.10 — Asset system
 - `src/types/assets.ts` — QoldauAsset + AACCardConfig.

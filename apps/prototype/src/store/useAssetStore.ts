@@ -171,17 +171,26 @@ export const useAssetStore = create<AssetState>()(
         assets: state.assets.filter((a) => a.isCustom), // persist только custom
         cardConfigs: state.cardConfigs,
       }),
-      // При rehydrate — склеиваем built-in с persisted custom.
+      // При rehydrate — built-ins пересоздаются, persisted custom добавляются.
+      // partialize сохраняет только custom assets, поэтому в state.assets сейчас
+      // лежат ТОЛЬКО custom. Built-ins ре-сидим из registry.
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         const builtins = buildInitialAssets();
         const customPersisted = state.assets ?? [];
-        const customIds = new Set(customPersisted.map((a) => a.id));
-        // Избегаем дублей если built-in ключ уже есть у custom
+
+        // Dedupe built-ins vs custom: если у custom такой же builtinKey+category,
+        // пропускаем built-in (custom побеждает).
         const builtinsToAdd = builtins.filter(
-          (b) => !customPersisted.some((c) => c.builtinKey === b.builtinKey && c.category === b.category),
+          (b) =>
+            !customPersisted.some(
+              (c) => c.builtinKey === b.builtinKey && c.category === b.category,
+            ),
         );
-        state.assets = [...builtinsToAdd, ...customPersisted.filter((a) => !customIds.has(a.id))];
+
+        // Все custom assets из persist добавляются как есть (id уникальны по построению).
+        state.assets = [...builtinsToAdd, ...customPersisted];
+
         if (!state.cardConfigs || state.cardConfigs.length === 0) {
           state.cardConfigs = buildDefaultCardConfigs(DEFAULT_CHILD_ID);
         }

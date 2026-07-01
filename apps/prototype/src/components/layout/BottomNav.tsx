@@ -37,7 +37,7 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
   ],
   tutor: [
     { icon: Home, label: 'Главная', path: '/tutor/home' },
-    { icon: Brain, label: 'AI', path: '/tutor/ai-review' },
+    { icon: Mic, label: 'Голос', path: '/tutor/voice' },
     { icon: FileText, label: 'Отчёт', path: '/tutor/report' },
     { icon: User, label: 'Профиль', path: '/tutor/child-profile' },
   ],

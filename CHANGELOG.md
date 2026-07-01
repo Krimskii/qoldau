@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.11] — 2026-07-01 (QA hotfix after asset/navigation review)
+
+### Fixed
+- **Asset rehydrate bug** — `useAssetStore` мог терять custom assets при reload. `customIds.has(a.id)` отфильтровывал все persisted assets, потому что `customIds` строился из того же массива. Теперь built-ins пересоздаются из registry, custom assets добавляются после built-ins, dedupe только по `builtinKey+category`. После reload загруженное изображение и карточка, к которой оно привязано, сохраняются.
+- **Tutor BottomNav** — убран `Brain → /tutor/ai-review` из постоянной навигации. Теперь: Главная → Голос → Отчёт → Профиль. `/tutor/ai-review` остаётся доступен из flow «Запись → AI-разбор».
+- **CallMom SOS vs message** — кнопка «Написать сообщение» больше не создаёт `Event[type="sos"]`. Теперь создаётся `Event[type="communication"]` с payload `{ source: 'child_message_button', target: 'adult', messageType: 'need_help' }` и feedback «Сообщение отправлено взрослому». SOS остался отдельной кнопкой.
+- **CallMom contacts** — иконки mom/tutor рендерятся через `IconRenderer` из `useAssetStore.assets`. Custom photo (когда появится) автоматически заменит built-in `Mom`/`Tutor` иконку. Payload sos/communication теперь содержит `assetId` и `assetType`.
+- **ChildFavorites → Asset System** — больше не локальный массив с emoji/gradient. Карточки берутся из `useAssetStore.cardConfigs` где `eventType='media_request'` или `isFavorite=true`. Рендер через `IconRenderer`. Payload `media_request` теперь содержит `cardId/cardLabel/assetId/assetType` и `source: 'child_favorite'`.
+
+### Verified
+- childId consistency: новые события child actions (ChildCards, CallMom, ChildSpeak, ChildFavorites, PhraseBuilder) используют `DEMO_PRIMARY_CHILD.id = 'child-alikhan'`. Legacy seed data (`mockChild.ts`, `mockEvents.ts` и т.д.) с `childId: 'child-1'` оставлен как есть — это не consumer code.
+- `npm run build` passes (1659 modules, 0 errors).
+
+### Not changed
+- Event Timeline logic, store-логика, child UI polish, routes, demo flow.
+- Voice flow (Phase 3-9) — вне scope этого hotfix.
+
+---
+
 ## [0.3.10] — 2026-07-01 (Asset system + local image upload)
 
 ### Added — Asset system

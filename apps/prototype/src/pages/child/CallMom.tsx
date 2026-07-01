@@ -2,46 +2,134 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { HugIcon, SpeakIcon } from '@/components/icons';
+import { useAssetStore } from '@/store/useAssetStore';
+import { SpeakIcon } from '@/components/icons';
 import { SuccessSparkle } from '@/components/illustrations/SuccessSparkle';
-import type { IconProps } from '@/components/icons';
+import { IconRenderer } from '@/components/assets/IconRenderer';
+import type { QoldauAsset } from '@/types/assets';
 
-interface Contact {
+interface ContactDef {
   id: string;
   name: string;
-  Icon: React.FC<IconProps>;
-  iconColor: string;
+  builtinKey: string;
+  color: QoldauAsset['color'];
   bg: string;
   border: string;
+  targetPerson: 'mom' | 'dad' | 'tutor' | 'specialist';
 }
 
-const CONTACTS: Contact[] = [
-  { id: 'mom', name: 'Позвать маму', Icon: HugIcon, iconColor: 'text-[#cc251d]', bg: 'bg-[#FFEAEA]', border: 'border-[#ffd9d3]' },
-  { id: 'tutor', name: 'Позвать тьютора', Icon: SpeakIcon, iconColor: 'text-[#1c6cb8]', bg: 'bg-[#EAF5FF]', border: 'border-[#cce6f7]' },
+const CONTACTS: ContactDef[] = [
+  {
+    id: 'mom',
+    name: 'Позвать маму',
+    builtinKey: 'Mom',
+    color: 'coral',
+    bg: 'bg-[#FFEAEA]',
+    border: 'border-[#ffd9d3]',
+    targetPerson: 'mom',
+  },
+  {
+    id: 'tutor',
+    name: 'Позвать тьютора',
+    builtinKey: 'Tutor',
+    color: 'blue',
+    bg: 'bg-[#EAF5FF]',
+    border: 'border-[#cce6f7]',
+    targetPerson: 'tutor',
+  },
 ];
-
-type SosContact = { id: 'sos'; name: 'SOS' };
 
 export const ChildCall: React.FC = () => {
   const navigate = useNavigate();
-  const [feedback, setFeedback] = useState<{ name: string; sos?: boolean } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    message: string;
+    sub?: string;
+  } | null>(null);
   const { addEvent } = useEventStore();
+  const assets = useAssetStore((s) => s.assets);
 
-  const handleCall = (contact: Contact | SosContact) => {
-    const isSos = contact.id === 'sos';
+  /** Резолвит ассет для контакта: предпочитает custom фото, иначе built-in. */
+  const getContactAsset = (builtinKey: string): QoldauAsset | undefined => {
+    // Ищем custom ассет с тем же builtinKey+category='person'
+    const customMatch = assets.find(
+      (a) => a.isCustom && a.builtinKey === builtinKey && a.category === 'person',
+    );
+    if (customMatch) return customMatch;
+    return assets.find((a) => !a.isCustom && a.builtinKey === builtinKey && a.category === 'person');
+  };
+
+  /** SOS — реальный экстренный вызов. */
+  const handleSOS = () => {
+    const asset = getContactAsset('Mom');
     addEvent({
       childId: DEMO_PRIMARY_CHILD.id,
       type: 'sos',
-      title: isSos ? 'SOS' : `SOS: ${contact.name}`,
-      description: isSos
-        ? 'Ребёнок нажал SOS — срочный вызов помощи'
-        : `Ребёнок нажал кнопку «${contact.name}»`,
+      title: 'SOS',
+      description: 'Ребёнок нажал SOS — срочный вызов помощи',
       timestamp: new Date().toISOString(),
       sourceRole: 'child',
       status: 'confirmed',
-      payload: { contact: contact.id, source: 'call_button' },
+      payload: {
+        contact: 'sos',
+        targetPerson: 'mom',
+        assetId: asset?.id,
+        assetType: asset?.type,
+        source: 'sos_button',
+      },
     });
-    setFeedback({ name: contact.name, sos: isSos });
+    setFeedback({
+      message: 'Мама получила сигнал',
+      sub: 'Событие добавлено в Event Timeline',
+    });
+    setTimeout(() => setFeedback(null), 1800);
+  };
+
+  /** Позвать конкретного взрослого (mom/tutor). */
+  const handleCall = (contact: ContactDef) => {
+    const asset = getContactAsset(contact.builtinKey);
+    addEvent({
+      childId: DEMO_PRIMARY_CHILD.id,
+      type: 'sos',
+      title: `SOS: ${contact.name}`,
+      description: `Ребёнок нажал кнопку «${contact.name}»`,
+      timestamp: new Date().toISOString(),
+      sourceRole: 'child',
+      status: 'confirmed',
+      payload: {
+        contact: contact.id,
+        targetPerson: contact.targetPerson,
+        assetId: asset?.id,
+        assetType: asset?.type,
+        source: 'call_button',
+      },
+    });
+    setFeedback({
+      message: `${contact.name} получили сигнал`,
+      sub: 'Событие добавлено в Event Timeline',
+    });
+    setTimeout(() => setFeedback(null), 1800);
+  };
+
+  /** Написать сообщение взрослому — НЕ SOS, обычный communication event. */
+  const handleMessage = () => {
+    addEvent({
+      childId: DEMO_PRIMARY_CHILD.id,
+      type: 'communication',
+      title: 'Сообщение взрослому',
+      description: 'Ребёнок написал сообщение взрослому',
+      timestamp: new Date().toISOString(),
+      sourceRole: 'child',
+      status: 'confirmed',
+      payload: {
+        source: 'child_message_button',
+        target: 'adult',
+        messageType: 'need_help',
+      },
+    });
+    setFeedback({
+      message: 'Сообщение отправлено взрослому',
+      sub: 'Событие добавлено в Event Timeline',
+    });
     setTimeout(() => setFeedback(null), 1800);
   };
 
@@ -62,29 +150,32 @@ export const ChildCall: React.FC = () => {
 
       {/* Контакт-карточки */}
       <div className="flex flex-col gap-3">
-        {CONTACTS.map((contact) => (
-          <button
-            key={contact.id}
-            onClick={() => handleCall(contact)}
-            aria-label={`Позвать ${contact.name}`}
-            className={`${contact.bg} border-2 ${contact.border} rounded-2xl px-4 py-4 grid grid-cols-[64px_1fr_auto] gap-3 items-center min-h-[88px] transition-transform duration-200 ease-out hover:scale-[0.98] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_10px_rgba(42,73,108,0.04)]`}
-          >
-            <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center flex-shrink-0">
-              <contact.Icon size={36} className={contact.iconColor} />
-            </div>
-            <div className="font-black text-ink leading-tight text-base text-left">
-              {contact.name}
-            </div>
-            <div className="w-12 h-12 rounded-full bg-[#39bb72] flex items-center justify-center shadow-sm">
-              <span className="text-white text-2xl font-black" aria-hidden="true">☎</span>
-            </div>
-          </button>
-        ))}
+        {CONTACTS.map((contact) => {
+          const asset = getContactAsset(contact.builtinKey);
+          return (
+            <button
+              key={contact.id}
+              onClick={() => handleCall(contact)}
+              aria-label={`Позвать ${contact.name}`}
+              className={`${contact.bg} border-2 ${contact.border} rounded-2xl px-4 py-4 grid grid-cols-[64px_1fr_auto] gap-3 items-center min-h-[88px] transition-transform duration-200 ease-out hover:scale-[0.98] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_10px_rgba(42,73,108,0.04)]`}
+            >
+              <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <IconRenderer asset={asset} size={40} rounded />
+              </div>
+              <div className="font-black text-ink leading-tight text-base text-left">
+                {contact.name}
+              </div>
+              <div className="w-12 h-12 rounded-full bg-[#39bb72] flex items-center justify-center shadow-sm">
+                <span className="text-white text-2xl font-black" aria-hidden="true">☎</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* SOS — заметный, но через coralSoft (пастельный, не пугающий) */}
+      {/* SOS — заметный, но через coralSoft (не пугающий) */}
       <button
-        onClick={() => handleCall({ id: 'sos', name: 'SOS' })}
+        onClick={handleSOS}
         aria-label="SOS — экстренный вызов"
         className="bg-[#FFEAEA] border-2 border-[#FFC2BE] rounded-2xl px-5 py-5 flex items-center gap-4 min-h-[88px] transition-transform duration-200 ease-out hover:scale-[0.98] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E56F5D]/40"
       >
@@ -102,9 +193,9 @@ export const ChildCall: React.FC = () => {
         </div>
       </button>
 
-      {/* Написать сообщение */}
+      {/* Написать сообщение — НЕ SOS, а communication event */}
       <button
-        onClick={() => handleCall({ id: 'sos', name: 'SOS' })}
+        onClick={handleMessage}
         aria-label="Написать сообщение взрослому"
         className="min-h-[64px] border-2 border-[#dce9f4] rounded-2xl bg-white flex items-center justify-center gap-2 font-black text-[#376488] text-base hover:bg-bg transition-colors"
       >
@@ -112,7 +203,7 @@ export const ChildCall: React.FC = () => {
         Написать сообщение
       </button>
 
-      {/* Success feedback — мягкая карточка с SuccessSparkle */}
+      {/* Success feedback */}
       {feedback && (
         <div
           role="status"
@@ -123,12 +214,10 @@ export const ChildCall: React.FC = () => {
             <div className="flex justify-center mb-2">
               <SuccessSparkle className="w-16 h-16" />
             </div>
-            <p className="text-base font-black text-ink">
-              {feedback.sos ? 'Мама получила сигнал' : `${feedback.name} получили сигнал`}
-            </p>
-            <p className="text-xs text-muted mt-1.5">
-              Событие добавлено в Event Timeline
-            </p>
+            <p className="text-base font-black text-ink">{feedback.message}</p>
+            {feedback.sub && (
+              <p className="text-xs text-muted mt-1.5">{feedback.sub}</p>
+            )}
           </div>
         </div>
       )}
