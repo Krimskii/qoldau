@@ -1,6 +1,6 @@
 import React from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Button } from '@/components/ui/Button';
 import { FileText } from 'lucide-react';
 
@@ -14,7 +14,7 @@ export const Reports: React.FC = () => {
       />
 
       {/* Weekly Report Preview */}
-      <Card>
+      <QoldauCard>
         <div className="flex items-center gap-3 mb-4">
           <FileText className="w-6 h-6 text-teal" />
           <div>
@@ -49,7 +49,7 @@ export const Reports: React.FC = () => {
             </p>
           </div>
         </div>
-      </Card>
+      </QoldauCard>
 
       {/* Download */}
       <Button className="flex items-center justify-center gap-2">

@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Button } from '@/components/ui/Button';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { useEventStore } from '@/store/useEventStore';
@@ -91,18 +91,18 @@ export const TutorAIReview: React.FC = () => {
 
       {/* Транскрипт — для контекста тьютору */}
       {effectiveTranscript && (
-        <Card variant="tinted-blue">
+        <QoldauCard variant="tinted-blue">
           <p className="text-xs font-black text-blue uppercase tracking-wide mb-2">
             Расшифровка
           </p>
           <p className="text-sm text-ink italic leading-relaxed">
             "{effectiveTranscript}"
           </p>
-        </Card>
+        </QoldauCard>
       )}
 
       {/* Выделенные события */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-black text-ink mb-3">Что произошло</h4>
         {events.length === 0 ? (
           <p className="text-sm text-muted">
@@ -128,7 +128,7 @@ export const TutorAIReview: React.FC = () => {
             </div>
           ))
         )}
-      </Card>
+      </QoldauCard>
 
       <AIInsightCard
         text={

@@ -8,19 +8,47 @@ import { useAssetStore } from '@/store/useAssetStore';
 import { useRoleStore } from '@/store/useRoleStore';
 import { IconRenderer } from '@/components/assets/IconRenderer';
 import { AssetPicker } from '@/components/assets/AssetPicker';
-import type { QoldauAsset, AACCardConfig } from '@/types/assets';
-import { COLOR_MAP } from '@/components/ui/QoldauIconCard';
+import type { QoldauAsset, AACCardConfig, AssetColor } from '@/types/assets';
+import type { IconProps } from '@/components/icons';
+import { QoldauIconCard, type QoldauIconColor } from '@/components/ui/QoldauIconCard';
 import { Settings } from 'lucide-react';
 
 /**
- * ChildCards — AAC-карточки через asset system.
+ * ChildCards — быстрые карточки AAC, сгруппированные по смыслу.
  *
- * Карточки берутся из useAssetStore.cardConfigs (создаются в buildDefaultCardConfigs).
- * Рендер — через IconRenderer (универсальный: builtin SVG, emoji, uploaded image).
+ * Группы (по category из cardConfigs):
+ * - need     — Хочу пить / Туалет / Домой / Еда
+ * - feeling  — Больно / Устал / Нет
+ * - activity — Играть
+ * - calm     — Обниматься
+ * - person   — Мама / Тьютор
+ * - media    — Мультик / Песенки / Животные / Машинки / Спокойное видео
+ *
+ * Рендер — QoldauIconCard (через адаптер IconRenderer → IconProps) для
+ * единого стиля карточек.
  *
  * В parent/demo mode можно редактировать иконки через AssetPicker.
  * В child mode редактирование скрыто.
  */
+
+const ASSET_COLOR_TO_ICON_COLOR: Record<AssetColor, QoldauIconColor> = {
+  blue: 'blue',
+  green: 'green',
+  teal: 'teal',
+  yellow: 'yellow',
+  purple: 'purple',
+  coral: 'coral',
+};
+
+const GROUP_LABELS: Record<string, { title: string; subtitle?: string }> = {
+  need: { title: 'Хочу', subtitle: 'Базовые потребности' },
+  feeling: { title: 'Чувствую', subtitle: 'Эмоции и состояние' },
+  activity: { title: 'Делаю', subtitle: 'Чем заняться' },
+  calm: { title: 'Спокойно', subtitle: 'Поддержка и отдых' },
+  person: { title: 'Люди', subtitle: 'Кого позвать' },
+  media: { title: 'Медиа', subtitle: 'Что посмотреть / послушать' },
+};
+
 export const ChildCards: React.FC = () => {
   const navigate = useNavigate();
   const { addEvent } = useEventStore();
@@ -35,7 +63,6 @@ export const ChildCards: React.FC = () => {
     asset: QoldauAsset;
   } | null>(null);
 
-  // Edit mode показывается только вне child mode.
   const isEditable = currentRole !== 'child';
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
 
@@ -47,8 +74,32 @@ export const ChildCards: React.FC = () => {
     [cardConfigs],
   );
 
+  // Группировка по category
+  const groupedConfigs = useMemo(() => {
+    const groups = new Map<string, AACCardConfig[]>();
+    childConfigs.forEach((cfg) => {
+      const cat = cfg.category ?? 'other';
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(cfg);
+    });
+    // Фиксированный порядок групп для предсказуемого UI
+    const order = ['need', 'feeling', 'activity', 'calm', 'person', 'media'];
+    return order
+      .map((cat) => ({ key: cat, items: groups.get(cat) ?? [] }))
+      .filter((g) => g.items.length > 0);
+  }, [childConfigs]);
+
   const getCardAsset = (config: AACCardConfig): QoldauAsset | undefined =>
     assets.find((a) => a.id === config.assetId);
+
+  // Адаптер: QoldauAsset → React.FC<IconProps> для QoldauIconCard.
+  const iconForAsset = (asset: QoldauAsset): React.FC<IconProps> => {
+    const Adapted: React.FC<IconProps> = (p) => (
+      <IconRenderer asset={asset} {...p} />
+    );
+    Adapted.displayName = `AssetIcon(${asset.id})`;
+    return Adapted;
+  };
 
   const handleSelect = (config: AACCardConfig) => {
     if (editingCardId === config.id) return;
@@ -84,7 +135,7 @@ export const ChildCards: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 relative">
+    <div className="flex flex-col gap-5 relative">
       {/* Header */}
       <div className="flex items-center justify-between">
         <button
@@ -94,7 +145,7 @@ export const ChildCards: React.FC = () => {
         >
           <span className="text-2xl text-[#53677e]">‹</span>
         </button>
-        <h2 className="text-lg font-black text-[#143259]">Быстрые карточки</h2>
+        <h1 className="text-base font-black text-ink">Быстрые карточки</h1>
         {isEditable ? (
           <button
             onClick={() => setEditingCardId(editingCardId ? null : childConfigs[0]?.id ?? null)}
@@ -115,58 +166,62 @@ export const ChildCards: React.FC = () => {
 
       {/* Edit mode banner */}
       {editingCardId && (
-        <div className="bg-[#FFFCEC] border border-[#f7e5a3] rounded-xl px-4 py-3 text-sm text-ink-2">
+        <div className="bg-yellow-soft border border-yellow/30 rounded-2xl px-4 py-3 text-sm text-ink-2">
           Нажмите на карточку, чтобы изменить её иконку. Выйдите из режима настроек, чтобы снова нажимать.
         </div>
       )}
 
-      {/* AAC cards через QoldauIconCard + IconRenderer */}
-      <div className="grid grid-cols-4 gap-2.5">
-        {childConfigs.map((config) => {
-          const asset = getCardAsset(config);
-          if (!asset) return null;
-
-          const palette = asset.color ? COLOR_MAP[asset.color] : null;
-          const isSelected = selected === config.id;
-          const isEditing = editingCardId === config.id;
-
+      {/* Группы AAC карточек */}
+      <div className="flex flex-col gap-6">
+        {groupedConfigs.map(({ key, items }) => {
+          const meta = GROUP_LABELS[key] ?? { title: key };
           return (
-            <button
-              key={config.id}
-              onClick={() => {
-                if (editingCardId) {
-                  // В edit mode — открываем picker для этой карточки
-                  if (editingCardId === config.id) {
-                    setEditingCardId(null);
-                  }
-                } else {
-                  handleSelect(config);
-                }
-              }}
-              className={`relative min-h-[110px] rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 p-2 text-base font-black transition-all duration-200 ease-out active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 ${
-                palette
-                  ? `${palette.bg} ${palette.border}`
-                  : 'bg-white border-line'
-              } ${isSelected ? 'scale-[0.96] opacity-80' : ''} ${
-                isEditing ? 'ring-2 ring-offset-2 ring-teal/50' : ''
-              }`}
-              aria-label={`${config.label}${editingCardId ? ' (нажмите чтобы изменить иконку)' : ''}`}
-            >
-              <IconRenderer asset={asset} size={40} />
-              <span className={`text-sm leading-tight text-center ${palette?.text ?? 'text-ink'}`}>
-                {config.label}
-              </span>
-              {isEditing && (
-                <span className="absolute top-1 right-1 text-[10px] font-black uppercase text-teal-dark">
-                  edit
-                </span>
-              )}
-            </button>
+            <section key={key} aria-labelledby={`group-${key}`} className="flex flex-col gap-3">
+              <header>
+                <h2 id={`group-${key}`} className="text-sm font-black text-ink-2">
+                  {meta.title}
+                </h2>
+                {meta.subtitle && (
+                  <p className="text-xs text-muted mt-0.5">{meta.subtitle}</p>
+                )}
+              </header>
+              <div className="grid grid-cols-4 gap-2.5">
+                {items.map((config) => {
+                  const asset = getCardAsset(config);
+                  if (!asset) return null;
+
+                  const iconColor: QoldauIconColor = asset.color
+                    ? ASSET_COLOR_TO_ICON_COLOR[asset.color] ?? 'blue'
+                    : 'blue';
+
+                  return (
+                    <QoldauIconCard
+                      key={config.id}
+                      icon={iconForAsset(asset)}
+                      label={config.label}
+                      color={iconColor}
+                      size="md"
+                      state={selected === config.id ? 'pressed' : 'default'}
+                      onClick={() => {
+                        if (editingCardId) {
+                          if (editingCardId === config.id) {
+                            setEditingCardId(null);
+                          }
+                          return;
+                        }
+                        handleSelect(config);
+                      }}
+                      ariaLabel={`${config.label}${editingCardId ? ' (нажмите чтобы изменить иконку)' : ''}`}
+                    />
+                  );
+                })}
+              </div>
+            </section>
           );
         })}
       </div>
 
-      {/* Asset picker — открывается когда есть editingCardId */}
+      {/* Asset picker */}
       {editingCardId && (
         <AssetPicker
           isOpen={!!editingCardId}
@@ -187,7 +242,7 @@ export const ChildCards: React.FC = () => {
           aria-live="polite"
           className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-sm qoldau-success-pop"
         >
-          <div className="bg-white border-2 border-[#DDF5F0] rounded-3xl px-6 py-5 shadow-card text-center">
+          <div className="bg-white border-2 border-teal-soft rounded-3xl px-6 py-5 shadow-card text-center">
             <div className="flex justify-center mb-2">
               <SuccessSparkle className="w-16 h-16" />
             </div>

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
@@ -61,22 +61,22 @@ export const CarePatterns: React.FC = () => {
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-3">
-        <Card variant="default">
+        <QoldauCard variant="default">
           <div className="text-2xl font-black text-green">{summary.food}</div>
           <p className="text-xs text-muted">Приёмы пищи</p>
-        </Card>
-        <Card variant="default">
+        </QoldauCard>
+        <QoldauCard variant="default">
           <div className="text-2xl font-black text-blue">{summary.water}</div>
           <p className="text-xs text-muted">Вода</p>
-        </Card>
-        <Card variant="default">
+        </QoldauCard>
+        <QoldauCard variant="default">
           <div className="text-2xl font-black text-purple">{summary.toilet}</div>
           <p className="text-xs text-muted">Туалет</p>
-        </Card>
+        </QoldauCard>
       </div>
 
       {/* Patterns from data */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-bold mb-3">Связи событий (гипотезы)</h4>
         {foodToSensoryPatterns.length === 0 ? (
           <p className="text-xs text-muted text-center py-3">
@@ -100,16 +100,16 @@ export const CarePatterns: React.FC = () => {
         <p className="text-xs text-muted mt-3 italic">
           Это гипотезы на основе наблюдений. Не являются медицинским диагнозом.
         </p>
-      </Card>
+      </QoldauCard>
 
       {/* Behavior connection */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-bold mb-3">Связь с поведением</h4>
         <p className="text-sm text-ink-2 leading-relaxed">
           Похоже, нервозность иногда появляется через 20–30 минут после еды или при шуме.
           Возможна связь с пищеварением или сенсорной перегрузкой. Это наблюдение, не диагноз.
         </p>
-      </Card>
+      </QoldauCard>
 
       <AIInsightCard
         text="Похоже, можно отслеживать потребление воды и связь с событиями поведения. Это наблюдение, не диагноз. Можно обсудить со специалистом."

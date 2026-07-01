@@ -24,6 +24,7 @@ interface QoldauActionCardProps {
   state?: QoldauActionState;
   onClick?: () => void;
   ariaLabel?: string;
+  disabled?: boolean;
   /** Дополнительный класс — например, для span col-span-3 на choice row. */
   className?: string;
 }
@@ -35,6 +36,7 @@ export const QoldauActionCard: React.FC<QoldauActionCardProps> = ({
   state = 'default',
   onClick,
   ariaLabel,
+  disabled,
   className,
 }) => {
   const palette = COLOR_MAP[color];
@@ -42,19 +44,21 @@ export const QoldauActionCard: React.FC<QoldauActionCardProps> = ({
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       aria-label={ariaLabel ?? label}
       className={clsx(
-        'min-h-[110px] rounded-2xl border-2 flex flex-col items-center justify-center gap-2 p-3 transition-all duration-200 ease-out',
+        'min-h-[128px] rounded-2xl border-2 flex flex-col items-center justify-center gap-2 p-3 transition-all duration-200 ease-out',
         palette.bg,
         palette.border,
         'text-[#173760] font-black text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_6px_12px_rgba(42,73,108,0.05)]',
         state === 'pressed' && 'scale-[0.96] opacity-90',
         state === 'selected' && 'ring-2 ring-offset-2 ring-teal/40 scale-[0.97]',
-        'active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40',
+        !disabled && 'active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40',
+        disabled && 'opacity-40 cursor-not-allowed',
         className,
       )}
     >
-      <Icon size={42} className={palette.text} />
+      <Icon size={56} className={palette.text} />
       <span className="leading-tight text-center">{label}</span>
     </button>
   );

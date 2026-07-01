@@ -4,11 +4,51 @@ import {
   ChevronRight,
   Mic,
   Settings,
+  Utensils,
+  Droplet,
+  Moon,
+  MessageCircle,
+  Sparkles,
+  Smile,
+  type LucideIcon,
 } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { SectionCard } from '@/components/ui/SectionCard';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD, DEMO_PARENTS } from '@/data/demoDataset';
+
+interface QuickAction {
+  id: string;
+  label: string;
+  Icon: LucideIcon;
+  color: 'green' | 'blue' | 'purple' | 'yellow';
+  path: string;
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
+  { id: 'food', label: 'Еда', Icon: Utensils, color: 'green', path: '/parent/care' },
+  { id: 'water', label: 'Вода', Icon: Droplet, color: 'blue', path: '/parent/care' },
+  { id: 'toilet', label: 'Туалет', Icon: Droplet, color: 'blue', path: '/parent/care' },
+  { id: 'sleep', label: 'Сон', Icon: Moon, color: 'purple', path: '/parent/care' },
+  { id: 'behavior', label: 'Поведение', Icon: Smile, color: 'yellow', path: '/parent/behavior' },
+  { id: 'comms', label: 'Коммуникация', Icon: MessageCircle, color: 'purple', path: '/specialist/communication-profile' },
+];
+
+const COLOR_BG: Record<QuickAction['color'], string> = {
+  green: 'bg-green-soft',
+  blue: 'bg-blue-soft',
+  purple: 'bg-purple-soft',
+  yellow: 'bg-yellow-soft',
+};
+
+const COLOR_TEXT: Record<QuickAction['color'], string> = {
+  green: 'text-green',
+  blue: 'text-blue',
+  purple: 'text-purple',
+  yellow: 'text-yellow',
+};
 
 export const ParentHome: React.FC = () => {
   const navigate = useNavigate();
@@ -38,20 +78,17 @@ export const ParentHome: React.FC = () => {
   return (
     <div className="flex flex-col gap-5">
       {/* Hero — карточка ребёнка */}
-      <Card variant="tinted-teal" className="overflow-hidden">
+      <QoldauCard variant="tinted-teal" padding="md">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#FFE7BE] to-[#E4F8FF] border-2 border-white flex items-center justify-center text-3xl flex-shrink-0 shadow-card-soft">
-            👦
+          <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#FFE7BE] to-[#E4F8FF] border-2 border-white flex items-center justify-center flex-shrink-0 shadow-card-soft">
+            <Sparkles className="w-7 h-7 text-teal-dark" />
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-xl font-black text-ink leading-tight">
               {child.name}, {child.age} лет
             </h2>
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <span className="w-2 h-2 rounded-full bg-green" />
-              <span className="text-xs font-bold text-green">
-                Сейчас: {child.currentState}
-              </span>
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              <StatusBadge kind="ok" label={child.currentState} />
             </div>
           </div>
           <button
@@ -62,12 +99,13 @@ export const ParentHome: React.FC = () => {
             <Settings className="w-4 h-4 text-ink-2" />
           </button>
         </div>
-      </Card>
+      </QoldauCard>
 
       {/* Большая CTA — голос */}
       <button
         onClick={() => navigate('/parent/voice')}
         className="w-full rounded-3xl p-5 bg-gradient-to-br from-teal to-teal-dark text-white shadow-card hover:shadow-card-hover transition-all active:scale-[0.98] flex items-center gap-4"
+        aria-label="Сказать наблюдение"
       >
         <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0">
           <Mic className="w-7 h-7" />
@@ -81,48 +119,39 @@ export const ParentHome: React.FC = () => {
         <ChevronRight className="w-5 h-5 opacity-90" />
       </button>
 
-      {/* Быстрые действия — 2×3 */}
-      <div>
-        <p className="text-xs font-black text-muted uppercase tracking-wide mb-2 px-1">
-          Быстрые действия
-        </p>
+      {/* Быстрые действия */}
+      <SectionCard title="Быстрые действия" accent="teal">
         <div className="grid grid-cols-3 gap-2.5">
-          {[
-            { icon: '🍎', label: 'Еда', path: '/parent/care', color: 'bg-[#EAF8F0]' },
-            { icon: '🚽', label: 'Туалет', path: '/parent/care', color: 'bg-[#EAF5FF]' },
-            { icon: '💧', label: 'Вода', path: '/parent/care', color: 'bg-[#EAF5FF]' },
-            { icon: '😊', label: 'Поведение', path: '/parent/behavior', color: 'bg-[#FFF6DF]' },
-            { icon: '🌙', label: 'Сон', path: '/parent/care', color: 'bg-[#F1EDFF]' },
-            { icon: '💬', label: 'Коммуникация', path: '/specialist/communication-profile', color: 'bg-[#F1EDFF]' },
-          ].map((a) => (
+          {QUICK_ACTIONS.map(({ id, label, Icon, color, path }) => (
             <button
-              key={a.label}
-              onClick={() => navigate(a.path)}
-              className={`min-h-[88px] rounded-2xl ${a.color} border border-line flex flex-col items-center justify-center gap-1.5 p-2 hover:scale-[0.97] active:scale-[0.94] transition-transform`}
+              key={id}
+              onClick={() => navigate(path)}
+              className={`min-h-[88px] rounded-2xl ${COLOR_BG[color]} border border-line flex flex-col items-center justify-center gap-1.5 p-2 hover:scale-[0.97] active:scale-[0.94] transition-transform`}
+              aria-label={label}
             >
-              <span className="text-3xl" aria-hidden="true">
-                {a.icon}
-              </span>
-              <span className="text-xs font-bold text-ink">{a.label}</span>
+              <Icon className={`w-7 h-7 ${COLOR_TEXT[color]}`} aria-hidden="true" />
+              <span className="text-xs font-bold text-ink-2">{label}</span>
             </button>
           ))}
         </div>
-      </div>
+      </SectionCard>
 
       {/* AI observation */}
       <AIInsightCard text={aiObservation} />
 
       {/* Последние события */}
-      <Card variant="default">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-black text-ink">Сегодня</p>
+      <SectionCard
+        title="Сегодня"
+        accent="teal"
+        action={
           <button
             onClick={() => navigate('/parent/events')}
             className="text-xs font-bold text-teal flex items-center gap-1"
           >
             Все <ChevronRight className="w-3 h-3" />
           </button>
-        </div>
+        }
+      >
         {lastEvents.length === 0 ? (
           <p className="text-sm text-muted text-center py-3">
             Сегодня пока нет событий
@@ -133,7 +162,7 @@ export const ParentHome: React.FC = () => {
               <button
                 key={event.id}
                 onClick={() => navigate(`/parent/events/${event.id}`)}
-                className={`w-full flex items-center gap-3 py-2.5 text-left ${
+                className={`w-full flex items-center gap-3 py-2.5 text-left hover:bg-bg transition-colors rounded-xl px-2 -mx-2 ${
                   idx < lastEvents.length - 1 ? 'border-b border-line-soft' : ''
                 }`}
               >
@@ -154,7 +183,7 @@ export const ParentHome: React.FC = () => {
             ))}
           </div>
         )}
-      </Card>
+      </SectionCard>
 
       {/* Disclaimer */}
       <p className="text-[11px] text-muted text-center italic px-4">

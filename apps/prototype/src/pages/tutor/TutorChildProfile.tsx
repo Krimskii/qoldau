@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Badge } from '@/components/ui/Badge';
 import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
@@ -36,7 +36,7 @@ export const TutorChildProfile: React.FC = () => {
       <ChildSelector />
 
       {/* Signals */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-black text-ink mb-3">Ключевые сигналы</h4>
         {child.mainSignals.map((signal) => (
           <div
@@ -50,20 +50,20 @@ export const TutorChildProfile: React.FC = () => {
             <Badge variant="purple">{signal.confirmedCount} раз</Badge>
           </div>
         ))}
-      </Card>
+      </QoldauCard>
 
       {/* What helps */}
-      <Card variant="tinted-green">
+      <QoldauCard variant="tinted-green">
         <h4 className="text-sm font-black text-ink mb-3">Что помогает</h4>
         <div className="flex flex-wrap gap-2">
           {whatHelps.map((h) => (
             <Badge key={h} variant="green">{h}</Badge>
           ))}
         </div>
-      </Card>
+      </QoldauCard>
 
       {/* Avoid */}
-      <Card variant="tinted-coral">
+      <QoldauCard variant="tinted-coral">
         <h4 className="text-sm font-black text-ink mb-3">Чего избегать</h4>
         <ul className="space-y-1.5">
           {avoidList.map((item, i) => (
@@ -73,10 +73,10 @@ export const TutorChildProfile: React.FC = () => {
             </li>
           ))}
         </ul>
-      </Card>
+      </QoldauCard>
 
       {/* Preferences */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-black text-ink mb-3">Предпочтения</h4>
         <ul className="space-y-1.5">
           {preferences.map((item, i) => (
@@ -86,7 +86,7 @@ export const TutorChildProfile: React.FC = () => {
             </li>
           ))}
         </ul>
-      </Card>
+      </QoldauCard>
 
       <button
         onClick={() => navigate('/specialist/communication-profile')}
@@ -95,11 +95,11 @@ export const TutorChildProfile: React.FC = () => {
         Коммуникационный профиль →
       </button>
 
-      <Card variant="tinted-yellow">
+      <QoldauCard variant="tinted-yellow">
         <p className="text-xs text-ink-2 leading-relaxed">
           Это профиль наблюдений, не медицинский диагноз. Все формулировки осторожные.
         </p>
-      </Card>
+      </QoldauCard>
     </div>
   );
 };

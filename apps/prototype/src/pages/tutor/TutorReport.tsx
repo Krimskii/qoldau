@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Copy, Send, Calendar, CheckCircle, Lightbulb, Clock } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
@@ -82,22 +82,22 @@ export const TutorReport: React.FC = () => {
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-2.5">
-        <Card variant="default" className="text-center">
+        <QoldauCard variant="default" className="text-center">
           <p className="text-2xl font-black text-teal">{summary.total}</p>
           <p className="text-[11px] text-muted">Всего</p>
-        </Card>
-        <Card variant="tinted-green" className="text-center">
+        </QoldauCard>
+        <QoldauCard variant="tinted-green" className="text-center">
           <p className="text-2xl font-black text-green">{summary.positive}</p>
           <p className="text-[11px] text-muted">Хороших</p>
-        </Card>
-        <Card variant="tinted-yellow" className="text-center">
+        </QoldauCard>
+        <QoldauCard variant="tinted-yellow" className="text-center">
           <p className="text-2xl font-black text-yellow">{summary.attention}</p>
           <p className="text-[11px] text-muted">Внимания</p>
-        </Card>
+        </QoldauCard>
       </div>
 
       {/* What happened */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <div className="flex items-center gap-2 mb-3">
           <Calendar className="w-4 h-4 text-teal" />
           <h4 className="text-sm font-black text-ink">События</h4>
@@ -133,10 +133,10 @@ export const TutorReport: React.FC = () => {
             </div>
           ))
         )}
-      </Card>
+      </QoldauCard>
 
       {/* What helped */}
-      <Card variant="tinted-green">
+      <QoldauCard variant="tinted-green">
         <div className="flex items-center gap-2 mb-2">
           <CheckCircle className="w-4 h-4 text-green" />
           <h4 className="text-sm font-black text-ink">Что помогло</h4>
@@ -146,10 +146,10 @@ export const TutorReport: React.FC = () => {
           <span className="px-3 py-1 rounded-full bg-white text-green text-xs font-bold border border-green/30">Тихое место</span>
           <span className="px-3 py-1 rounded-full bg-white text-green text-xs font-bold border border-green/30">Визуальное расписание</span>
         </div>
-      </Card>
+      </QoldauCard>
 
       {/* To clarify */}
-      <Card variant="tinted-yellow">
+      <QoldauCard variant="tinted-yellow">
         <div className="flex items-center gap-2 mb-2">
           <Lightbulb className="w-4 h-4 text-yellow" />
           <h4 className="text-sm font-black text-ink">Что стоит подтвердить дома</h4>
@@ -159,7 +159,7 @@ export const TutorReport: React.FC = () => {
           <li className="leading-relaxed">• Эффект визуального расписания</li>
           <li className="leading-relaxed">• Как часто используется AAC «Вода»</li>
         </ul>
-      </Card>
+      </QoldauCard>
 
       <p className="text-[11px] text-muted text-center italic px-4">
         Формулировки нейтральные. Это наблюдения, не оценка. Не являются медицинским диагнозом.

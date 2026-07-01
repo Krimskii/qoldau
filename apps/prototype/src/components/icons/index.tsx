@@ -20,6 +20,9 @@ export {
 // Flat SVG icons (currentColor, 32x32 viewBox)
 export * from './flat.tsx';
 
+// Soft 3D PNG assets (ChatGPT-generated, transparent background)
+export * from './soft3d';
+
 // Convenience: lucide-react common icons
 export {
   ChevronLeft,

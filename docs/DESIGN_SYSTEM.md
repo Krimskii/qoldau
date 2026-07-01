@@ -206,15 +206,45 @@ Wrapper для всех экранов кроме Overview. Phone-panel (max-wid
 ## 9. Карточки детского UI
 
 Детский интерфейс использует:
-- `min-h-[110px]` для кнопок (touch target ≥ 96px)
-- pastel-фоны (`bg-[#EAF5FF]`, `bg-[#FFEAEA]` и т.д.)
+- `min-h-[128px]` для кнопок (touch target ≥ 96px, фактически 128px)
+- **white bg + цветная рамка + цветной текст** (вместо pastel-фонов) для лучшего различения категорий
 - минимум текста (1–2 слова)
-- **flat SVG-иконки** (см. [`ICON_SYSTEM.md`](./ICON_SYSTEM.md)) вместо эмодзи
+- **soft 3D PNG иконки** (см. Hybrid Icon System ниже) вместо эмодзи/flat
 - in-app feedback вместо alert
 - **универсальные компоненты:**
-  - `QoldauIconCard` — AAC-карточки, calm options, choice варианты.
-  - `QoldauActionCard` — большие 6 actions на ChildHome.
-  - `AchievementCard` + `DailyProgressStrip` — мягкие достижения.
+  - `QoldauActionCard` (alias `ActionCard`) — 6 actions на ChildHome. `min-h 128px`, icon `56px`, border-2.
+  - `QoldauIconCard` (alias `IconTile`) — AAC-карточки, calm options, choice варианты. Sizes: sm `88px/40 icon` / md `128px/56 icon` / lg `160px/72 icon`.
+  - `QoldauCard` — обёртка для контента (timer, feedback, examples).
+  - `SectionCard` — заголовок секции + QoldauCard.
+  - `StatusBadge` — pill состояния (ok/help/calm/tired/focus/neutral).
+  - `CalmPanel` — calming wrapper для CalmMode (CloudMascot + gradient bg + footer).
+
+### Правила карточек ребёнка (v0.3.13)
+
+Все child-карточки следуют единым правилам:
+
+| Параметр | ActionCard | IconTile md | IconTile lg |
+|----------|-----------|-------------|-------------|
+| min-h | 128px | 128px | 160px |
+| icon size | 56px | 56px | 72px |
+| icon-text gap | 8px | 8px | 8px |
+| border | 2px | 2px | 2px |
+| border-radius | 24px | 24px | 24px |
+| padding | 12px | 10px | 12px |
+| label font | text-base font-black | text-base font-black | text-lg font-black |
+| bg | white + цветная рамка | white + цветная рамка | white + цветная рамка |
+
+**Spacing между карточками в сетке:** `gap-2.5` (10px).
+
+**Цветовая схема (6-токен):** blue `#1c6cb8` / green `#158647` / purple `#5a3eb4` / yellow `#9a7820` / teal `#00796F` / coral `#cc251d`. Border и text берут один и тот же токен.
+
+**States (обязательны все 4):**
+- `default` — без модификаторов
+- `pressed` — `scale-[0.96] opacity-90`
+- `selected` — `ring-2 ring-offset-2 ring-teal/40 scale-[0.97]`
+- `disabled` — `opacity-40 cursor-not-allowed` (не реагирует на click)
+
+**Hover/active:** `active:scale-[0.96]`, focus `ring-2 ring-teal/40`.
 
 ### SVG-иллюстрации (v0.3.8)
 
@@ -223,6 +253,55 @@ Wrapper для всех экранов кроме Overview. Phone-panel (max-wid
 - `src/components/illustrations/SuccessSparkle.tsx` — success-галочка после действия.
 
 Все принимают `animated?: boolean` (по умолчанию `true`) и `className?`. Все имеют `aria-label`. Используются в ChildHome, CalmMode, PhraseBuilder, ChildCards, ChildProgress, EmptyState, CallMom.
+
+## 10. Hybrid Icon System (v0.3.13)
+
+Два разных стиля иконок, два разных назначения. **Не смешивать** в одном экране.
+
+### Soft 3D PNG (action / event / mascot)
+
+**Где:** `public/assets/icons/{actions,events,mascots}/*.png`.
+
+**Что:** child-friendly 3D PNG ассеты (ChatGPT-generated, вручную отобраны по смыслу). 24 actions + 4 events + 2 mascots = 30 файлов.
+
+**Имена файлов = функция:** `water.png`, `food.png`, `music.png`, `cloud-mascot.png` и т.д. — не `icon-001.png`.
+
+**Использование в коде:** через `SOFT_FIRST_REGISTRY` в `src/components/icons/soft3d.tsx`. Ключи — это `builtinKey` из `assetRegistry` (`Water`, `Food`, `Music`, `Animals`, `Cartoon`, `Speak`, `Video`, `CloudMascot`, ...).
+
+**Где используется:**
+- `IconRenderer` — auto-fallback если soft версия есть.
+- `ChildCards` — AAC карточки (auto через IconRenderer).
+- `ChildHome` — 6 actions (явно импорт `WaterSoftIcon` etc.).
+- `CalmMode` — 6 опций (явно импорт).
+- `ChildProgress` — top cards.
+- `AssetPicker` — выбор builtin ассетов.
+
+### Lucide React (system icons)
+
+**Где:** `node_modules/lucide-react`.
+
+**Что:** tree-shakeable named imports. Используется для:
+- `Bell` (уведомления в TopBar)
+- `Home`, `Calendar`, `BarChart3`, `User`, `MessageCircle` (BottomNav)
+- `Mic`, `Plus` (floating action buttons)
+- `Settings`, `ChevronLeft` (header buttons)
+
+**Стиль:** `strokeWidth 2-2.5`, size 20-24px, цвет через text-ink / text-muted.
+
+### Граница ответственности
+
+| Стиль | Где |
+|-------|-----|
+| Soft 3D PNG | Child-action кнопки, AAC карточки, маскоты, event icons |
+| Lucide SVG | Navigation, header, settings, mic, system controls |
+| Brand SVG (custom) | Логотип Qoldau, VoiceWave, EventTimeline, AAC, CalmMode |
+
+### Запрещено
+
+- Использовать emoji-кнопки в AAC (только asset icons через `IconRenderer`).
+- Использовать flat SVG в child UI, если есть soft 3D версия для этого `builtinKey`.
+- Использовать Lucide для иконок действий ребёнка (вода, еда, игры и т.д.).
+- Смешивать стили в одной карточке (например, soft PNG + lucide accent).
 
 ## 10. Accessibility
 

@@ -58,16 +58,12 @@ function buildDefaultCardConfigs(childId: string): AACCardConfig[] {
     category: AssetCategory;
     eventType: AACCardConfig['eventType'];
   }> = [
-    { id: 'card-water', label: 'Вода', phrase: 'Хочу пить воду', builtinKey: 'Water', category: 'need', eventType: 'aac_card' },
     { id: 'card-food', label: 'Еда', phrase: 'Хочу есть', builtinKey: 'Food', category: 'need', eventType: 'aac_card' },
-    { id: 'card-toilet', label: 'Туалет', phrase: 'Хочу в туалет', builtinKey: 'Toilet', category: 'need', eventType: 'aac_card' },
     { id: 'card-pain', label: 'Больно', phrase: 'Мне больно', builtinKey: 'Sad', category: 'feeling', eventType: 'aac_card' },
     { id: 'card-tired', label: 'Устал', phrase: 'Я устал', builtinKey: 'Sleep', category: 'feeling', eventType: 'aac_card' },
     { id: 'card-home', label: 'Домой', phrase: 'Хочу домой', builtinKey: 'Home', category: 'need', eventType: 'aac_card' },
     { id: 'card-play', label: 'Играть', phrase: 'Хочу играть', builtinKey: 'Play', category: 'activity', eventType: 'aac_card' },
     { id: 'card-hug', label: 'Обниматься', phrase: 'Обнимите меня', builtinKey: 'Hug', category: 'calm', eventType: 'aac_card' },
-    { id: 'card-help', label: 'Помощь', phrase: 'Помогите', builtinKey: 'Help', category: 'need', eventType: 'aac_card' },
-    { id: 'card-pause', label: 'Пауза', phrase: 'Мне нужна пауза', builtinKey: 'Pause', category: 'calm', eventType: 'aac_card' },
     { id: 'card-no', label: 'Нет', phrase: 'Нет', builtinKey: 'No', category: 'feeling', eventType: 'aac_card' },
     { id: 'card-mom', label: 'Позвать маму', phrase: 'Позовите маму', builtinKey: 'Mom', category: 'person', eventType: 'sos' },
     { id: 'card-tutor', label: 'Позвать тьютора', phrase: 'Позовите тьютора', builtinKey: 'Tutor', category: 'person', eventType: 'sos' },
@@ -75,7 +71,7 @@ function buildDefaultCardConfigs(childId: string): AACCardConfig[] {
     { id: 'songs', label: 'Песенки', phrase: 'Хочу песенки', builtinKey: 'Music', category: 'media', eventType: 'media_request', isFavorite: true } as any,
     { id: 'animals', label: 'Животные', phrase: 'Хочу про животных', builtinKey: 'Animals', category: 'media', eventType: 'media_request', isFavorite: true } as any,
     { id: 'cars', label: 'Машинки', phrase: 'Хочу машинки', builtinKey: 'Cars', category: 'media', eventType: 'media_request', isFavorite: true } as any,
-    { id: 'calm-video', label: 'Спокойное видео', phrase: 'Спокойное видео', builtinKey: 'Moon', category: 'media', eventType: 'media_request', isFavorite: true } as any,
+    { id: 'calm-video', label: 'Спокойное видео', phrase: 'Спокойное видео', builtinKey: 'Video', category: 'media', eventType: 'media_request', isFavorite: true } as any,
   ];
 
   return cards.map((c, i) => ({

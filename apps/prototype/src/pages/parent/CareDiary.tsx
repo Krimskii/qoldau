@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, Utensils, Droplet, Smile } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useEventStore } from '@/store/useEventStore';
@@ -89,7 +89,7 @@ export const CareDiary: React.FC = () => {
             <p className="text-xs font-black text-muted uppercase tracking-wide mb-2 px-1">
               {day}
             </p>
-            <Card variant="default" padding="sm">
+            <QoldauCard variant="default" padding="sm">
               {entries.map((event, i) => (
                 <div
                   key={event.id}
@@ -112,7 +112,7 @@ export const CareDiary: React.FC = () => {
                   </span>
                 </div>
               ))}
-            </Card>
+            </QoldauCard>
           </div>
         ))
       )}

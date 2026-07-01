@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Volume2, ArrowRightLeft, Mic, Lightbulb, TrendingUp } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useEventStore } from '@/store/useEventStore';
@@ -82,7 +82,7 @@ export const BehaviorSensory: React.FC = () => {
 
       {activeTab === 'triggers' && (
         <>
-          <Card variant="default">
+          <QoldauCard variant="default">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-black text-ink">Сенсорные события</h4>
               <span className="text-xs text-muted">{sensoryEvents.length} за неделю</span>
@@ -113,9 +113,9 @@ export const BehaviorSensory: React.FC = () => {
                 </div>
               ))
             )}
-          </Card>
+          </QoldauCard>
 
-          <Card variant="default">
+          <QoldauCard variant="default">
             <h4 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-coral" />
               Повторяющиеся ситуации (гипотезы)
@@ -143,12 +143,12 @@ export const BehaviorSensory: React.FC = () => {
             <p className="text-[11px] text-muted mt-3 italic">
               Это гипотезы на основе наблюдений. Не являются медицинским диагнозом.
             </p>
-          </Card>
+          </QoldauCard>
         </>
       )}
 
       {activeTab === 'helped' && (
-        <Card variant="default">
+        <QoldauCard variant="default">
           <h4 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
             <Lightbulb className="w-4 h-4 text-yellow" />
             Что помогало
@@ -178,12 +178,12 @@ export const BehaviorSensory: React.FC = () => {
               </span>
             </div>
           ))}
-        </Card>
+        </QoldauCard>
       )}
 
       {activeTab === 'calm' && (
         <>
-          <Card variant="default">
+          <QoldauCard variant="default">
             <h4 className="text-sm font-black text-ink mb-3">Спокойный режим</h4>
             {calmEvents.length === 0 ? (
               <EmptyState
@@ -215,7 +215,7 @@ export const BehaviorSensory: React.FC = () => {
                 </div>
               ))
             )}
-          </Card>
+          </QoldauCard>
           <AIInsightCard
             text="Похоже, короткие паузы и тихое место помогают снизить напряжение. Это наблюдение, не диагноз. Можно попробовать и дальше, если это работает."
           />

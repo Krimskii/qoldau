@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Badge } from '@/components/ui/Badge';
 import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
@@ -134,22 +134,22 @@ export const CommunicationProfile: React.FC = () => {
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-3">
-        <Card variant="default" className="text-center">
+        <QoldauCard variant="default" className="text-center">
           <p className="text-2xl font-black text-teal">{signals.length}</p>
           <p className="text-xs text-muted">Сигналов</p>
-        </Card>
-        <Card variant="default" className="text-center">
+        </QoldauCard>
+        <QoldauCard variant="default" className="text-center">
           <p className="text-2xl font-black text-green">{highConfidenceSignals.length}</p>
           <p className="text-xs text-muted">Подтверждённых</p>
-        </Card>
-        <Card variant="default" className="text-center">
+        </QoldauCard>
+        <QoldauCard variant="default" className="text-center">
           <p className="text-2xl font-black text-yellow">{mediumConfidenceSignals.length}</p>
           <p className="text-xs text-muted">Требуют проверки</p>
-        </Card>
+        </QoldauCard>
       </div>
 
       {/* Signals List */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-sm font-bold flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-teal" />
@@ -199,10 +199,10 @@ export const CommunicationProfile: React.FC = () => {
             </div>
           ))}
         </div>
-      </Card>
+      </QoldauCard>
 
       {/* Communication Methods */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
           <MessageCircle className="w-4 h-4 text-teal" />
           Методы коммуникации
@@ -212,10 +212,10 @@ export const CommunicationProfile: React.FC = () => {
             <Badge key={m} className="bg-teal-soft text-teal">{m}</Badge>
           ))}
         </div>
-      </Card>
+      </QoldauCard>
 
       {/* Progress */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-teal" />
           Прогресс за месяц
@@ -245,7 +245,7 @@ export const CommunicationProfile: React.FC = () => {
         <p className="text-xs text-muted mt-4 italic">
           Это наблюдения на основе данных. Не является медицинской оценкой.
         </p>
-      </Card>
+      </QoldauCard>
     </div>
   );
 };

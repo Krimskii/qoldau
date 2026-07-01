@@ -1,6 +1,6 @@
 import React from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Badge } from '@/components/ui/Badge';
 import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
@@ -30,14 +30,14 @@ export const SupportPlan: React.FC = () => {
 
       <ChildSelector />
 
-      <Card variant="default" className="bg-yellow-soft border-yellow/30">
+      <QoldauCard variant="default" className="bg-yellow-soft border-yellow/30">
         <p className="text-sm text-ink-2">
           <strong>Это план поддержки.</strong> Не план лечения. Все шаги — гипотезы, не медицинские назначения.
         </p>
-      </Card>
+      </QoldauCard>
 
       {/* Visual Schedule */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-bold mb-3">Визуальное расписание</h4>
         <div className="flex gap-2 overflow-x-auto pb-2">
           {schedule.map((s, i) => (
@@ -49,10 +49,10 @@ export const SupportPlan: React.FC = () => {
             </div>
           ))}
         </div>
-      </Card>
+      </QoldauCard>
 
       {/* Sensory Support */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-bold mb-3">Сенсорная поддержка</h4>
         <div className="space-y-2">
           {sensory.map((s, i) => (
@@ -62,20 +62,20 @@ export const SupportPlan: React.FC = () => {
             </div>
           ))}
         </div>
-      </Card>
+      </QoldauCard>
 
       {/* What helps */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-bold mb-3">Что помогает</h4>
         <div className="flex flex-wrap gap-2">
           {whatHelps.map((h) => (
             <Badge key={h} className="bg-green-soft text-green">{h}</Badge>
           ))}
         </div>
-      </Card>
+      </QoldauCard>
 
       {/* To try */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-bold mb-3">Что стоит попробовать</h4>
         <ul className="space-y-2">
           {toTry.map((item, i) => (
@@ -85,10 +85,10 @@ export const SupportPlan: React.FC = () => {
             </li>
           ))}
         </ul>
-      </Card>
+      </QoldauCard>
 
       {/* To confirm */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-bold mb-3">Что подтвердить наблюдениями</h4>
         <ul className="space-y-2">
           {toConfirm.map((item, i) => (
@@ -98,13 +98,13 @@ export const SupportPlan: React.FC = () => {
             </li>
           ))}
         </ul>
-      </Card>
+      </QoldauCard>
 
-      <Card variant="default" className="bg-blue-soft border-blue/20">
+      <QoldauCard variant="default" className="bg-blue-soft border-blue/20">
         <p className="text-sm text-ink-2">
           <strong>Что обсудить со специалистом:</strong> текущие паттерны поведения, сенсорная поддержка, развитие коммуникации.
         </p>
-      </Card>
+      </QoldauCard>
     </div>
   );
 };

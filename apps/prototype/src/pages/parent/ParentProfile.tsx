@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Smartphone, Shield, ChevronRight } from 'lucide-react';
 import { DEMO_PRIMARY_CHILD, DEMO_PARENTS, DEMO_TUTORS, DEMO_SPECIALISTS } from '@/data/demoDataset';
 
@@ -17,7 +17,7 @@ export const ParentProfile: React.FC = () => {
       <PageHeader title={`Профиль ${child.name}`} subtitle="Семья и сопровождение" />
 
       {/* Child summary */}
-      <Card variant="tinted-teal">
+      <QoldauCard variant="tinted-teal">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-2xl shadow-card-soft">
             👦
@@ -39,7 +39,7 @@ export const ParentProfile: React.FC = () => {
             </span>
           ))}
         </div>
-      </Card>
+      </QoldauCard>
 
       <p className="text-xs font-black text-muted uppercase tracking-wide px-1">Сопровождение</p>
 
@@ -100,11 +100,11 @@ export const ParentProfile: React.FC = () => {
         />
       </div>
 
-      <Card variant="tinted-yellow">
+      <QoldauCard variant="tinted-yellow">
         <p className="text-xs text-ink-2 leading-relaxed">
           <strong>Важно.</strong> Это профиль наблюдений, не диагноз. Все AI-выводы формулируются осторожно. Можно обсудить со специалистом.
         </p>
-      </Card>
+      </QoldauCard>
     </div>
   );
 };

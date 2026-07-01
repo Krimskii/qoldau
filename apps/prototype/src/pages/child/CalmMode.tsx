@@ -3,17 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { CloudMascot } from '@/components/illustrations/CloudMascot';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { QoldauIconCard, type QoldauIconColor } from '@/components/ui/QoldauIconCard';
+import { CalmPanel } from '@/components/ui/CalmPanel';
+import { SectionCard } from '@/components/ui/SectionCard';
 import { PrimaryAction } from '@/components/ui/Primitives';
 import {
-  MusicIcon,
+  MusicSoftIcon,
   BreathIcon,
-  HeadphonesIcon,
+  HeadphonesSoftIcon,
   MoonIcon,
-  PauseIcon,
-  HugIcon,
+  PauseSoftIcon,
+  HugSoftIcon,
   type IconProps,
 } from '@/components/icons';
 
@@ -27,16 +28,27 @@ interface CalmOption {
   path?: string;
 }
 
-// 6 спокойных опций — flat SVG через QoldauIconCard для единого стиля.
+// 6 спокойных опций — единый QoldauIconCard для визуального порядка.
 const OPTIONS: CalmOption[] = [
-  { id: 'music', label: 'Тихая музыка', Icon: MusicIcon, color: 'purple' },
+  { id: 'music', label: 'Музыка', Icon: MusicSoftIcon, color: 'purple' },
   { id: 'breath', label: 'Дыхание', Icon: BreathIcon, color: 'blue' },
-  { id: 'headphones', label: 'Наушники', Icon: HeadphonesIcon, color: 'green' },
-  { id: 'pause', label: 'Пауза', Icon: PauseIcon, color: 'yellow' },
+  { id: 'headphones', label: 'Наушники', Icon: HeadphonesSoftIcon, color: 'green' },
+  { id: 'pause', label: 'Пауза', Icon: PauseSoftIcon, color: 'yellow' },
   { id: 'dark', label: 'Темно', Icon: MoonIcon, color: 'teal' },
-  { id: 'call-mom', label: 'Позвать маму', Icon: HugIcon, color: 'coral', path: '/child/call' },
+  { id: 'call-mom', label: 'Позвать маму', Icon: HugSoftIcon, color: 'coral', path: '/child/call' },
 ];
 
+/**
+ * CalmMode — самый спокойный экран Qoldau.
+ *
+ * Структура:
+ * - CalmPanel: gradient фон + CloudMascot + поддерживающий текст.
+ * - Карточка таймера / старта.
+ * - 6 опций спокойствия в сетке 3×2.
+ * - Footer note «Я рядом».
+ *
+ * Без анимаций > 360ms, без резких переходов.
+ */
 export const CalmMode: React.FC = () => {
   const navigate = useNavigate();
   const [startedAt, setStartedAt] = useState<number | null>(null);
@@ -110,19 +122,17 @@ export const CalmMode: React.FC = () => {
   const seconds = remaining % 60;
 
   return (
-    <div className="flex flex-col gap-4 min-h-[calc(100vh-80px)] bg-gradient-to-br from-[#EAF5FF] via-[#F9FCFC] to-[#F1EDFF] -mx-4 -mt-2 px-4 pt-2 pb-4 rounded-t-3xl">
-      {/* Hero — CloudMascot + поддерживающие тексты */}
-      <div className="flex flex-col items-center pt-4">
-        <CloudMascot
-          mood={startedAt ? 'happy' : 'calm'}
-          animated
-          className="w-28 h-auto"
-        />
-        <h2 className="text-xl font-black text-ink mt-3">Можно отдохнуть</h2>
-        <p className="text-sm text-muted mt-1">Ты в безопасности · Я рядом</p>
-      </div>
-
-      {/* Таймер / кнопка старта */}
+    <CalmPanel
+      title={startedAt === null ? 'Можно отдохнуть' : 'Дыши спокойно'}
+      subtitle={startedAt === null ? 'Ты в безопасности · Я рядом' : 'В любой момент можно выйти'}
+      mood={startedAt ? 'happy' : 'calm'}
+      footerNote={
+        <span>
+          Я рядом <span className="text-[#4EC28A] text-base" aria-hidden="true">♥</span>
+        </span>
+      }
+    >
+      {/* Карточка таймера / старта */}
       <QoldauCard variant="elevated" padding="lg">
         {startedAt === null ? (
           <div className="flex flex-col items-center gap-3">
@@ -130,7 +140,7 @@ export const CalmMode: React.FC = () => {
               Таймер на 1 минуту. В любой момент можно выйти.
             </p>
             <PrimaryAction
-              label="Начать (1 минута)"
+              label="Начать"
               onClick={handleStart}
               variant="primary"
               size="lg"
@@ -144,11 +154,14 @@ export const CalmMode: React.FC = () => {
           </div>
         ) : (
           <div className="text-center">
-            <div className="text-5xl font-black text-teal-dark tabular-nums">
+            <div
+              className="text-6xl font-black text-teal-dark tabular-nums tracking-tight"
+              aria-live="polite"
+            >
               {minutes}:{String(seconds).padStart(2, '0')}
             </div>
-            <p className="text-sm text-muted mt-2">Дыши спокойно</p>
-            <div className="mt-4 flex justify-center gap-3">
+            <p className="text-sm text-muted mt-2">Спокойно и ровно</p>
+            <div className="mt-5 flex justify-center gap-3">
               <button
                 onClick={() => handleFinish(true)}
                 className="px-5 py-3 rounded-full bg-[#EAF8F0] text-[#158647] font-bold hover:bg-[#d6f1e0] transition-colors"
@@ -166,25 +179,27 @@ export const CalmMode: React.FC = () => {
         )}
       </QoldauCard>
 
-      {/* 6 опций через QoldauIconCard */}
-      <div className="grid grid-cols-3 gap-3">
-        {OPTIONS.map(({ id, label, Icon, color, path }) => (
-          <QoldauIconCard
-            key={id}
-            icon={Icon}
-            label={label}
-            color={color}
-            size="md"
-            onClick={() => {
-              if (path) navigate(path);
-            }}
-          />
-        ))}
-      </div>
-
-      <p className="text-center font-black text-ink-2 mt-2 text-sm">
-        Я рядом <span className="text-[#4EC28A] text-lg" aria-hidden="true">♥</span>
-      </p>
-    </div>
+      {/* 6 опций — SectionCard для структуры */}
+      <SectionCard
+        title="Что поможет?"
+        subtitle="Выбери, что тебе сейчас подходит"
+        accent="teal"
+      >
+        <div className="grid grid-cols-3 gap-2.5">
+          {OPTIONS.map(({ id, label, Icon, color, path }) => (
+            <QoldauIconCard
+              key={id}
+              icon={Icon}
+              label={label}
+              color={color}
+              size="md"
+              onClick={() => {
+                if (path) navigate(path);
+              }}
+            />
+          ))}
+        </div>
+      </SectionCard>
+    </CalmPanel>
   );
 };

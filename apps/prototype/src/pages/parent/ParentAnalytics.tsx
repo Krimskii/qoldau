@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
+import { SectionCard } from '@/components/ui/SectionCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
@@ -39,21 +40,24 @@ export const ParentAnalytics: React.FC = () => {
   const total = summary.reduce((acc, x) => acc + x.count, 0) || 1;
   const top3 = [...summary].sort((a, b) => b.count - a.count).slice(0, 3);
 
-  // Triggers
   const triggers = [
     { name: 'Шум', percent: 60 },
     { name: 'Смена активности', percent: 35 },
     { name: 'Громкий звук', percent: 25 },
   ];
 
-  // Helpers
   const helpers = [
     { name: 'Пауза / отдых', count: 4 },
     { name: 'Тихое место', count: 3 },
     { name: 'Визуальное расписание', count: 3 },
   ];
 
-  // Donut gradient stops
+  const dynamics = [
+    { label: 'AAC', value: '+15%', bg: 'bg-teal-soft', text: 'text-teal' },
+    { label: 'Коммуникация', value: '+8%', bg: 'bg-green-soft', text: 'text-green' },
+    { label: 'Подтверждения', value: '+5%', bg: 'bg-blue-soft', text: 'text-blue' },
+  ];
+
   const gradientStops = (() => {
     let acc = 0;
     const stops = top3.map((item) => {
@@ -65,19 +69,16 @@ export const ParentAnalytics: React.FC = () => {
   })();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <PageHeader title="Аналитика" subtitle="За 7 дней" />
 
       {/* Donut + Top signals */}
-      <Card variant="default">
-        <h4 className="text-sm font-black text-ink mb-4 flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-teal" />
-          Распределение событий
-        </h4>
+      <SectionCard title="Распределение событий" accent="teal" action={<BarChart3 className="w-5 h-5 text-teal" />}>
         <div className="flex items-center gap-4">
           <div
             className="w-24 h-24 rounded-full relative flex-shrink-0"
             style={{ background: gradientStops }}
+            aria-hidden="true"
           >
             <div className="absolute inset-2 bg-white rounded-full flex flex-col items-center justify-center">
               <span className="text-xl font-black text-ink">{total}</span>
@@ -94,11 +95,10 @@ export const ParentAnalytics: React.FC = () => {
             ))}
           </div>
         </div>
-      </Card>
+      </SectionCard>
 
       {/* Triggers */}
-      <Card variant="default">
-        <h4 className="text-sm font-black text-ink mb-3">Ситуации, которые могли повлиять</h4>
+      <SectionCard title="Ситуации, которые могли повлиять" accent="yellow">
         {triggers.map((t) => (
           <div
             key={t.name}
@@ -119,14 +119,14 @@ export const ParentAnalytics: React.FC = () => {
         <p className="text-[11px] text-muted mt-3 italic">
           Это гипотезы на основе наблюдений. Не являются медицинским диагнозом.
         </p>
-      </Card>
+      </SectionCard>
 
       {/* What helped */}
-      <Card variant="default">
-        <h4 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-teal" />
-          Что помогало
-        </h4>
+      <SectionCard
+        title="Что помогало"
+        accent="green"
+        action={<Sparkles className="w-5 h-5 text-green" />}
+      >
         {helpers.map((h) => (
           <div
             key={h.name}
@@ -136,29 +136,25 @@ export const ParentAnalytics: React.FC = () => {
             <span className="text-xs font-bold text-green">{h.count} раз</span>
           </div>
         ))}
-      </Card>
+      </SectionCard>
 
-      {/* Triggers chart */}
-      <Card variant="default">
-        <h4 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-purple" />
-          Динамика
-        </h4>
+      {/* Dynamics */}
+      <SectionCard
+        title="Динамика"
+        accent="purple"
+        action={<TrendingUp className="w-5 h-5 text-purple" />}
+      >
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-teal-soft rounded-2xl p-3 text-center">
-            <p className="text-2xl font-black text-teal">+15%</p>
-            <p className="text-[11px] text-muted">AAC</p>
-          </div>
-          <div className="bg-green-soft rounded-2xl p-3 text-center">
-            <p className="text-2xl font-black text-green">+8%</p>
-            <p className="text-[11px] text-muted">Коммуникация</p>
-          </div>
-          <div className="bg-blue-soft rounded-2xl p-3 text-center">
-            <p className="text-2xl font-black text-blue">+5%</p>
-            <p className="text-[11px] text-muted">Подтверждения</p>
-          </div>
+          {dynamics.map((d) => (
+            <QoldauCard key={d.label} variant="default" padding="sm" className={`${d.bg} border-0`}>
+              <div className="text-center">
+                <p className={`text-2xl font-black ${d.text}`}>{d.value}</p>
+                <p className="text-[11px] text-muted">{d.label}</p>
+              </div>
+            </QoldauCard>
+          ))}
         </div>
-      </Card>
+      </SectionCard>
 
       <AIInsightCard
         text="Похоже, за неделю больше всего событий связано с коммуникацией и AAC. Это хороший знак! Можно продолжать поддерживать."

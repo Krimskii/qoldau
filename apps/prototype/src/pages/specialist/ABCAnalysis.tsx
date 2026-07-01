@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
@@ -95,7 +95,7 @@ export const ABCAnalysis: React.FC = () => {
       </div>
 
       {/* Patterns from data */}
-      <Card variant="default">
+      <QoldauCard variant="default">
         <h4 className="text-sm font-bold mb-3">Замеченные паттерны</h4>
         <ul className="space-y-3">
           <li className="text-sm">
@@ -114,7 +114,7 @@ export const ABCAnalysis: React.FC = () => {
             <span className="text-muted text-xs">→ Похоже, стало спокойнее</span>
           </li>
         </ul>
-      </Card>
+      </QoldauCard>
 
       <AIInsightCard
         text="ABC-паттерны — гипотезы на основе наблюдений. Это не диагноз. Можно обсудить со специалистом и семьёй."

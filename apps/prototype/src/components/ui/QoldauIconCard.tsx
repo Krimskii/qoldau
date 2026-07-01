@@ -26,20 +26,20 @@ export type QoldauIconState = 'default' | 'pressed' | 'selected' | 'success';
 export type QoldauIconSize = 'sm' | 'md' | 'lg';
 
 const COLOR_MAP: Record<QoldauIconColor, { bg: string; text: string; border: string }> = {
-  blue: { bg: 'bg-[#EAF5FF]', text: 'text-[#1c6cb8]', border: 'border-[#cce6f7]' },
-  green: { bg: 'bg-[#EAF8F0]', text: 'text-[#158647]', border: 'border-[#ccebd9]' },
-  purple: { bg: 'bg-[#F1EDFF]', text: 'text-[#5a3eb4]', border: 'border-[#e0d6f7]' },
-  yellow: { bg: 'bg-[#FFF6DF]', text: 'text-[#9a7820]', border: 'border-[#f0e2a7]' },
-  teal: { bg: 'bg-[#DDF5F0]', text: 'text-[#00796F]', border: 'border-[#bfecdf]' },
-  coral: { bg: 'bg-[#FFEAEA]', text: 'text-[#cc251d]', border: 'border-[#ffd9d3]' },
+  blue: { bg: 'bg-white', text: 'text-[#1c6cb8]', border: 'border-[#1c6cb8]' },
+  green: { bg: 'bg-white', text: 'text-[#158647]', border: 'border-[#158647]' },
+  purple: { bg: 'bg-white', text: 'text-[#5a3eb4]', border: 'border-[#5a3eb4]' },
+  yellow: { bg: 'bg-white', text: 'text-[#9a7820]', border: 'border-[#9a7820]' },
+  teal: { bg: 'bg-white', text: 'text-[#00796F]', border: 'border-[#00796F]' },
+  coral: { bg: 'bg-white', text: 'text-[#cc251d]', border: 'border-[#cc251d]' },
 };
 
 export { COLOR_MAP };
 
 const SIZE_MAP: Record<QoldauIconSize, { container: string; iconSize: number; labelText: string; padding: string }> = {
-  sm: { container: 'min-h-[80px]', iconSize: 28, labelText: 'text-sm', padding: 'p-2' },
-  md: { container: 'min-h-[110px]', iconSize: 36, labelText: 'text-base', padding: 'p-2' },
-  lg: { container: 'min-h-[140px]', iconSize: 44, labelText: 'text-lg', padding: 'p-3' },
+  sm: { container: 'min-h-[88px]', iconSize: 40, labelText: 'text-sm', padding: 'p-2' },
+  md: { container: 'min-h-[128px]', iconSize: 56, labelText: 'text-base', padding: 'p-2.5' },
+  lg: { container: 'min-h-[160px]', iconSize: 72, labelText: 'text-lg', padding: 'p-3' },
 };
 
 interface QoldauIconCardProps {
@@ -76,7 +76,7 @@ export const QoldauIconCard: React.FC<QoldauIconCardProps> = ({
       disabled={disabled}
       aria-label={ariaLabel ?? label}
       className={clsx(
-        'flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 transition-all duration-200 ease-out',
+        'flex flex-col items-center justify-center gap-2 rounded-2xl border-2 transition-all duration-200 ease-out',
         dims.container,
         dims.padding,
         palette.bg,

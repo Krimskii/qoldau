@@ -11,6 +11,7 @@ const VoiceWave: React.FC<{ active?: boolean }> = ({ active = true }) => {
       className={`flex items-end justify-center gap-1.5 h-16 px-4 ${
         active ? 'wave-animation-active' : ''
       }`}
+      aria-hidden="true"
     >
       {Array.from({ length: 14 }).map((_, i) => (
         <span
@@ -34,6 +35,15 @@ const VoiceWave: React.FC<{ active?: boolean }> = ({ active = true }) => {
   );
 };
 
+/**
+ * ChildSpeak — голосовой ввод для ребёнка.
+ *
+ * Принципы:
+ * - Одна огромная кнопка-микрофон — главный touch target.
+ * - После записи — карточка с распознаванием и подтверждением.
+ * - Подсказки-примеры под кнопкой (короткие слова).
+ * - Без medical claims: «Похоже, это вода» вместо диагноза.
+ */
 export const ChildSpeak: React.FC = () => {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
@@ -88,7 +98,7 @@ export const ChildSpeak: React.FC = () => {
   const examples = ['вода', 'мама', 'домой'];
 
   return (
-    <div className="flex flex-col gap-4 min-h-[calc(100vh-80px)]">
+    <div className="flex flex-col gap-5 min-h-[calc(100vh-80px)]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <button
@@ -98,13 +108,13 @@ export const ChildSpeak: React.FC = () => {
         >
           <span className="text-2xl text-[#53677e]">‹</span>
         </button>
-        <h2 className="text-lg font-black text-[#143259]">Нажми и скажи</h2>
+        <h1 className="text-base font-black text-ink">Нажми и скажи</h1>
         <div className="w-10" />
       </div>
 
       {/* Большая зона с микрофоном */}
       <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
-        {/* Кнопка-микрофон — flat SVG-иконка, qoldau-soft-pulse при ожидании */}
+        {/* Кнопка-микрофон */}
         <button
           onClick={handleMic}
           aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
@@ -130,34 +140,35 @@ export const ChildSpeak: React.FC = () => {
           </div>
         )}
 
-        {/* Расшифровка — QoldauCard tinted-teal */}
+        {/* Расшифровка */}
         {heard && !isRecording && (
-          <div role="status" aria-live="polite" className="qoldau-success-pop">
-            <QoldauCard variant="tinted-teal" padding="lg" className="text-center">
-              <p className="text-base font-black text-muted mb-1">
-                Я услышал: «{heard}»
-              </p>
-              {suggestion && (
-                <p className="text-base font-black text-teal-dark">
-                  Возможно: {suggestion}{' '}
-                  <span className="text-muted text-xs font-bold">(нужно подтвердить)</span>
-                </p>
-              )}
-              <div className="flex gap-3 justify-center mt-4">
-                <button
-                  onClick={handleConfirm}
-                  className="px-7 py-3 rounded-full bg-[#EAF8F0] font-black text-[#158647] text-base hover:bg-[#4EC28A] hover:text-white transition-colors flex items-center gap-1.5"
-                >
-                  <YesIcon size={18} />
-                  Да
-                </button>
-                <button
-                  onClick={handleReject}
-                  className="px-7 py-3 rounded-full bg-[#FFEAEA] font-black text-[#cc251d] text-base hover:bg-[#E56F5D] hover:text-white transition-colors flex items-center gap-1.5"
-                >
-                  <NoIcon size={18} />
-                  Нет
-                </button>
+          <div role="status" aria-live="polite" className="qoldau-success-pop w-full">
+            <QoldauCard variant="tinted-teal" padding="lg">
+              <div className="text-center">
+                <p className="text-sm font-bold text-muted mb-1">Я услышал</p>
+                <p className="text-xl font-black text-ink mb-3">«{heard}»</p>
+                {suggestion && (
+                  <p className="text-base font-black text-teal-dark mb-1">
+                    Похоже: {suggestion}
+                  </p>
+                )}
+                <p className="text-xs text-muted mb-4">Это наблюдение, не диагноз</p>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={handleConfirm}
+                    className="px-6 py-3 rounded-full bg-green text-white font-black text-base hover:opacity-90 transition-opacity flex items-center gap-2 shadow-card"
+                  >
+                    <YesIcon size={18} />
+                    Да, верно
+                  </button>
+                  <button
+                    onClick={handleReject}
+                    className="px-6 py-3 rounded-full bg-white border-2 border-line text-muted font-black text-base hover:bg-bg transition-colors flex items-center gap-2"
+                  >
+                    <NoIcon size={18} />
+                    Нет
+                  </button>
+                </div>
               </div>
             </QoldauCard>
           </div>
@@ -170,19 +181,21 @@ export const ChildSpeak: React.FC = () => {
         )}
       </div>
 
-      {/* Примеры — QoldauCard tinted-blue */}
+      {/* Примеры */}
       {!heard && !isRecording && (
-        <QoldauCard variant="tinted-blue" padding="md" className="text-center">
-          <p className="text-muted font-bold mb-3 text-sm">Например:</p>
-          <div className="flex gap-2 justify-center flex-wrap">
-            {examples.map((ex) => (
-              <span
-                key={ex}
-                className="border-2 border-[#dce9f4] bg-white rounded-full px-6 py-2.5 text-sm font-black text-ink-2"
-              >
-                {ex}
-              </span>
-            ))}
+        <QoldauCard variant="tinted-blue" padding="md">
+          <div className="text-center">
+            <p className="text-muted font-bold mb-3 text-sm">Например:</p>
+            <div className="flex gap-2 justify-center flex-wrap">
+              {examples.map((ex) => (
+                <span
+                  key={ex}
+                  className="border-2 border-[#dce9f4] bg-white rounded-full px-6 py-2.5 text-sm font-black text-ink-2"
+                >
+                  {ex}
+                </span>
+              ))}
+            </div>
           </div>
         </QoldauCard>
       )}

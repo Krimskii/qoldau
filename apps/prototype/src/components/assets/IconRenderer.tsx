@@ -42,6 +42,7 @@ import {
   type IconProps,
 } from '@/components/icons';
 import { getBuiltinByKey } from '@/data/assetRegistry';
+import { SOFT_FIRST_REGISTRY } from '@/components/icons/soft3d';
 
 interface IconRendererProps {
   asset?: QoldauAsset;
@@ -68,6 +69,9 @@ const COLOR_TEXT: Record<AssetColor, string> = {
  */
 function resolveBuiltinComponent(key?: string): React.FC<IconProps> | undefined {
   if (!key) return undefined;
+  // Soft-first: если есть soft 3D версия — рендерим её.
+  const soft = SOFT_FIRST_REGISTRY[key];
+  if (soft) return soft;
   const map: Record<string, React.FC<IconProps>> = {
     Water: WaterIcon,
     Food: FoodIcon,

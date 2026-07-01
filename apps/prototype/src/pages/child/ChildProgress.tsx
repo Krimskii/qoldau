@@ -4,7 +4,7 @@ import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { SuccessSparkle } from '@/components/illustrations/SuccessSparkle';
 import { AchievementCard } from '@/components/game/AchievementCard';
 import { DailyProgressStrip } from '@/components/game/DailyProgressStrip';
-import { SparkleIcon, WaterIcon, ToiletIcon, HugIcon } from '@/components/icons';
+import { SparkleIcon, WaterSoftIcon, ToiletSoftIcon, HugSoftIcon } from '@/components/icons';
 import { computeAchievements } from '@/lib/game/achievementRules';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 
@@ -32,9 +32,9 @@ export const ChildProgress: React.FC = () => {
   );
 
   const topCards = [
-    { id: '1', label: 'Вода', Icon: WaterIcon, iconColor: 'text-[#1c6cb8]', count: stats.aac > 0 ? stats.aac : 3 },
-    { id: '2', label: 'Туалет', Icon: ToiletIcon, iconColor: 'text-[#5a3eb4]', count: 2 },
-    { id: '3', label: 'Играть', Icon: HugIcon, iconColor: 'text-[#158647]', count: 2 },
+    { id: '1', label: 'Вода', Icon: WaterSoftIcon, iconColor: 'text-[#1c6cb8]', count: stats.aac > 0 ? stats.aac : 3 },
+    { id: '2', label: 'Туалет', Icon: ToiletSoftIcon, iconColor: 'text-[#5a3eb4]', count: 2 },
+    { id: '3', label: 'Играть', Icon: HugSoftIcon, iconColor: 'text-[#158647]', count: 2 },
   ];
 
   return (

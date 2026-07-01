@@ -2,6 +2,77 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.14] — 2026-07-02 (Parent / Tutor / Specialist UI consolidation)
+
+### Changed
+- **`src/pages/parent/ParentHome.tsx`** — emoji quick-actions заменены на Lucide-иконки (Utensils/Droplet/Moon/Smile/MessageCircle) с цветовой кодировкой. StatusBadge для состояния ребёнка. «Быстрые действия» и «Сегодня» обёрнуты в `SectionCard`. Hover-state на строках событий.
+- **`src/pages/parent/ParentNotifications.tsx`** — emoji source-иконки заменены на Lucide (Sparkles/GraduationCap/MessageCircle/Bell). Список обёрнут в `SectionCard`. Disclaimer через QoldauCard soft.
+- **`src/pages/parent/ParentAnalytics.tsx`** — все секции через `SectionCard` (teal/yellow/green/purple accents). Dynamics block — QoldauCard в tinted-soft палитре.
+- **`src/pages/tutor/TutorHome.tsx`** — StatusBadge для состояния. Schedule/Hints/Last observations в `SectionCard` (purple/teal accents). Логическая группировка.
+- **`src/pages/specialist/SpecialistDashboard.tsx`** — 4 KPI через `QoldauCard` с icon container. Period selector через `role="tablist"`. Все секции в `SectionCard` с accent. Иконки в tinted контейнерах вместо opacity.
+
+### Migrated (Card → QoldauCard)
+Все 11 оставшихся страниц мигрированы со старого `Card` на канонический `QoldauCard`:
+- `TutorAIReview`, `TutorReport`, `TutorChildProfile`
+- `ParentProfile`, `CareDiary`, `BehaviorSensory`
+- `SupportPlan`, `CommunicationProfile`, `CarePatterns`, `ABCAnalysis`, `Reports`
+
+### Verified
+- `npm run build` — 1669 modules, 0 errors.
+- `npx tsc --noEmit` — 0 errors.
+- Mobile-first layout сохранён.
+- Routes не сломаны.
+
+---
+
+## [0.3.13] — 2026-07-02 (Child UI consolidation — unified design system)
+
+### Added — Design system components
+- **`src/components/layout/TopBar.tsx`** — единый заголовок приложения. Variants: `compact` (child screens с title), `child` (маскот + имя ребёнка + bell), `standard` (parent/tutor/specialist). Sticky, blur backdrop. Извлечён из AppShell для переиспользования.
+- **`src/components/ui/SectionCard.tsx`** — структурный блок: заголовок секции + контент в QoldauCard. Accent: `teal/blue/purple/yellow/coral/green/warm`. Единые отступы, заголовок в font-black с tinted цветом.
+- **`src/components/ui/StatusBadge.tsx`** — компактный pill для состояния ребёнка. Kinds: `ok/help/calm/tired/focus/neutral`. Без medical claims — это наблюдение, а не диагноз. Под капотом — Badge с правильным color variant.
+- **`src/components/ui/CalmPanel.tsx`** — calming wrapper для CalmMode и safety-ориентированных surfaces. CloudMascot + поддерживающий текст + footer note. Gradient bg `#EAF5FF → #F9FCFC → #F1EDFF`.
+- **`src/components/ui/index.ts`** — barrel export всех design system компонентов. Алиасы для дизайн-спека: `IconTile = QoldauIconCard`, `ActionCard = QoldauActionCard`.
+
+### Added — Hybrid icon system (Soft 3D assets)
+- **`public/assets/icons/{actions,events,mascots}/*.png`** — 30 soft 3D PNG ассетов (ChatGPT-generated, child-friendly 3D). 24 actions + 4 events + 2 mascots.
+- **`src/components/icons/soft3d.tsx`** — `AssetIcon` (universal PNG wrapper) + 30 `SoftXxxIcon` компонентов + `SOFT_FIRST_REGISTRY` (single source of truth).
+- **`src/components/assets/IconRenderer.tsx`** — soft-first resolution: если soft 3D версия существует для `builtinKey` — рендерит её, иначе fallback на flat SVG. Это автоматически подменяет flat на soft во всех местах, где используется `IconRenderer` (ChildCards, AssetPicker, asset registry).
+- Новые soft ключи в реестре: `Animals`, `Cartoon`, `Speak`, `Video` (для media cards: Животные, Мультик, Песенки/Сказать, Спокойное видео).
+
+### Changed — Card system unification
+- **`src/components/ui/QoldauActionCard.tsx`** — добавлен `disabled` state. Визуальный стандарт: `min-h 128px`, icon `56px`, border-2 + цветной, white bg + цветная рамка + цветной текст, единые тени, scale-pressed state, focus ring teal.
+- **`src/components/ui/QoldauIconCard.tsx`** — `COLOR_MAP` переведён с мягких заливок (`bg-[#EAF5FF]`) на white bg + цветная рамка + цветной текст (`border-[#1c6cb8]`). `SIZE_MAP` увеличен: `sm 88px/40 → md 128px/56 → lg 160px/72`. Более выразительный, ребёнок сразу различает категории.
+- **`src/store/useAssetStore.ts`** — `buildDefaultCardConfigs`: удалены дубли с главного экрана (`card-water`, `card-toilet`, `card-help`, `card-pause`). 18 → 14 AAC карточек. `calm-video` builtinKey `Moon → Video` (для soft Video иконки).
+- **`src/data/assetRegistry.ts`** — `media/Спокойное видео` builtinKey `Moon → Video`.
+
+### Changed — Child screens rebuilt on design system
+- **`src/pages/child/ChildHome.tsx`** — убран дублирующий header (TopBar уже в AppShell). Hero использует `StatusBadge` для «Я в порядке». 6 actions обёрнуты в `SectionCard` «Что хочешь сделать?». Добавлены: chip-link «Подсказки» внизу. CTA «Позвать маму» ещё крупнее (68px). Copy упрощён, без medical claims.
+- **`src/pages/child/CalmMode.tsx`** — целиком на `CalmPanel`. Hero через CalmPanel. Таймер через QoldauCard elevated. 6 опций через `SectionCard` «Что поможет?» + `QoldauIconCard`. Поддерживающий текст в footer. Pulse-анимация ≤ 360ms (sensory-safe).
+- **`src/pages/child/ChildCards.tsx`** — единый стиль через `QoldauIconCard` (адаптер `IconRenderer → IconProps` через `useMemo`). **Группировка по смыслу**: «Хочу» (need) / «Чувствую» (feeling) / «Делаю» (activity) / «Спокойно» (calm) / «Люди» (person) / «Медиа» (media). Группы с подзаголовками. Edit mode banner через tinted-yellow. Success feedback через tinted-teal + teal-soft border.
+- **`src/pages/child/ChildSpeak.tsx`** — единые компоненты: QoldauCard tinted-teal для feedback, tinted-blue для примеров. Кнопки подтверждения: `bg-green text-white` для «Да, верно», `bg-white border-line` для «Нет». Disclaimer «Это наблюдение, не диагноз» под результатом. Copy: «Похоже: вода» вместо «Возможно: вода».
+
+### Verified
+- `npm run build` passes — 1669 modules transformed, 0 errors, 7.58s.
+- `npx tsc --noEmit` clean (0 errors).
+- Mobile-first layout сохранён (max-w 430px для child/parent/tutor).
+- Touch-friendly controls: все кнопки ≥ 96px высоты, icon buttons ≥ 40px.
+- Routes не сломаны (`/child/home`, `/child/cards`, `/child/calm`, `/child/speak` работают).
+- HMR подхватывает без перезапуска dev server.
+
+### Documentation
+- **`docs/TECH_DECISIONS.md`** — добавлен раздел «Qoldau Child UI Principles» + «Hybrid Icon System».
+- **`docs/DESIGN_SYSTEM.md`** — добавлены разделы «Child Card Design» + «Hybrid Icon System».
+
+### Not changed
+- Event Timeline data model, store-логика.
+- STT / AI abstraction.
+- Routes, demo flow, demo dataset.
+- Specialist / Parent / Tutor screens (вне scope этой фазы).
+- Backend integration (Phase 5+).
+
+---
+
 ## [0.3.12] — 2026-07-02 (Visual refresh — design system consolidation)
 
 ### Added — Foundation (Phase A)

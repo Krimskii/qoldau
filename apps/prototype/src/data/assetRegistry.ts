@@ -62,7 +62,7 @@ export const BUILTIN_ASSETS: BuiltinAsset[] = [
   { type: 'builtin_svg', category: 'media', label: 'Песенка', builtinKey: 'Music', color: 'purple' },
   { type: 'builtin_svg', category: 'media', label: 'Животные', builtinKey: 'Animals', color: 'green' },
   { type: 'builtin_svg', category: 'media', label: 'Машинки', builtinKey: 'Cars', color: 'blue' },
-  { type: 'builtin_svg', category: 'media', label: 'Спокойное видео', builtinKey: 'Moon', color: 'blue' },
+  { type: 'builtin_svg', category: 'media', label: 'Спокойное видео', builtinKey: 'Video', color: 'blue' },
   { type: 'builtin_svg', category: 'media', label: 'Планшет', builtinKey: 'Tablet', color: 'teal' },
 
   // ===== Navigation (навигация) =====
