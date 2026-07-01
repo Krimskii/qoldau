@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
-import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
+import { useVoiceObservationStore } from '@/store/useVoiceObservationStore';
 import { useEventStore } from '@/store/useEventStore';
 import { EventType } from '@/types/qoldau';
 

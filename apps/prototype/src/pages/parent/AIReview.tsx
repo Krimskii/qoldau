@@ -5,8 +5,8 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
-import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
-import { ParsedEvent } from '@/lib/aiParser.mock';
+import { useVoiceObservationStore } from '@/store/useVoiceObservationStore';
+import { ParsedEvent } from '@/lib/ai/aiParser.types';
 
 interface ParsedDisplay {
   type: string;

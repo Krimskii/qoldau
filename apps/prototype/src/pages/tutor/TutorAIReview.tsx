@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { useEventStore } from '@/store/useEventStore';
-import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
+import { useVoiceObservationStore } from '@/store/useVoiceObservationStore';
 import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { QoldauEvent } from '@/types/qoldau';

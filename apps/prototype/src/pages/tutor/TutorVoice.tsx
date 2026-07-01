@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Mic, MicOff } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { VoiceWave } from '@/components/ui/VoiceWave';
-import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
+import { useVoiceObservationStore } from '@/store/useVoiceObservationStore';
 
 export const TutorVoice: React.FC = () => {
   const navigate = useNavigate();

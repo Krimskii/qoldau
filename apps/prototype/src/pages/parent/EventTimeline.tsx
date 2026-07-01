@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, FileText } from 'lucide-react';
+import { Calendar, FileText, Filter, Check } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
@@ -80,9 +80,8 @@ const TimelineRow: React.FC<TimelineRowProps> = ({ event, onClick }) => {
   return (
     <button
       onClick={onClick}
-      className="w-full flex gap-3 items-start text-left py-3 px-2 -mx-2 rounded-2xl hover:bg-bg transition-colors group"
+      className="w-full flex gap-3 items-start text-left py-3 px-2 -mx-2 rounded-2xl hover:bg-bg transition-colors"
     >
-      {/* Time + dot */}
       <div className="flex flex-col items-center min-w-[44px] pt-0.5">
         <span className="text-xs font-bold text-ink tabular-nums">
           {formatTime(event.timestamp)}
@@ -92,30 +91,14 @@ const TimelineRow: React.FC<TimelineRowProps> = ({ event, onClick }) => {
         />
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 pb-2 border-b border-line-soft group-last:border-0">
+      <div className="flex-1 min-w-0 pb-2 border-b border-line-soft last:border-0">
         <h4 className="text-sm font-bold text-ink leading-tight">{event.title}</h4>
         <p className="text-xs text-muted leading-relaxed mt-0.5 line-clamp-2">
           {event.description}
         </p>
         <div className="flex flex-wrap gap-1.5 mt-2">
           <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${typeClass}`}>
-            {event.type === 'voice_observation' && 'Голос'}
-            {event.type === 'food' && 'Питание'}
-            {event.type === 'water' && 'Вода'}
-            {event.type === 'toilet' && 'Туалет'}
-            {event.type === 'sleep' && 'Сон'}
-            {event.type === 'behavior' && 'Поведение'}
-            {event.type === 'sensory' && 'Сенсорика'}
-            {event.type === 'communication' && 'Коммуникация'}
-            {event.type === 'aac_card' && 'AAC'}
-            {event.type === 'phrase' && 'Фраза'}
-            {event.type === 'media_request' && 'Медиа'}
-            {event.type === 'sos' && 'SOS'}
-            {event.type === 'calm_mode' && 'Спокойствие'}
-            {event.type === 'tutor_note' && 'Тьютор'}
-            {event.type === 'specialist_note' && 'Специалист'}
-            {event.type === 'state' && 'Состояние'}
+            {getTypeShort(event.type)}
           </span>
           <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${sourceClass}`}>
             {getEventSourceLabel(event.sourceRole)}
@@ -129,6 +112,102 @@ const TimelineRow: React.FC<TimelineRowProps> = ({ event, onClick }) => {
   );
 };
 
+const TYPE_LABELS: Record<string, string> = {
+  voice_observation: 'Голос',
+  food: 'Питание',
+  water: 'Вода',
+  toilet: 'Туалет',
+  sleep: 'Сон',
+  behavior: 'Поведение',
+  sensory: 'Сенсорика',
+  communication: 'Коммуникация',
+  aac_card: 'AAC',
+  phrase: 'Фраза',
+  media_request: 'Медиа',
+  sos: 'SOS',
+  calm_mode: 'Спокойствие',
+  tutor_note: 'Тьютор',
+  specialist_note: 'Специалист',
+  state: 'Состояние',
+};
+
+const getTypeShort = (type: string) => TYPE_LABELS[type] ?? type;
+
+interface FilterDropdownProps {
+  value: FilterType;
+  onChange: (v: FilterType) => void;
+}
+
+const FilterDropdown: React.FC<FilterDropdownProps> = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const current = FILTERS.find((f) => f.key === value) ?? FILTERS[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`w-full flex items-center justify-between gap-2 h-11 px-4 rounded-2xl text-sm font-bold transition-colors ${
+          value !== 'all'
+            ? 'bg-teal text-white shadow-card-soft'
+            : 'bg-white border border-line text-ink hover:border-teal'
+        }`}
+        aria-expanded={open}
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <Filter className="w-4 h-4 opacity-80 flex-shrink-0" />
+          <span className="truncate">
+            {value === 'all' ? 'Все события' : current.label}
+          </span>
+        </span>
+        <svg
+          className={`w-4 h-4 opacity-80 transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 right-0 mt-2 z-30 bg-white border border-line rounded-2xl shadow-card max-h-72 overflow-y-auto animate-fade-in">
+          {FILTERS.map((f) => {
+            const isActive = f.key === value;
+            return (
+              <button
+                key={f.key}
+                onClick={() => {
+                  onChange(f.key);
+                  setOpen(false);
+                }}
+                className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-bold text-left transition-colors ${
+                  isActive
+                    ? 'bg-teal-soft text-teal-dark'
+                    : 'text-ink hover:bg-bg'
+                }`}
+              >
+                <span>{f.label}</span>
+                {isActive && <Check className="w-4 h-4" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const EventTimeline: React.FC = () => {
   const navigate = useNavigate();
   const { events } = useEventStore();
@@ -139,7 +218,6 @@ export const EventTimeline: React.FC = () => {
     return events.filter((e) => e.type === activeFilter);
   }, [events, activeFilter]);
 
-  // Group by date (descending)
   const grouped = useMemo(() => {
     const map: Record<string, QoldauEvent[]> = {};
     [...filtered]
@@ -182,24 +260,8 @@ export const EventTimeline: React.FC = () => {
         }
       />
 
-      {/* Filter chips */}
-      <div className="overflow-x-auto -mx-5 px-5 pb-1">
-        <div className="flex gap-2 min-w-max">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setActiveFilter(f.key)}
-              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
-                activeFilter === f.key
-                  ? 'bg-teal text-white shadow-card-soft'
-                  : 'bg-white border border-line text-ink-2 hover:border-teal hover:text-teal-dark'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Filter dropdown (collapsible) */}
+      <FilterDropdown value={activeFilter} onChange={setActiveFilter} />
 
       {/* AI observation */}
       <AIInsightCard text={aiObservation} />
