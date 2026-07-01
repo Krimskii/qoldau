@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -8,58 +8,60 @@ import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { useEventStore } from '@/store/useEventStore';
 import { useVoiceObservationStore } from '@/store/useVoiceObservationStore';
 import { useToastStore } from '@/store/useToastStore';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { QoldauEvent } from '@/types/qoldau';
+import { createEventsFromAIReview } from '@/lib/events/eventFactory';
+import { DEMO_PRIMARY_CHILD_ID } from '@/data/demoDataset';
 
 export const TutorAIReview: React.FC = () => {
   const navigate = useNavigate();
-  const { addEvent, addEvents } = useEventStore();
-  const { parsedObservation, transcript, isProcessing, processTranscript, reset } =
-    useVoiceObservationStore();
+  const { addEvents } = useEventStore();
+  const {
+    parsedObservation,
+    currentTranscript,
+    originalTranscript,
+    editedTranscript,
+    isProcessing,
+    processTranscript,
+    reset,
+    sttSource,
+    childId,
+  } = useVoiceObservationStore();
   const { showToast } = useToastStore();
-  const [events, setEvents] = useState<any[]>([]);
+  const [hasRun, setHasRun] = React.useState(false);
 
-  useEffect(() => {
-    if (!parsedObservation) {
-      processTranscript().then((result) => setEvents(result.events));
-    } else {
-      setEvents(parsedObservation.events);
+  // Запускаем полный flow (mock STT + AI) только один раз, если ещё не запускали.
+  React.useEffect(() => {
+    if (!parsedObservation && !hasRun && !isProcessing) {
+      setHasRun(true);
+      processTranscript();
     }
-  }, [parsedObservation, processTranscript]);
+  }, [parsedObservation, hasRun, isProcessing, processTranscript]);
+
+  // effective transcript = editedTranscript (если был изменён) иначе originalTranscript.
+  const effectiveTranscript =
+    editedTranscript || originalTranscript || currentTranscript;
 
   const handleSave = () => {
-    const baseTime = new Date().toISOString();
-    const newEvents: Omit<QoldauEvent, 'id'>[] = events.map((event) => ({
-      childId: DEMO_PRIMARY_CHILD.id,
-      type: (event.type as QoldauEvent['type']) || 'tutor_note',
-      title: event.title,
-      description: event.description,
-      timestamp: baseTime,
-      sourceRole: 'tutor',
-      status: 'confirmed',
-      confidence: event.confidence,
-      rawText: transcript,
-      payload: {
-        source: 'tutor_voice_observation',
-        aiInsight: parsedObservation?.insight ?? '',
-      },
-    }));
-
-    if (newEvents.length === 0) {
-      addEvent({
-        childId: DEMO_PRIMARY_CHILD.id,
-        type: 'tutor_note',
-        title: 'Наблюдение тьютора',
-        description: transcript || 'Без расшифровки',
-        timestamp: baseTime,
-        sourceRole: 'tutor',
-        status: 'confirmed',
-        rawText: transcript,
-        payload: { source: 'tutor_voice_observation' },
-      });
-    } else {
-      addEvents(newEvents);
+    if (!parsedObservation) {
+      showToast('Нет данных для сохранения', 'error');
+      navigate('/tutor/home');
+      return;
     }
+
+    const batch = createEventsFromAIReview({
+      parsed: parsedObservation,
+      transcript: originalTranscript || currentTranscript,
+      editedTranscript:
+        editedTranscript && editedTranscript !== originalTranscript
+          ? editedTranscript
+          : undefined,
+      originalTranscript,
+      sttSource,
+      sourceRole: 'tutor',
+      childId: childId || DEMO_PRIMARY_CHILD_ID,
+      status: 'confirmed',
+    });
+
+    addEvents([...batch.extracted, batch.observation]);
 
     showToast('Сохранено в Event Timeline', 'success');
     reset();
@@ -72,7 +74,7 @@ export const TutorAIReview: React.FC = () => {
     navigate('/tutor/home');
   };
 
-  if (isProcessing) {
+  if (isProcessing || !parsedObservation) {
     return (
       <div className="flex flex-col gap-4 items-center justify-center min-h-[60vh]">
         <div className="w-16 h-16 rounded-full border-4 border-teal border-t-transparent animate-spin" />
@@ -81,21 +83,31 @@ export const TutorAIReview: React.FC = () => {
     );
   }
 
+  const events = parsedObservation.events;
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="AI-разбор" subtitle="Проверьте и сохраните" showBack />
 
-      {transcript && (
+      {/* Транскрипт — для контекста тьютору */}
+      {effectiveTranscript && (
         <Card variant="tinted-blue">
-          <p className="text-xs font-black text-blue uppercase tracking-wide mb-2">Расшифровка</p>
-          <p className="text-sm text-ink italic leading-relaxed">"{transcript}"</p>
+          <p className="text-xs font-black text-blue uppercase tracking-wide mb-2">
+            Расшифровка
+          </p>
+          <p className="text-sm text-ink italic leading-relaxed">
+            "{effectiveTranscript}"
+          </p>
         </Card>
       )}
 
+      {/* Выделенные события */}
       <Card variant="default">
         <h4 className="text-sm font-black text-ink mb-3">Что произошло</h4>
         {events.length === 0 ? (
-          <p className="text-sm text-muted">AI не выделил событий. Можно сохранить общую заметку.</p>
+          <p className="text-sm text-muted">
+            AI не выделил событий. Можно сохранить общую заметку.
+          </p>
         ) : (
           events.map((event, i) => (
             <div
@@ -109,32 +121,21 @@ export const TutorAIReview: React.FC = () => {
               </span>
               <div>
                 <p className="text-sm font-bold text-ink">{event.title}</p>
-                <p className="text-xs text-muted leading-relaxed">{event.description}</p>
+                <p className="text-xs text-muted leading-relaxed">
+                  {event.description}
+                </p>
               </div>
             </div>
           ))
         )}
       </Card>
 
-      <Card variant="tinted-green">
-        <h4 className="text-sm font-black text-ink mb-2">Что помогло</h4>
-        <div className="flex flex-wrap gap-2">
-          <span className="px-3 py-1 rounded-full bg-green-soft text-green text-xs font-bold">Пауза</span>
-          <span className="px-3 py-1 rounded-full bg-green-soft text-green text-xs font-bold">Тихое место</span>
-          <span className="px-3 py-1 rounded-full bg-green-soft text-green text-xs font-bold">Визуальное расписание</span>
-        </div>
-      </Card>
-
-      <Card variant="tinted-yellow">
-        <h4 className="text-sm font-black text-ink mb-2">Что стоит подтвердить дома</h4>
-        <ul className="space-y-1.5">
-          <li className="text-sm text-ink-2 leading-relaxed">• Связь шума и закрывания ушей</li>
-          <li className="text-sm text-ink-2 leading-relaxed">• Эффект визуального расписания</li>
-        </ul>
-      </Card>
-
       <AIInsightCard
-        text="Похоже, сегодня ребёнок хорошо использовал визуальные подсказки и паузы. Это наблюдение, не диагноз. Можно обсудить со специалистом."
+        text={
+          parsedObservation.insight ||
+          'Это наблюдение, не диагноз. Можно обсудить со специалистом.'
+        }
+        variant="default"
       />
 
       <div className="flex flex-col gap-2 mt-2">

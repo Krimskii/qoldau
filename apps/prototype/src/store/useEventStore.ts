@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { QoldauEvent, EventType } from '@/types/qoldau';
 import { DEMO_EVENTS, seedDemoEvents } from '@/data/demoScenario';
 
@@ -9,7 +10,7 @@ interface ClarifyingAnswers {
 interface EventState {
   events: QoldauEvent[];
   clarifyingAnswers: ClarifyingAnswers;
-  
+
   // Actions
   setEvents: (events: QoldauEvent[]) => void;
   addEvent: (event: Omit<QoldauEvent, 'id'>) => QoldauEvent;
@@ -21,70 +22,95 @@ interface EventState {
   setClarifyingAnswer: (question: string, answer: string) => void;
   getClarifyingAnswer: (question: string) => string;
   resetClarifyingAnswers: () => void;
-  
+
   // Demo helpers
   ensureDemoEvents: () => void;
+  /** Полный сброс — очищает events и answers, оставляет стор пустым. */
+  clearAll: () => void;
 }
 
 const DEMO_BASE_DATE = '2026-07-01T10:30:00';
 
-// Initialize store with full 60+ demo events
-const initialEvents = seedDemoEvents(DEMO_EVENTS);
+export const useEventStore = create<EventState>()(
+  persist(
+    (set, get) => ({
+      events: [],
+      clarifyingAnswers: {},
 
-export const useEventStore = create<EventState>((set, get) => ({
-  events: initialEvents,
-  clarifyingAnswers: {},
+      setEvents: (events) => set({ events }),
 
-  setEvents: (events) => set({ events }),
+      addEvent: (eventData) => {
+        const newEvent: QoldauEvent = {
+          ...eventData,
+          id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        };
+        set((state) => ({
+          events: [newEvent, ...state.events],
+        }));
+        return newEvent;
+      },
 
-  addEvent: (eventData) => {
-    const newEvent: QoldauEvent = {
-      ...eventData,
-      id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    };
-    set((state) => ({
-      events: [newEvent, ...state.events],
-    }));
-    return newEvent;
-  },
+      addEvents: (eventsData) => {
+        const newEvents = eventsData.map((eventData) => ({
+          ...eventData,
+          id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        }));
+        set((state) => ({
+          events: [...newEvents, ...state.events],
+        }));
+        return newEvents;
+      },
 
-  addEvents: (eventsData) => {
-    const newEvents = eventsData.map((eventData) => ({
-      ...eventData,
-      id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    }));
-    set((state) => ({
-      events: [...newEvents, ...state.events],
-    }));
-    return newEvents;
-  },
+      updateEvent: (id, updates) =>
+        set((state) => ({
+          events: state.events.map((e) => (e.id === id ? { ...e, ...updates } : e)),
+        })),
 
-  updateEvent: (id, updates) =>
-    set((state) => ({
-      events: state.events.map((e) => (e.id === id ? { ...e, ...updates } : e)),
-    })),
+      deleteEvent: (id) =>
+        set((state) => ({
+          events: state.events.filter((e) => e.id !== id),
+        })),
 
-  deleteEvent: (id) =>
-    set((state) => ({
-      events: state.events.filter((e) => e.id !== id),
-    })),
+      getEventsByType: (type) => get().events.filter((e) => e.type === type),
 
-  getEventsByType: (type) => get().events.filter((e) => e.type === type),
+      getEventsByTypeAndDate: (types, date) =>
+        get().events.filter((e) => types.includes(e.type) && e.timestamp.startsWith(date)),
 
-  getEventsByTypeAndDate: (types, date) =>
-    get().events.filter((e) => types.includes(e.type) && e.timestamp.startsWith(date)),
+      setClarifyingAnswer: (question, answer) =>
+        set((state) => ({
+          clarifyingAnswers: { ...state.clarifyingAnswers, [question]: answer },
+        })),
 
-  setClarifyingAnswer: (question, answer) =>
-    set((state) => ({
-      clarifyingAnswers: { ...state.clarifyingAnswers, [question]: answer },
-    })),
+      getClarifyingAnswer: (question) => get().clarifyingAnswers[question] || '',
 
-  getClarifyingAnswer: (question) => get().clarifyingAnswers[question] || '',
+      resetClarifyingAnswers: () => set({ clarifyingAnswers: {} }),
 
-  resetClarifyingAnswers: () => set({ clarifyingAnswers: {} }),
+      ensureDemoEvents: () =>
+        set((state) => ({ events: seedDemoEvents(state.events) })),
 
-  ensureDemoEvents: () =>
-    set((state) => ({ events: seedDemoEvents(state.events) })),
-}));
+      clearAll: () =>
+        set({
+          events: [],
+          clarifyingAnswers: {},
+        }),
+    }),
+    {
+      name: 'qoldau-events-v1',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        events: state.events,
+        clarifyingAnswers: state.clarifyingAnswers,
+      }),
+      // При первой загрузке (нет persist) — сидим демо-данные.
+      // При последующих — restore из localStorage.
+      onRehydrateStorage: () => (state) => {
+        if (state && state.events.length === 0) {
+          state.events = seedDemoEvents(DEMO_EVENTS);
+        }
+      },
+      version: 1,
+    },
+  ),
+);
 
 export { DEMO_BASE_DATE };

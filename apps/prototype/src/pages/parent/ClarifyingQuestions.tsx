@@ -7,7 +7,39 @@ import { Button } from '@/components/ui/Button';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { useVoiceObservationStore } from '@/store/useVoiceObservationStore';
 import { useEventStore } from '@/store/useEventStore';
-import { EventType } from '@/types/qoldau';
+import { useToastStore } from '@/store/useToastStore';
+import {
+  createEventsFromAIReview,
+} from '@/lib/events/eventFactory';
+import { DEMO_PRIMARY_CHILD_ID } from '@/data/demoDataset';
+
+// --- Clarifying store — локальный стейт UI для экрана уточнений ---
+
+interface ClarifyingState {
+  answers: Record<string, string>;
+  setAnswer: (questionId: string, answer: string) => void;
+}
+
+import { create } from 'zustand';
+
+const defaultAnswers: Record<string, string> = {
+  'water-amount': 'Нормально',
+  'toilet-better': 'Да',
+  'noise-around': 'Да',
+};
+
+export const useClarifyingStore = create<ClarifyingState>((set) => ({
+  answers: { ...defaultAnswers },
+  setAnswer: (questionId, answer) =>
+    set((state) => ({
+      answers: { ...state.answers, [questionId]: answer },
+    })),
+}));
+
+// --- Уточняющие вопросы ---
+// В будущем список должен приходить из AIParserResult.clarificationQuestions
+// (тогда UI будет рендерить динамически). Пока используем фиксированный набор
+// под демо-транскрипт для обратной совместимости.
 
 const questions = [
   {
@@ -36,76 +68,49 @@ const questions = [
   },
 ];
 
-const EVENT_TYPE_MAP: Record<string, EventType> = {
-  food: 'food',
-  toilet: 'toilet',
-  behavior: 'behavior',
-  communication: 'communication',
-  water: 'water',
-  sensory: 'sensory',
-  state: 'state',
-};
-
 export const ClarifyingQuestions: React.FC = () => {
   const navigate = useNavigate();
   const { answers, setAnswer } = useClarifyingStore();
-  const { transcript, parsedObservation, reset: resetVoiceObservation } =
-    useVoiceObservationStore();
+  const {
+    currentTranscript,
+    originalTranscript,
+    editedTranscript,
+    parsedObservation,
+    sttSource,
+    childId,
+    reset: resetVoiceObservation,
+  } = useVoiceObservationStore();
   const { addEvents } = useEventStore();
-
-  const handleAnswer = (questionId: string, option: string) =>
-    setAnswer(questionId, option);
+  const { showToast } = useToastStore();
 
   const handleSave = () => {
-    const parsed = parsedObservation?.events ?? [];
+    if (!parsedObservation) {
+      showToast('Нет данных для сохранения', 'error');
+      navigate('/parent/events');
+      return;
+    }
 
-    const eventData =
-      parsed.length > 0
-        ? parsed.map((event) => ({
-            childId: 'child-alikhan',
-            type: EVENT_TYPE_MAP[event.type] || 'voice_observation',
-            title: event.title,
-            description: event.description,
-            timestamp: new Date().toISOString(),
-            sourceRole: 'parent' as const,
-            status: 'confirmed' as const,
-            confidence: event.confidence,
-            rawText: transcript,
-            linkedEventIds: [],
-            payload: {
-              clarifyingAnswers: { ...answers },
-              aiInsight: parsedObservation?.insight ?? '',
-              source: 'voice_observation',
-            },
-          }))
-        : [
-            {
-              childId: 'child-alikhan',
-              type: 'voice_observation' as const,
-              title: 'Голосовое наблюдение',
-              description: transcript || 'Наблюдение без расшифровки',
-              timestamp: new Date().toISOString(),
-              sourceRole: 'parent' as const,
-              status: 'confirmed' as const,
-              rawText: transcript,
-              linkedEventIds: [],
-              payload: {
-                clarifyingAnswers: { ...answers },
-                aiInsight: parsedObservation?.insight ?? '',
-                source: 'voice_observation',
-              },
-            },
-          ];
-
-    const created = addEvents(eventData);
-
-    const linkedIds = created.map((e) => e.id);
-    created.forEach((event) => {
-      useEventStore.getState().updateEvent(event.id, {
-        linkedEventIds: linkedIds.filter((id) => id !== event.id),
-      });
+    // Используем EventFactory — единая точка создания событий.
+    // В payload попадают originalTranscript и editedTranscript (если был изменён).
+    const batch = createEventsFromAIReview({
+      parsed: parsedObservation,
+      transcript: originalTranscript || currentTranscript,
+      editedTranscript:
+        editedTranscript && editedTranscript !== originalTranscript
+          ? editedTranscript
+          : undefined,
+      originalTranscript,
+      sttSource,
+      sourceRole: 'parent',
+      childId: childId || DEMO_PRIMARY_CHILD_ID,
+      clarificationAnswers: { ...answers },
+      status: 'confirmed',
     });
 
+    // Сохраняем batch: сначала все extracted, потом observation (последним — он связан с ними).
+    addEvents([...batch.extracted, batch.observation]);
+
+    showToast('События сохранены в Event Timeline', 'success');
     resetVoiceObservation();
     navigate('/parent/events');
   };
@@ -141,7 +146,7 @@ export const ClarifyingQuestions: React.FC = () => {
               {q.options.map((option) => (
                 <button
                   key={option}
-                  onClick={() => handleAnswer(q.id, option)}
+                  onClick={() => setAnswer(q.id, option)}
                   className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${
                     selected === option
                       ? 'bg-teal text-white border-teal shadow-card-soft'
@@ -157,7 +162,7 @@ export const ClarifyingQuestions: React.FC = () => {
       })}
 
       <AIInsightCard
-        text="Лучше задать короткий вопрос и сохранить только подтверждённое наблюдение."
+        text="Лучше задать короткий вопрос и сохранить только подтверждённое наблюдение. Это наблюдение, не диагноз."
         variant="default"
         title="Подсказка"
       />
@@ -173,25 +178,3 @@ export const ClarifyingQuestions: React.FC = () => {
     </div>
   );
 };
-
-// Local store
-interface ClarifyingState {
-  answers: Record<string, string>;
-  setAnswer: (questionId: string, answer: string) => void;
-}
-
-import { create } from 'zustand';
-
-const defaultAnswers: Record<string, string> = {
-  'water-amount': 'Нормально',
-  'toilet-better': 'Да',
-  'noise-around': 'Да',
-};
-
-export const useClarifyingStore = create<ClarifyingState>((set) => ({
-  answers: { ...defaultAnswers },
-  setAnswer: (questionId, answer) =>
-    set((state) => ({
-      answers: { ...state.answers, [questionId]: answer },
-    })),
-}));
