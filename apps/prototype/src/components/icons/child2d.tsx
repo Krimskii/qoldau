@@ -515,6 +515,46 @@ export const Settings2DIcon: React.FC<{ size?: number; className?: string }> = (
   </svg>
 );
 
+export const Tap2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('tap-2d', '#efc884', '#d9a24e')}</defs>
+    {wrap('pulse', (
+      <>
+        <ellipse cx={24} cy={18} rx={6} ry={9} fill="url(#tap-2d)" />
+        <ellipse cx={24} cy={36} rx={14} ry={4} fill="#e0d6f7" opacity={0.5} />
+        <circle cx={20} cy={20} r={1.5} fill="#fff" />
+        <circle cx={28} cy={20} r={1.5} fill="#fff" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Text2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('txt-2d', '#c3aef0', '#8a6fc9')}</defs>
+    {wrap('float', (
+      <>
+        <rect x={8} y={12} width={32} height={24} rx={3} fill="url(#txt-2d)" />
+        <text x={24} y={28} fontSize={16} fontWeight={800} fill="#fff" textAnchor="middle" fontFamily="sans-serif">Аа</text>
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Eye2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('eye-2d', '#8fd0ea', '#3a9fd4')}</defs>
+    {wrap('blink', (
+      <>
+        <ellipse cx={24} cy={24} rx={18} ry={11} fill="url(#eye-2d)" />
+        <circle cx={24} cy={24} r={6} fill="#fff" />
+        <circle cx={24} cy={24} r={3} fill="#173039" />
+        <circle cx={25.5} cy={22.5} r={1} fill="#fff" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
 // === Color families для child cards (используется в QoldauActionCard-style wrappers) ===
 
 export type ChildCardFamily = 'need' | 'do' | 'feel' | 'fav' | 'help';
@@ -528,4 +568,400 @@ export const CHILD_FAMILY_STYLES: Record<
   feel:  { icoBg: 'bg-[#FBF3E6]', lbl: 'text-[#8A5D17]', ico: 'text-[#D9A24E]' },
   fav:   { icoBg: 'bg-[#F1EEFB]', lbl: 'text-[#5B47A0]', ico: 'text-[#8A6FC9]' },
   help:  { icoBg: 'bg-[#FBEDED]', lbl: 'text-[#A24545]', ico: 'text-[#D97A7A]' },
+};
+
+// === Дополнительные иконки для полного покрытия builtinKey ===
+
+export const Speak2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('sp-2d', '#7fd1c9', '#12807a')}</defs>
+    {wrap('pulse', (
+      <>
+        <path d="M6 12a3 3 0 0 1 3-3h30a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H18l-8 6v-6a3 3 0 0 1-4-3z" fill="url(#sp-2d)" />
+        <path d="M14 18a5 5 0 0 1 0 8M19 16a8 8 0 0 1 0 12M24 14a11 11 0 0 1 0 16" stroke="#fff" strokeWidth={2} fill="none" strokeLinecap="round" opacity={0.85} />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Call2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('cl-2d', '#7fd1c9', '#12807a')}</defs>
+    {wrap('pulse', (
+      <path d="M14 14a4 4 0 0 1 4-4h2l2 5-2.5 1.5a11 11 0 0 0 6 6L27 20l5 2v2a4 4 0 0 1-4 4 18 18 0 0 1-18-18z" fill="url(#cl-2d)" />
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Star2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('st-2d', '#f7c948', '#d9a24e')}</defs>
+    {wrap('pulse', (
+      <path d="M24 6l4 9 10 1-7.5 6.5L33 33l-9-5-9 5 2.5-10.5L10 16l10-1z" fill="url(#st-2d)" stroke="#fff" strokeWidth={1.5} />
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Now2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('nw-2d', '#8fd0ea', '#3a9fd4')}</defs>
+    {wrap('pulse', (
+      <>
+        <circle cx={24} cy={24} r={16} fill="url(#nw-2d)" />
+        <circle cx={24} cy={24} r={13} fill="#fff" />
+        <path d="M24 14v10l7 4" stroke="url(#nw-2d)" strokeWidth={3} fill="none" strokeLinecap="round" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Next2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('nx-2d', '#77c797', '#3aa06b')}</defs>
+    {wrap('sway', (
+      <path d="M16 10l14 14-14 14z" fill="url(#nx-2d)" />
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Study2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('sd-2d', '#c3aef0', '#8a6fc9')}</defs>
+    {wrap('float', (
+      <>
+        <path d="M10 14a2 2 0 0 1 2-2h20a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2z" fill="url(#sd-2d)" />
+        <path d="M10 14h24M10 18h24" stroke="#fff" strokeWidth={1.5} />
+        <path d="M14 24h6M14 28h12" stroke="#fff" strokeWidth={1.5} strokeLinecap="round" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Yes2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('ys-2d', '#77c797', '#3aa06b')}</defs>
+    {wrap('pulse', (
+      <>
+        <circle cx={24} cy={24} r={16} fill="url(#ys-2d)" />
+        <path d="M14 24l7 7 14-14" stroke="#fff" strokeWidth={4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Trip2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('tr2-2d', '#efc884', '#d9a24e')}</defs>
+    {wrap('float', (
+      <>
+        <path d="M10 18a4 4 0 0 1 4-4h20a4 4 0 0 1 4 4v14H10z" fill="url(#tr2-2d)" />
+        <path d="M14 14a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v4" stroke="url(#tr2-2d)" strokeWidth={2.5} fill="none" />
+        <path d="M18 26h12" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const SOS2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('so-2d', '#f0b4b4', '#d97a7a')}</defs>
+    {wrap('pulse', (
+      <>
+        <path d="M24 6l5 11 12 1.5-9 8 2.5 12L24 32l-10.5 6.5L16 26l-9-8 12-1.5z" fill="url(#so-2d)" />
+        <text x={24} y={28} fontSize={11} fontWeight={800} fill="#fff" textAnchor="middle">SOS</text>
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Message2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('mg-2d', '#8fd0ea', '#3a9fd4')}</defs>
+    {wrap('float', (
+      <path d="M8 12a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H18l-8 6v-6a4 4 0 0 1-2-4z" fill="url(#mg-2d)" />
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Calm2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('cl2-2d', '#c3aef0', '#8a6fc9')}</defs>
+    {wrap('pulse', (
+      <>
+        <path d="M34 30a13 13 0 1 1-16-17 10 10 0 0 0 16 17z" fill="url(#cl2-2d)" />
+        <circle cx={20} cy={20} r={1.6} fill="#fff" />
+        <circle cx={26} cy={16} r={1.2} fill="#fff" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Tablet2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('tb-2d', '#8fd0ea', '#3a9fd4')}</defs>
+    {wrap('float', (
+      <>
+        <rect x={9} y={6} width={30} height={36} rx={4} fill="url(#tb-2d)" />
+        <rect x={13} y={10} width={22} height={26} rx={1} fill="#fff" />
+        <circle cx={24} cy={40} r={1.5} fill="#fff" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Sparkle2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    {wrap('pulse', (
+      <path d="M24 6l3 9 9 3-9 3-3 9-3-9-9-3 9-3z" fill="#f7c948" stroke="#fff" strokeWidth={1.5} />
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Trophy2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('trp-2d', '#f7c948', '#d9a24e')}</defs>
+    {wrap('pulse', (
+      <>
+        <path d="M14 8h20v8a10 10 0 0 1-20 0z" fill="url(#trp-2d)" />
+        <path d="M14 12H8a4 4 0 0 0 4 6M34 12h6a4 4 0 0 1-4 6" stroke="url(#trp-2d)" strokeWidth={2.5} fill="none" />
+        <rect x={18} y={28} width={12} height={6} fill="url(#trp-2d)" />
+        <rect x={14} y={34} width={20} height={4} rx={1} fill="url(#trp-2d)" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Check2DIconLg: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('chk-2d', '#77c797', '#3aa06b')}</defs>
+    {wrap('pulse', (
+      <>
+        <circle cx={24} cy={24} r={18} fill="url(#chk-2d)" />
+        <path d="M14 24l7 7 14-14" stroke="#fff" strokeWidth={4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Phrase2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('ph-2d', '#c3aef0', '#8a6fc9')}</defs>
+    {wrap('pulse', (
+      <>
+        <path d="M6 12a3 3 0 0 1 3-3h30a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H18l-8 6v-6a3 3 0 0 1-4-3z" fill="url(#ph-2d)" />
+        <path d="M12 17h6M12 22h14M12 27h10" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Calendar2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('cal-2d', '#8fd0ea', '#3a9fd4')}</defs>
+    {wrap('float', (
+      <>
+        <rect x={8} y={10} width={32} height={30} rx={3} fill="url(#cal-2d)" />
+        <rect x={8} y={10} width={32} height={8} fill="#fff" />
+        <path d="M16 6v8M32 6v8" stroke="#3a9fd4" strokeWidth={3} strokeLinecap="round" />
+        <circle cx={18} cy={26} r={2} fill="#fff" />
+        <circle cx={24} cy={26} r={2} fill="#fff" />
+        <circle cx={30} cy={26} r={2} fill="#fff" />
+        <circle cx={18} cy={32} r={2} fill="#fff" />
+        <circle cx={24} cy={32} r={2} fill="#fff" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Chart2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('ch-2d', '#c3aef0', '#8a6fc9')}</defs>
+    {wrap('pulse', (
+      <>
+        <rect x={8} y={26} width={6} height={14} rx={1.5} fill="url(#ch-2d)" />
+        <rect x={20} y={18} width={6} height={22} rx={1.5} fill="url(#ch-2d)" />
+        <rect x={32} y={10} width={6} height={30} rx={1.5} fill="url(#ch-2d)" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const User2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('us-2d', '#8fd0ea', '#3a9fd4')}</defs>
+    {wrap('float', (
+      <>
+        <circle cx={24} cy={17} r={7} fill="url(#us-2d)" />
+        <path d="M11 39a13 13 0 0 1 26 0z" fill="url(#us-2d)" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Walk2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('wk-2d', '#77c797', '#3aa06b')}</defs>
+    {wrap('float', (
+      <>
+        <circle cx={22} cy={10} r={4} fill="url(#wk-2d)" />
+        <path d="M22 18l-2 10 6 4 2 8" stroke="url(#wk-2d)" strokeWidth={3} fill="none" strokeLinecap="round" />
+        <path d="M20 18l8 4 4-2" stroke="url(#wk-2d)" strokeWidth={3} fill="none" strokeLinecap="round" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const Dad2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('dd-2d', '#8fd0ea', '#3a9fd4')}</defs>
+    {wrap('float', (
+      <>
+        <circle cx={24} cy={17} r={7} fill="url(#dd-2d)" />
+        <path d="M11 39a13 13 0 0 1 26 0z" fill="url(#dd-2d)" />
+        <path d="M18 12h12" stroke="#3a9fd4" strokeWidth={2.5} strokeLinecap="round" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+// === Event icons (для IconRenderer event types) ===
+
+export const CommunicationEvent2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('ce-2d', '#c3aef0', '#8a6fc9')}</defs>
+    {wrap('pulse', (
+      <>
+        <path d="M6 12a3 3 0 0 1 3-3h30a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H18l-8 6v-6a3 3 0 0 1-4-3z" fill="url(#ce-2d)" />
+        <circle cx={16} cy={20} r={2} fill="#fff" />
+        <circle cx={24} cy={20} r={2} fill="#fff" />
+        <circle cx={32} cy={20} r={2} fill="#fff" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const VoiceEvent2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('ve-2d', '#7fd1c9', '#12807a')}</defs>
+    {wrap('pulse', (
+      <>
+        <rect x={19} y={9} width={10} height={20} rx={5} fill="url(#ve-2d)" />
+        <path d="M14 24a10 10 0 0 0 20 0" stroke="#12807a" strokeWidth={3} fill="none" strokeLinecap="round" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const AACEvent2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('ae-2d', '#7fd1c9', '#12807a')}</defs>
+    {wrap('pulse', (
+      <>
+        <rect x={6} y={10} width={16} height={12} rx={2} fill="url(#ae-2d)" />
+        <rect x={26} y={10} width={16} height={12} rx={2} fill="url(#ae-2d)" />
+        <rect x={6} y={26} width={16} height={12} rx={2} fill="url(#ae-2d)" />
+        <rect x={26} y={26} width={16} height={12} rx={2} fill="url(#ae-2d)" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+export const QuestionEvent2DIcon: React.FC<Child2DProps> = ({ size = 48, animated = true, className, ariaLabel }) => (
+  <SvgShell size={size} ariaLabel={ariaLabel} className={className}>
+    <defs>{defGrad('qe-2d', '#f7c948', '#d9a24e')}</defs>
+    {wrap('pulse', (
+      <>
+        <circle cx={24} cy={24} r={18} fill="url(#qe-2d)" />
+        <path d="M18 18a6 6 0 0 1 12 0c0 4-6 4-6 8" stroke="#fff" strokeWidth={3} fill="none" strokeLinecap="round" />
+        <circle cx={24} cy={32} r={2} fill="#fff" />
+      </>
+    ), size, animated)}
+  </SvgShell>
+);
+
+// === Mascot: альтернативный динозаврик (для PhraseBuilder/Choice) ===
+
+export const DinoMascot2D: React.FC<{ size?: number; animated?: boolean }> = ({
+  size = 80,
+  animated = true,
+}) => (
+  <svg
+    viewBox="0 0 100 100"
+    width={size}
+    height={size}
+    style={{ overflow: 'visible' }}
+    aria-label="Динозаврик"
+  >
+    <defs>{defGrad('dng', '#8fd8d0', '#1ba39a')}</defs>
+    <g className={animated ? 'qoldau-icon-float' : ''}>
+      <ellipse cx="50" cy="58" rx="28" ry="28" fill="url(#dng)" />
+      <ellipse cx="40" cy="48" rx="9" ry="7" fill="#fff" opacity={0.3} />
+      <path d="M22 50l-6-3 6-3M78 50l6-3-6-3" fill="#0d5c5c" />
+      <path d="M30 70l-4 6M70 70l4 6" stroke="#0d5c5c" strokeWidth={3} strokeLinecap="round" />
+      <circle cx="42" cy="55" r="3.5" fill="#173039" />
+      <circle cx="58" cy="55" r="3.5" fill="#173039" />
+      <circle cx="43" cy="54" r="1.2" fill="#fff" />
+      <circle cx="59" cy="54" r="1.2" fill="#fff" />
+      <path d="M44 66 Q50 70 56 66" stroke="#0d5c5c" strokeWidth={2.5} fill="none" strokeLinecap="round" />
+    </g>
+  </svg>
+);
+
+// === Реестр builtinKey → 2D компонент ===
+// (заменяет SOFT_FIRST_REGISTRY)
+
+export const CHILD_2D_REGISTRY: Record<string, React.FC<{ size?: number; animated?: boolean; className?: string; ariaLabel?: string }>> = {
+  // actions
+  Water: Water2DIcon,
+  Food: Food2DIcon,
+  Toilet: Toilet2DIcon,
+  Help: Help2DIcon,
+  Pause: Pause2DIcon,
+  Favorites: Fav2DIcon,
+  Microphone: Mic2DIcon,
+  Sleep: Tired2DIcon,
+  Call: Call2DIcon,
+  Star: Star2DIcon,
+  Now: Now2DIcon,
+  Next: Next2DIcon,
+  Study: Study2DIcon,
+  No: No2DIcon,
+  Home: Home2DIcon,
+  Yes: Yes2DIcon,
+  Hug: Hug2DIcon,
+  Play: Play2DIcon,
+  Trip: Trip2DIcon,
+  Music: Music2DIcon,
+  Headphones: Headphones2DIcon,
+  SOS: SOS2DIcon,
+  Message: Message2DIcon,
+  Calm: Calm2DIcon,
+  Animals: Animals2DIcon,
+  Cars: Car2DIcon,
+  Cartoon: Cartoon2DIcon,
+  Speak: Speak2DIcon,
+  Video: CalmVid2DIcon,
+  Breath: Breath2DIcon,
+  Tablet: Tablet2DIcon,
+  Sparkle: Sparkle2DIcon,
+  Trophy: Trophy2DIcon,
+  Check: Check2DIconLg,
+  Phrase: Phrase2DIcon,
+  Calendar: Calendar2DIcon,
+  Chart: Chart2DIcon,
+  User: User2DIcon,
+  Walk: Walk2DIcon,
+  Mom: Mom2DIcon,
+  Dad: Dad2DIcon,
+  Tutor: Tutor2DIcon,
+  Sad: Hurt2DIcon,
+  Moon: Dark2DIcon,
+  // events
+  CommunicationEvent: CommunicationEvent2DIcon,
+  VoiceEvent: VoiceEvent2DIcon,
+  AACEvent: AACEvent2DIcon,
+  QuestionEvent: QuestionEvent2DIcon,
+  // mascots
+  CloudMascot: ChildCloudMascot,
+  DinoMascot: DinoMascot2D,
 };

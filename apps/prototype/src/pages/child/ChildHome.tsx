@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { ChildTopBar } from '@/components/layout/ChildTopBar';
+import { ChildOnboarding } from '@/components/child/ChildOnboarding';
 import {
   Water2DIcon,
   Toilet2DIcon,
@@ -77,6 +78,7 @@ export const ChildHome: React.FC = () => {
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)]">
       <ChildTopBar />
+      <ChildOnboarding />
 
       {/* Hello card */}
       <div

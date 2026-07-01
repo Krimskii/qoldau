@@ -1,48 +1,8 @@
 import React from 'react';
 import type { QoldauAsset, AssetColor } from '@/types/assets';
-import {
-  WaterIcon,
-  FoodIcon,
-  ToiletIcon,
-  HelpIcon,
-  PauseIcon,
-  HomeIcon,
-  SadIcon,
-  SleepIcon,
-  SparkleIcon,
-  MoonIcon,
-  NoIcon,
-  YesIcon,
-  PlayIcon,
-  MusicIcon,
-  HeadphonesIcon,
-  WalkIcon,
-  StudyIcon,
-  MomIcon,
-  DadIcon,
-  TutorIcon,
-  HugIcon,
-  BreathIcon,
-  CartoonIcon,
-  AnimalsIcon,
-  CarsIcon,
-  TabletIcon,
-  StarIcon,
-  TrophyIcon,
-  CheckIcon,
-  SOSIcon,
-  MessageIcon,
-  PhraseIcon,
-  SpeakIcon,
-  CalendarIcon,
-  ChartIcon,
-  UserIcon,
-  ArrowLeftIcon,
-  PlusIcon,
-  type IconProps,
-} from '@/components/icons';
+import type { IconProps } from '@/components/icons';
 import { getBuiltinByKey } from '@/data/assetRegistry';
-import { SOFT_FIRST_REGISTRY } from '@/components/icons/soft3d';
+import { CHILD_2D_REGISTRY } from '@/components/icons/child2d';
 
 interface IconRendererProps {
   asset?: QoldauAsset;
@@ -52,6 +12,8 @@ interface IconRendererProps {
   className?: string;
   /** Если true — asset.dataUrl/imgUrl заполняет контейнер (object-cover). */
   rounded?: boolean;
+  /** Отключить CSS-анимации (для списков где много иконок). */
+  animated?: boolean;
 }
 
 const COLOR_TEXT: Record<AssetColor, string> = {
@@ -64,62 +26,21 @@ const COLOR_TEXT: Record<AssetColor, string> = {
 };
 
 /**
- * Резолвит builtinKey → React-компонент из icons/index.tsx.
- * Возвращает undefined, если ключ не найден.
+ * Резолвит builtinKey → React-компонент из 2D-набора (child2d.tsx).
+ * Это единая точка входа для всех child-иконок в приложении.
  */
-function resolveBuiltinComponent(key?: string): React.FC<IconProps> | undefined {
+function resolveBuiltinComponent(
+  key?: string,
+): React.FC<{ size?: number; animated?: boolean; className?: string; ariaLabel?: string }> | undefined {
   if (!key) return undefined;
-  // Soft-first: если есть soft 3D версия — рендерим её.
-  const soft = SOFT_FIRST_REGISTRY[key];
-  if (soft) return soft;
-  const map: Record<string, React.FC<IconProps>> = {
-    Water: WaterIcon,
-    Food: FoodIcon,
-    Toilet: ToiletIcon,
-    Help: HelpIcon,
-    Pause: PauseIcon,
-    Home: HomeIcon,
-    Sad: SadIcon,
-    Sleep: SleepIcon,
-    Sparkle: SparkleIcon,
-    Moon: MoonIcon,
-    No: NoIcon,
-    Yes: YesIcon,
-    Play: PlayIcon,
-    Music: MusicIcon,
-    Headphones: HeadphonesIcon,
-    Walk: WalkIcon,
-    Study: StudyIcon,
-    Mom: MomIcon,
-    Dad: DadIcon,
-    Tutor: TutorIcon,
-    Hug: HugIcon,
-    Breath: BreathIcon,
-    Cartoon: CartoonIcon,
-    Animals: AnimalsIcon,
-    Cars: CarsIcon,
-    Tablet: TabletIcon,
-    Star: StarIcon,
-    Trophy: TrophyIcon,
-    Check: CheckIcon,
-    SOS: SOSIcon,
-    Message: MessageIcon,
-    Phrase: PhraseIcon,
-    Speak: SpeakIcon,
-    Calendar: CalendarIcon,
-    Chart: ChartIcon,
-    User: UserIcon,
-    ArrowLeft: ArrowLeftIcon,
-    Plus: PlusIcon,
-  };
-  return map[key];
+  return CHILD_2D_REGISTRY[key];
 }
 
 /**
- * IconRenderer — единый рендер ассета.
+ * IconRenderer — единый рендер ассета (v0.3.15).
  *
  * Поддерживает:
- * - builtin_svg (через builtinKey → компонент).
+ * - builtin_svg (через 2D child2d registry).
  * - emoji.
  * - uploaded_image / uploaded_photo / media_cover (через dataUrl).
  * - Fallback (если ничего не подходит).
@@ -130,6 +51,7 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
   size = 48,
   className = '',
   rounded = true,
+  animated = true,
 }) => {
   // 1. Uploaded image / photo / media cover — через dataUrl
   if (asset?.dataUrl) {
@@ -173,20 +95,23 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
     );
   }
 
-  // 4. Built-in SVG
+  // 4. Built-in 2D icon
   if (asset?.builtinKey) {
     const Comp = resolveBuiltinComponent(asset.builtinKey);
     if (Comp) {
-      const colorClass = asset.color ? COLOR_TEXT[asset.color] : '';
       return (
-        <Comp size={size} className={`${colorClass} ${className}`} aria-label={asset.label} />
+        <Comp
+          size={size}
+          animated={animated}
+          className={className}
+          ariaLabel={asset.label}
+        />
       );
     }
 
     // Резолвим через registry (для safety, если компонент не зарегистрирован)
     const builtin = getBuiltinByKey(asset.builtinKey);
     if (builtin) {
-      // Всё равно пытаемся через тот же map
       return (
         <span
           className={`inline-flex items-center justify-center ${className}`}
@@ -218,20 +143,22 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
 
 /**
  * Helper для получения только builtin-иконки (без asset обёртки).
- * Удобно когда хочется быстро использовать built-in без assetId.
  */
 export const BuiltinIcon: React.FC<{
   builtinKey?: string;
   color?: AssetColor;
   size?: number;
   className?: string;
-}> = ({ builtinKey, color, size = 48, className = '' }) => {
+  animated?: boolean;
+}> = ({ builtinKey, color, size = 48, className = '', animated = true }) => {
   const Comp = resolveBuiltinComponent(builtinKey);
   if (!Comp) return null;
   return (
     <Comp
       size={size}
+      animated={animated}
       className={`${color ? COLOR_TEXT[color] : ''} ${className}`}
+      ariaLabel={builtinKey}
     />
   );
 };

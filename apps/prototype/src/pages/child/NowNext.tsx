@@ -1,26 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock } from 'lucide-react';
+import { ChildTopBar } from '@/components/layout/ChildTopBar';
+import { BackArrowIcon, Now2DIcon, Cartoon2DIcon, Music2DIcon } from '@/components/icons/child2d';
 
 interface ScheduleItem {
   id: string;
   label: string;
   text: string;
-  emoji: string;
-  bg: string;
+  Icon: React.FC<{ size?: number; animated?: boolean }>;
+  gradient: string;
+  textColor: string;
 }
 
 const SCHEDULE: ScheduleItem[] = [
-  { id: '1', label: 'Сейчас', text: 'Ужин', emoji: '🍲', bg: 'bg-gradient-to-br from-[#FFEDEA] to-[#FFD9D3]' },
-  { id: '2', label: 'Потом', text: 'Мультфильм', emoji: '📺', bg: 'bg-gradient-to-br from-[#F0EBFF] to-[#E0D6F7]' },
-  { id: '3', label: 'После', text: 'Спокойная музыка', emoji: '🎵', bg: 'bg-gradient-to-br from-[#FFF3CE] to-[#F7E5A3]' },
+  { id: '1', label: 'Сейчас', text: 'Ужин',          Icon: Now2DIcon,     gradient: 'linear-gradient(135deg, #FFEDEA 0%, #FFD9D3 100%)', textColor: 'text-[#a24545]' },
+  { id: '2', label: 'Потом',  text: 'Мультфильм',    Icon: Cartoon2DIcon, gradient: 'linear-gradient(135deg, #F0EBFF 0%, #E0D6F7 100%)', textColor: 'text-[#5b47a0]' },
+  { id: '3', label: 'После',  text: 'Спокойная музыка', Icon: Music2DIcon, gradient: 'linear-gradient(135deg, #FFF6DF 0%, #FFEAB8 100%)', textColor: 'text-[#8a5d17]' },
 ];
 
-const TOTAL_DURATION = 60; // минут в таймере
+const TOTAL_DURATION = 60;
 
+/**
+ * NowNext — расписание + таймер (v0.3.15).
+ *
+ * Структура:
+ * - ChildTopBar без settings.
+ * - 3 карточки в сетке 1fr auto 1fr auto 1fr (со стрелками).
+ * - Таймер с progress bar.
+ * - "Готово!" → /child/calm.
+ */
 export const NowNext: React.FC = () => {
   const navigate = useNavigate();
-  const [remaining, setRemaining] = useState(TOTAL_DURATION * 60); // секунды
+  const [remaining, setRemaining] = useState(TOTAL_DURATION * 60);
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
@@ -31,66 +42,56 @@ export const NowNext: React.FC = () => {
     return () => clearInterval(id);
   }, [running]);
 
-  const toggle = () => {
-    setRunning((r) => !r);
-  };
+  const toggle = () => setRunning((r) => !r);
 
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
   const progressPct = ((TOTAL_DURATION * 60 - remaining) / (TOTAL_DURATION * 60)) * 100;
 
   return (
-    <div className="flex flex-col gap-4 min-h-[calc(100vh-80px)]">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col min-h-[calc(100vh-80px)]">
+      <ChildTopBar showSettings={false} />
+
+      <div className="flex items-center gap-2.5 px-5 pt-1 pb-0.5">
         <button
           onClick={() => navigate('/child/home')}
-          className="w-10 h-10 rounded-2xl bg-white border border-[#dce9f4] flex items-center justify-center hover:bg-bg transition-colors"
+          className="w-[42px] h-[42px] rounded-[14px] bg-white border-0 shadow-card flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
-          <span className="text-2xl text-[#53677e]">‹</span>
+          <BackArrowIcon size={22} />
         </button>
-        <h2 className="text-lg font-black text-[#143259] flex items-center gap-2">
-          <Clock className="w-5 h-5" />
-          Таймер
-        </h2>
-        <div className="w-10" />
+        <div className="text-xl font-black text-ink">Таймер</div>
       </div>
 
-      {/* Расписание — 2 карточки с стрелкой */}
-      <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-stretch">
+      <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] gap-1.5 items-stretch px-5 pt-4">
         {SCHEDULE.map((item, i) => (
           <React.Fragment key={item.id}>
             <div
-              className={`${item.bg} border-2 border-line rounded-2xl p-4 flex flex-col items-center justify-center gap-2 min-h-[140px]`}
+              className="rounded-2xl p-3 flex flex-col items-center justify-center gap-2 min-h-[140px] border-0 shadow-card"
+              style={{ background: item.gradient }}
             >
               <span className="text-xs font-bold text-muted">{item.label}</span>
-              <span className="text-6xl" aria-hidden="true">
-                {item.emoji}
-              </span>
-              <span className="text-base font-black text-ink">{item.text}</span>
+              <div className="w-14 h-14 rounded-3xl bg-white flex items-center justify-center">
+                <item.Icon size={42} />
+              </div>
+              <span className={`text-sm font-black text-center ${item.textColor}`}>{item.text}</span>
             </div>
             {i < SCHEDULE.length - 1 && (
               <div className="flex items-center justify-center px-1">
-                <span
-                  className="text-3xl font-black text-teal"
-                  aria-hidden="true"
-                >
-                  →
-                </span>
+                <span className="text-2xl font-black text-teal" aria-hidden="true">→</span>
               </div>
             )}
           </React.Fragment>
         ))}
       </div>
 
-      {/* Таймер */}
-      <div className="bg-gradient-to-br from-[#F0EBFF] to-[#E0D6F7] border-2 border-purple/20 rounded-3xl p-6 text-center">
-        <p className="text-sm font-bold text-purple mb-3 flex items-center justify-center gap-2">
-          <Clock className="w-4 h-4" />
-          Сейчас идёт
-        </p>
-        <div className="text-5xl font-black text-purple-dark tabular-nums mb-4">
+      {/* Timer card */}
+      <div
+        className="mx-5 mt-5 rounded-3xl p-6 text-center border-0 shadow-card"
+        style={{ background: 'linear-gradient(135deg, #F0EBFF 0%, #E0D6F7 100%)' }}
+      >
+        <p className="text-sm font-bold text-purple mb-3">Сейчас идёт</p>
+        <div className="text-5xl font-black text-purple tabular-nums mb-4">
           {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
         </div>
         <div className="h-2 bg-white rounded-full overflow-hidden mb-4">
@@ -104,24 +105,27 @@ export const NowNext: React.FC = () => {
           className={`px-8 py-3 rounded-2xl font-black text-base transition-all ${
             running
               ? 'bg-white text-purple border-2 border-purple'
-              : 'bg-gradient-to-br from-teal to-teal-dark text-white shadow-card'
+              : 'text-white shadow-card'
           }`}
+          style={!running ? { background: 'linear-gradient(135deg, #1ba39a 0%, #12807a 100%)' } : {}}
         >
           {running ? 'Пауза' : remaining === 0 ? 'Готово!' : 'Запустить таймер'}
         </button>
       </div>
 
-      {/* Большая кнопка готовности */}
       <button
         onClick={() => navigate('/child/calm')}
-        className="mt-auto w-full py-5 bg-gradient-to-br from-teal to-teal-dark text-white font-black rounded-2xl text-lg shadow-card flex items-center justify-center gap-2"
+        className="mx-5 mt-auto w-[calc(100%-2.5rem)] py-5 text-white font-black rounded-2xl text-lg shadow-card flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+        style={{ background: 'linear-gradient(135deg, #1ba39a 0%, #12807a 100%)' }}
       >
         Готово! <span className="text-2xl" aria-hidden="true">✓</span>
       </button>
 
-      <p className="text-center text-sm text-muted">
+      <p className="px-5 mt-2 text-center text-sm text-muted">
         Когда время выйдет — взрослый нажмёт «Готово», и мы перейдём в спокойный режим.
       </p>
+
+      <div style={{ height: 12 }} />
     </div>
   );
 };

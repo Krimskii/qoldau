@@ -4,12 +4,36 @@ import { useEventStore } from '@/store/useEventStore';
 import { useAssetStore } from '@/store/useAssetStore';
 import { useRoleStore } from '@/store/useRoleStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { IconRenderer } from '@/components/assets/IconRenderer';
 import { AssetPicker } from '@/components/assets/AssetPicker';
 import { QoldauCard } from '@/components/ui/QoldauCard';
+import { ChildTopBar } from '@/components/layout/ChildTopBar';
+import {
+  BackArrowIcon,
+  Cartoon2DIcon,
+  Music2DIcon,
+  Animals2DIcon,
+  Car2DIcon,
+  CalmVid2DIcon,
+  CHILD_FAMILY_STYLES,
+  type ChildCardFamily,
+} from '@/components/icons/child2d';
 import { Settings } from 'lucide-react';
 import type { QoldauAsset, AACCardConfig } from '@/types/assets';
 
+const FAVORITE_ICON_MAP: Record<string, { Icon: React.FC<{ size?: number; animated?: boolean }>; family: ChildCardFamily }> = {
+  cartoon:    { Icon: Cartoon2DIcon,   family: 'fav'  },
+  songs:      { Icon: Music2DIcon,     family: 'fav'  },
+  animals:    { Icon: Animals2DIcon,   family: 'do'   },
+  cars:       { Icon: Car2DIcon,       family: 'need' },
+  'calm-video': { Icon: CalmVid2DIcon, family: 'fav'  },
+};
+
+/**
+ * ChildFavorites — любимые карточки ребёнка (v0.3.15).
+ *
+ * Берёт media_request + isFavorite из cardConfigs. Сетка 3×N с 2D иконками.
+ * Edit mode через Settings для parent/demo.
+ */
 export const ChildFavorites: React.FC = () => {
   const navigate = useNavigate();
   const { addEvent } = useEventStore();
@@ -21,7 +45,6 @@ export const ChildFavorites: React.FC = () => {
   const [selected, setSelected] = useState<string | null>(null);
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
 
-  // В demo — только media_request карточки от текущего ребёнка.
   const favoriteCards: AACCardConfig[] = cardConfigs
     .filter(
       (c) =>
@@ -37,9 +60,7 @@ export const ChildFavorites: React.FC = () => {
     if (editingCardId === config.id) return;
     const asset = getAsset(config);
     if (!asset) return;
-
     setSelected(config.id);
-
     addEvent({
       childId: DEMO_PRIMARY_CHILD.id,
       type: 'media_request',
@@ -56,60 +77,52 @@ export const ChildFavorites: React.FC = () => {
         source: 'child_favorite',
       },
     });
-
     setTimeout(() => setSelected(null), 1500);
   };
 
   const isEditable = currentRole !== 'child';
 
   return (
-    <div className="flex flex-col gap-4 relative">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col min-h-[calc(100vh-80px)]">
+      <ChildTopBar showSettings={false} />
+
+      <div className="flex items-center gap-2.5 px-5 pt-1 pb-0.5">
         <button
           onClick={() => navigate('/child/home')}
-          className="text-3xl font-black text-[#203a60]"
+          className="w-[42px] h-[42px] rounded-[14px] bg-white border-0 shadow-card flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
-          ‹
+          <BackArrowIcon size={22} />
         </button>
-        <h2 className="text-lg font-black text-[#143259]">Любимые</h2>
-        {isEditable ? (
+        <div className="text-xl font-black text-ink">Любимые</div>
+        {isEditable && (
           <button
-            onClick={() =>
-              setEditingCardId(editingCardId ? null : favoriteCards[0]?.id ?? null)
-            }
-            className={`w-10 h-10 rounded-2xl border flex items-center justify-center transition-colors ${
-              editingCardId
-                ? 'bg-teal-soft border-teal/40 text-teal-dark'
-                : 'bg-white border-[#dce9f4] text-[#53677e] hover:bg-bg'
+            onClick={() => setEditingCardId(editingCardId ? null : favoriteCards[0]?.id ?? null)}
+            className={`ml-auto w-[42px] h-[42px] rounded-[14px] border-0 flex items-center justify-center transition-colors ${
+              editingCardId ? 'bg-teal-soft text-teal-dark' : 'bg-white text-ink-soft shadow-card hover:bg-bg'
             }`}
             aria-label="Настроить любимые"
             aria-pressed={!!editingCardId}
           >
             <Settings className="w-5 h-5" />
           </button>
-        ) : (
-          <div className="w-8" />
         )}
       </div>
 
-      {/* Edit mode banner — QoldauCard tinted-yellow */}
       {editingCardId && (
-        <QoldauCard variant="tinted-yellow" padding="sm">
+        <QoldauCard variant="tinted-yellow" padding="sm" className="mx-5 mt-3">
           <p className="text-sm text-ink-2">
             Нажмите на карточку, чтобы изменить её иконку.
           </p>
         </QoldauCard>
       )}
 
-      {/* Favorites grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {favoriteCards.map((config) => {
-          const asset = getAsset(config);
-          if (!asset) return null;
-
-          const palette = asset.color ?? 'yellow';
+      <div className="grid grid-cols-3 gap-2.5 px-5 pt-4">
+        {favoriteCards.map((config, idx) => {
+          const iconData = FAVORITE_ICON_MAP[config.id];
+          if (!iconData) return null;
+          const { Icon, family } = iconData;
+          const familyStyle = CHILD_FAMILY_STYLES[family];
           const isSelected = selected === config.id;
           const isEditing = editingCardId === config.id;
 
@@ -123,43 +136,28 @@ export const ChildFavorites: React.FC = () => {
                   handleSelect(config);
                 }
               }}
-              className={`relative min-h-[120px] rounded-2xl border-2 overflow-hidden transition-transform duration-200 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 flex flex-col items-center justify-center gap-2 p-4 ${
-                palette === 'yellow'
-                  ? 'bg-[#FFF6DF] border-[#f0e2a7]'
-                  : palette === 'coral'
-                    ? 'bg-[#FFEAEA] border-[#ffd9d3]'
-                    : palette === 'blue'
-                      ? 'bg-[#EAF5FF] border-[#cce6f7]'
-                      : palette === 'purple'
-                        ? 'bg-[#F1EDFF] border-[#e0d6f7]'
-                        : palette === 'green'
-                          ? 'bg-[#EAF8F0] border-[#ccebd9]'
-                          : 'bg-[#DDF5F0] border-[#bfecdf]'
-              } ${isSelected ? 'scale-[0.95] opacity-80' : ''} ${
-                isEditing ? 'ring-2 ring-offset-2 ring-teal/50' : ''
-              }`}
+              className={`qoldau-icon-pop flex flex-col items-center gap-2.5 px-2 py-4 bg-white rounded-3xl shadow-card cursor-pointer min-h-[120px] transition-all duration-200 hover:-translate-y-1 hover:shadow-card-lg active:scale-[0.94] ${
+                isSelected ? 'scale-95 opacity-80' : ''
+              } ${isEditing ? 'ring-2 ring-teal/50' : ''}`}
+              style={{ animationDelay: `${idx * 50}ms` }}
               aria-label={`${config.label}${editingCardId ? ' (нажмите чтобы изменить иконку)' : ''}`}
             >
-              <IconRenderer asset={asset} size={56} />
-              <span className="text-base font-black text-ink leading-tight text-center">
+              <div className={`w-14 h-14 rounded-[18px] ${familyStyle.icoBg} flex items-center justify-center`}>
+                <Icon size={46} />
+              </div>
+              <div className={`text-sm font-black text-center leading-tight ${familyStyle.lbl}`}>
                 {config.label}
-              </span>
-              {isEditing && (
-                <span className="absolute top-1 right-1 text-[10px] font-black uppercase text-teal-dark">
-                  edit
-                </span>
-              )}
+              </div>
             </button>
           );
         })}
         {favoriteCards.length === 0 && (
-          <p className="col-span-2 text-center text-sm text-muted py-6">
+          <p className="col-span-3 text-center text-sm text-muted py-6">
             Нет любимых карточек.
           </p>
         )}
       </div>
 
-      {/* Asset picker для edit mode */}
       {editingCardId && (
         <AssetPicker
           isOpen={!!editingCardId}
@@ -174,18 +172,13 @@ export const ChildFavorites: React.FC = () => {
         />
       )}
 
-      {/* Success feedback — QoldauCard tinted-teal */}
       {selected && (
-        <QoldauCard
-          variant="tinted-teal"
-          padding="md"
-          className="fixed bottom-24 left-4 right-4 z-40 text-center animate-fade-in shadow-card"
-        >
-          <p className="font-black text-ink">✓ Мама увидит запрос</p>
-          <p className="text-sm font-normal text-ink-2 opacity-90 mt-1">
-            Событие добавлено в Event Timeline
-          </p>
-        </QoldauCard>
+        <div className="fixed bottom-24 inset-x-4 z-50 mx-auto max-w-sm qoldau-success-pop">
+          <QoldauCard variant="tinted-teal" padding="md" className="text-center">
+            <p className="font-black text-ink">✓ Мама увидит запрос</p>
+            <p className="text-sm text-ink-2 opacity-90 mt-1">Событие добавлено в Event Timeline</p>
+          </QoldauCard>
+        </div>
       )}
     </div>
   );

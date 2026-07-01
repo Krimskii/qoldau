@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.15] — 2026-07-02 (MVP: 2D-only icons + Phone frame + Onboarding)
+
+### Changed — Icon system unified to 2D
+- **Все иконки** теперь inline 2D SVG с gradient + анимациями (float / sway / pulse / blink / heartbeat / cloud-float / pop / wiggle / rec).
+- **`src/components/icons/child2d.tsx`** — расширен: 50+ иконок покрывают ВСЕ `builtinKey` (Water, Food, Toilet, Help, Pause, Favorites, Microphone, Sleep, Call, Star, Now, Next, Study, No, Home, Yes, Hug, Play, Trip, Music, Headphones, SOS, Message, Calm, Animals, Cars, Cartoon, Speak, Video, Breath, Tablet, Sparkle, Trophy, Check, Phrase, Calendar, Chart, User, Walk, Mom, Dad, Tutor, Sad, Moon, Tap, Text, Eye, CommunicationEvent, VoiceEvent, AACEvent, QuestionEvent, CloudMascot, DinoMascot).
+- **`CHILD_2D_REGISTRY`** — единая точка входа `builtinKey → 2D-компонент`.
+- **`src/components/assets/IconRenderer.tsx`** — больше НЕ использует `SOFT_FIRST_REGISTRY` (soft 3D PNG). Soft-иконки оставлены в `soft3d.tsx` для обратной совместимости, но `IconRenderer` всегда рендерит 2D.
+- **`src/components/icons/flat.tsx`** — line SVG (WaterIcon, FoodIcon, etc) больше не используются IconRenderer'ом (для нового кода — `child2d.tsx`).
+- Public assets `apps/prototype/public/assets/icons/{actions,events,mascots}/*.png` сохранены (30 файлов), но больше не участвуют в рендере.
+
+### Added — Phone frame + Onboarding
+- **`src/components/layout/PhoneFrame.tsx`** — phone-like wrapper для desktop preview (390×844, dark border 8px #10343a, rounded 44px, shadow-lg). На mobile рендерит children напрямую.
+- **`src/components/layout/AppShell.tsx`** — child роль обёрнута в PhoneFrame на desktop. Parent/Tutor/Specialist — обычные max-width панели.
+- **`src/components/layout/ChildTopBar.tsx`** — заголовок child роли: avatar с первой буквой имени ребёнка (gradient teal-300→teal-500, 46×46), brand (Qoldau AI + name), bell (с notification dot), settings icon.
+- **`src/components/child/ChildOnboarding.tsx`** — 2-шаговый welcome overlay при первом визите `/child/home`. Показывает monster-mascot + объясняет 6 кнопок. Сохраняет флаг в localStorage (`qoldau-child-onboarded-v1`).
+
+### Migrated — все child pages на 2D + новый стиль
+- **`ChildHome`** — avatar topbar, hello card с ChildMonsterMascot, call-mom CTA с heartbeat-сердцем, 6 cards 3×2 grid со stagger pop, variants button с puzzle-иконкой, onboarding overlay.
+- **`ChildCards`** — back+title header, 14 AAC в 3-col grid (5 рядов: 3+3+3+3+2) со stagger pop.
+- **`ChildSpeak`** — 150px teal mic с pulse-ring при recording, hint, heard area 32px teal, 3 word buttons.
+- **`CalmMode`** — gradient bg, CloudMascot 124px, «Можно отдохнуть» 26px, timer card, 6 calm options 2×3 grid, footer «Я рядом 💚».
+- **`ChildProgress`** — celebratory hero, 4 top cards в 3-col grid, achievements 2×2, supportive footer.
+- **`ChildFavorites`** — 3-col grid media cards со stagger pop.
+- **`ChildChoice`** — 2×2 крупных карточки с 2D иконками в tinted icon containers.
+- **`NowNext`** — расписание 1fr auto 1fr auto 1fr с 2D иконками, timer card, teal Готово! кнопка.
+- **`PhraseBuilderPage`** — back+clear, phrase strip с DinoMascot2D и chips, teal «Сказать фразу» button, 3-col word grid, success overlay.
+- **`ChildInterfaceGuide`** — 8 принципов в 2D-иконках (Tap/Text/Eye/Mic/Fav/Phrase/Calm/SOS), методики pills, DinoMascot2D mascot.
+
+### Verified
+- `npm run build` passes — 1670 modules, 0 errors.
+- `npx tsc --noEmit` — 0 errors.
+- Mobile-first layout сохранён.
+- Routes не сломаны (`/child/*`).
+- Phone frame виден на desktop (md+), на mobile — full-width.
+- `prefers-reduced-motion: reduce` отключает анимации глобально.
+
+### Documentation
+- Все изменения соответствуют `docs/TECH_DECISIONS.md` § Qoldau Child UI Principles + Hybrid Icon System.
+
+---
+
 ## [0.3.14] — 2026-07-02 (Parent / Tutor / Specialist UI consolidation)
 
 ### Changed

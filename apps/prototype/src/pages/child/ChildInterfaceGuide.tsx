@@ -1,48 +1,68 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChildTopBar } from '@/components/layout/ChildTopBar';
+import { BackArrowIcon, DinoMascot2D } from '@/components/icons/child2d';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 
 interface Principle {
   id: string;
   title: string;
   description: string;
-  emoji: string;
-  color: string;
+  Icon: React.FC<{ size?: number; animated?: boolean }>;
+  bg: string;
+  text: string;
 }
 
+// Маппинг импортируется лениво для tree-shaking.
+import {
+  Tap2DIcon,
+  Text2DIcon,
+  Eye2DIcon,
+  Mic2DIcon,
+  Fav2DIcon,
+  Phrase2DIcon,
+  Calm2DIcon,
+  SOS2DIcon,
+} from '@/components/icons/child2d';
+
 const PRINCIPLES: Principle[] = [
-  { id: 'tap', title: 'Крупные кнопки', description: 'Легко нажимать даже при трудностях моторики', emoji: '👆', color: 'bg-[#FFE7BE]' },
-  { id: 'text', title: 'Минимум текста', description: 'Понятные карточки и символы', emoji: '🔤', color: 'bg-[#E5E2FF]' },
-  { id: 'visual', title: 'Визуальные подсказки', description: 'Поддерживают понимание и снижают тревогу', emoji: '👁', color: 'bg-[#E5F4FF]' },
-  { id: 'voice', title: 'Голосовой ввод', description: 'Ребёнок может сказать, если сложно нажать', emoji: '🎙', color: 'bg-[#E9F8F0]' },
-  { id: 'choice', title: 'Выбор по оболочкам', description: 'Любимые мультики и видео — через карточки', emoji: '⭐', color: 'bg-[#FFF3CE]' },
-  { id: 'phrase', title: 'Сборка фраз', description: 'Простые слова помогают выразить себя', emoji: '🗣', color: 'bg-[#FFEDEA]' },
-  { id: 'calm', title: 'Спокойный режим', description: 'Помогает восстановить состояние и фокус', emoji: '☁️', color: 'bg-[#E9F8F0]' },
-  { id: 'sos', title: 'Безопасный вызов', description: 'Всегда можно позвать маму', emoji: '🆘', color: 'bg-[#FFECEC]' },
+  { id: 'tap',    title: 'Крупные кнопки',     description: 'Легко нажимать даже при трудностях моторики',  Icon: Tap2DIcon,    bg: 'bg-[#FFE7BE]', text: 'text-[#8a5d17]' },
+  { id: 'text',   title: 'Минимум текста',     description: 'Понятные карточки и символы',                 Icon: Text2DIcon,   bg: 'bg-[#E5E2FF]', text: 'text-[#5b47a0]' },
+  { id: 'visual', title: 'Визуальные подсказки', description: 'Поддерживают понимание и снижают тревогу',  Icon: Eye2DIcon,    bg: 'bg-[#E5F4FF]', text: 'text-[#1c6cb8]' },
+  { id: 'voice',  title: 'Голосовой ввод',     description: 'Ребёнок может сказать, если сложно нажать',   Icon: Mic2DIcon,    bg: 'bg-[#EAF8F0]', text: 'text-[#276b48]' },
+  { id: 'choice', title: 'Выбор по оболочкам', description: 'Любимые мультики и видео — через карточки',  Icon: Fav2DIcon,    bg: 'bg-[#FFF3CE]', text: 'text-[#8a5d17]' },
+  { id: 'phrase', title: 'Сборка фраз',        description: 'Простые слова помогают выразить себя',        Icon: Phrase2DIcon, bg: 'bg-[#FFEDEA]', text: 'text-[#a24545]' },
+  { id: 'calm',   title: 'Спокойный режим',    description: 'Помогает восстановить состояние и фокус',    Icon: Calm2DIcon,   bg: 'bg-[#EAF8F0]', text: 'text-[#276b48]' },
+  { id: 'sos',    title: 'Безопасный вызов',   description: 'Всегда можно позвать маму',                   Icon: SOS2DIcon,    bg: 'bg-[#FFECEC]', text: 'text-[#a24545]' },
 ];
 
 const METHODS = ['AAC', 'Visual Supports', 'FCT', 'Prompting', 'Task Analysis', 'Social Stories', 'Self-management', 'Sensory Support'];
 
+/**
+ * ChildInterfaceGuide — принципы дизайна (v0.3.15).
+ *
+ * Заменяет emoji-иконки на 2D SVG. Маскот — DinoMascot2D.
+ */
 export const ChildInterfaceGuide: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col gap-4 pb-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col min-h-[calc(100vh-80px)]">
+      <ChildTopBar showSettings={false} />
+
+      <div className="flex items-center gap-2.5 px-5 pt-1 pb-0.5">
         <button
           onClick={() => navigate('/child/home')}
-          className="w-10 h-10 rounded-2xl bg-white border border-[#dce9f4] flex items-center justify-center hover:bg-bg transition-colors"
+          className="w-[42px] h-[42px] rounded-[14px] bg-white border-0 shadow-card flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
-          <span className="text-2xl text-[#53677e]">‹</span>
+          <BackArrowIcon size={22} />
         </button>
-        <h2 className="text-lg font-black text-[#143259]">О приложении</h2>
-        <div className="w-10" />
+        <div className="text-xl font-black text-ink">О приложении</div>
       </div>
 
-      {/* Принципы */}
-      <div className="bg-white border-2 border-line rounded-3xl p-5">
-        <h3 className="text-base font-black text-ink mb-4 flex items-center gap-2">
+      <QoldauCard variant="default" padding="lg" className="mx-5 mt-3">
+        <h3 className="text-base font-black text-ink mb-3 flex items-center gap-2">
           <span aria-hidden="true">✨</span>
           Что важно в интерфейсе
         </h3>
@@ -53,22 +73,25 @@ export const ChildInterfaceGuide: React.FC = () => {
               className="flex items-start gap-3 p-2 rounded-xl hover:bg-bg transition-colors"
             >
               <div
-                className={`w-12 h-12 rounded-2xl ${p.color} flex items-center justify-center text-2xl flex-shrink-0`}
+                className={`w-12 h-12 rounded-2xl ${p.bg} flex items-center justify-center flex-shrink-0`}
                 aria-hidden="true"
               >
-                {p.emoji}
+                <p.Icon size={32} />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-ink">{p.title}</h4>
+                <h4 className={`text-sm font-black ${p.text}`}>{p.title}</h4>
                 <p className="text-xs text-muted leading-relaxed">{p.description}</p>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </QoldauCard>
 
       {/* Методики */}
-      <div className="bg-gradient-to-br from-[#E5F4FF] to-[#F0EBFF] border-2 border-blue/20 rounded-3xl p-5">
+      <div
+        className="mx-5 mt-4 rounded-3xl p-5 border-0 shadow-card"
+        style={{ background: 'linear-gradient(135deg, #E5F4FF 0%, #F0EBFF 100%)' }}
+      >
         <h3 className="text-base font-black text-ink mb-3 flex items-center gap-2">
           <span aria-hidden="true">🧠</span>
           Заложенные методики
@@ -86,17 +109,21 @@ export const ChildInterfaceGuide: React.FC = () => {
       </div>
 
       {/* Маскот */}
-      <div className="bg-white border-2 border-line rounded-3xl p-6 text-center">
-        <div className="text-7xl mb-2" aria-hidden="true">🦖</div>
+      <QoldauCard variant="default" padding="lg" className="mx-5 mt-4 text-center">
+        <div className="flex justify-center mb-2">
+          <DinoMascot2D size={96} animated />
+        </div>
         <p className="text-sm text-ink-2 leading-relaxed max-w-sm mx-auto">
           Интерфейс создан так, чтобы ребёнок чувствовал себя уверенно и спокойно,
           мог обратиться за помощью и получать поддержку в нужный момент.
         </p>
-      </div>
+      </QoldauCard>
 
-      <p className="text-xs text-muted text-center italic">
+      <p className="px-5 mt-3 text-xs text-muted text-center italic">
         Приложение не является медицинским устройством. Это профиль достижений.
       </p>
+
+      <div style={{ height: 12 }} />
     </div>
   );
 };
