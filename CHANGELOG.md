@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1] — 2026-07-01
+
+### Added
+- **Event Timeline persistence**: Events now saved to `useEventStore` and persist across navigation
+- **Voice observation flow**: Parent can record voice → AI review → clarify → save events
+- **Child card events**: AAC cards create events in EventStore with in-app feedback
+- **Tutor event creation**: Tutor voice flow creates events with sourceRole: tutor
+- **CareDiary integration**: Now reads from EventStore (food/water/toilet events)
+- **BehaviorSensory integration**: Now reads from EventStore (behavior/sensory events)
+- **Clarifying questions**: Answers saved with events
+
+### Changed
+- **Safety wording**: All AI insights now use cautious language
+  - "Похоже..." instead of definitive statements
+  - "Возможно..." for hypotheses
+  - "Это наблюдение, не диагноз." as required footer
+  - "Можно обсудить со специалистом." for recommendations
+- **TypeScript fixes**: Removed NodeJS.Timeout, using ReturnType<typeof setInterval>
+- **Role switching**: Overview role cards now call setRole before navigation
+
+### Fixed
+- **Timer in VoiceObservation**: Uses useRef instead of window property
+- **Event creation**: Events properly mapped from AI parsed observation
+- **Clarifying answers**: Properly stored and attached to events
+
+### Technical
+- New stores: `useVoiceObservationStore`, `useClarifyingStore`
+- `useEventStore` expanded with addEvents, getEventsByTypeAndDate
+
 ## [0.1.0] — 2026-07-01
 
 ### Added

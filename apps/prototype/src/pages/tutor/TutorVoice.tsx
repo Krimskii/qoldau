@@ -1,21 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MicButton } from '@/components/ui/MicButton';
 import { VoiceWave } from '@/components/ui/VoiceWave';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
 
 export const TutorVoice: React.FC = () => {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { startRecording, stopRecording } = useVoiceObservationStore();
+
+  const handleStart = useCallback(() => {
+    setIsRecording(true);
+    setDuration(0);
+    startRecording();
+    intervalRef.current = setInterval(() => {
+      setDuration((d) => d + 1);
+    }, 1000);
+  }, [startRecording]);
+
+  const handleStop = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsRecording(false);
+    stopRecording();
+    navigate('/tutor/ai-review');
+  }, [navigate, stopRecording]);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   const handleRecord = () => {
     if (isRecording) {
-      setIsRecording(false);
-      navigate('/tutor/ai-review');
+      handleStop();
     } else {
-      setIsRecording(true);
-      setDuration(0);
+      handleStart();
     }
   };
 

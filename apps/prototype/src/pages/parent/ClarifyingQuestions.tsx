@@ -4,9 +4,12 @@ import { Droplet, Utensils, Brain } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
+import { useEventStore } from '@/store/useEventStore';
+import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
 
 const questions = [
   {
+    id: 'water-amount',
     icon: Droplet,
     color: 'blue',
     question: 'Сколько воды выпил?',
@@ -14,6 +17,7 @@ const questions = [
     defaultSelected: 'Нормально',
   },
   {
+    id: 'toilet-better',
     icon: Utensils,
     color: 'blue',
     question: 'После туалета стало легче?',
@@ -21,6 +25,7 @@ const questions = [
     defaultSelected: 'Да',
   },
   {
+    id: 'noise-around',
     icon: Brain,
     color: 'purple',
     question: 'Был ли шум вокруг?',
@@ -31,10 +36,17 @@ const questions = [
 
 export const ClarifyingQuestions: React.FC = () => {
   const navigate = useNavigate();
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const { answers, setAnswer, confirmAll, resetAnswers } = useClarifyingStore();
+  const { reset: resetVoiceObservation } = useVoiceObservationStore();
 
-  const handleAnswer = (qIndex: number, option: string) => {
-    setAnswers((prev) => ({ ...prev, [qIndex]: option }));
+  const handleAnswer = (questionId: string, option: string) => {
+    setAnswer(questionId, option);
+  };
+
+  const handleSave = () => {
+    confirmAll();
+    resetVoiceObservation();
+    navigate('/parent/events');
   };
 
   return (
@@ -45,12 +57,12 @@ export const ClarifyingQuestions: React.FC = () => {
         showBack
       />
 
-      {questions.map((q, qIndex) => {
+      {questions.map((q) => {
         const Icon = q.icon;
-        const selected = answers[qIndex] || q.defaultSelected;
+        const selected = answers[q.id] || q.defaultSelected;
 
         return (
-          <div key={qIndex} className="bg-white border border-line rounded-2xl p-4">
+          <div key={q.id} className="bg-white border border-line rounded-2xl p-4">
             <div className="flex items-center gap-2.5 mb-3 font-bold text-sm">
               <Icon className="w-4 h-4 text-blue" />
               {q.question}
@@ -59,7 +71,7 @@ export const ClarifyingQuestions: React.FC = () => {
               {q.options.map((option) => (
                 <button
                   key={option}
-                  onClick={() => handleAnswer(qIndex, option)}
+                  onClick={() => handleAnswer(q.id, option)}
                   className={`border rounded-full px-3 py-2 text-xs font-bold transition-colors ${
                     selected === option
                       ? 'border-teal bg-teal-soft text-teal-dark'
@@ -76,9 +88,43 @@ export const ClarifyingQuestions: React.FC = () => {
 
       <AIInsightCard text="Я не додумываю недостающие детали — лучше задать короткий вопрос и сохранить только подтверждённое." />
 
-      <Button onClick={() => navigate('/parent/events')} className="mt-auto">
+      <Button onClick={handleSave} className="mt-auto">
         Сохранить ответы
       </Button>
     </div>
   );
 };
+
+// Local store for clarifying answers
+interface ClarifyingState {
+  answers: Record<string, string>;
+  setAnswer: (questionId: string, answer: string) => void;
+  confirmAll: () => void;
+  resetAnswers: () => void;
+}
+
+import { create } from 'zustand';
+
+const defaultAnswers: Record<string, string> = {
+  'water-amount': 'Нормально',
+  'toilet-better': 'Да',
+  'noise-around': 'Да',
+};
+
+export const useClarifyingStore = create<ClarifyingState>((set, get) => ({
+  answers: { ...defaultAnswers },
+  
+  setAnswer: (questionId, answer) =>
+    set((state) => ({
+      answers: { ...state.answers, [questionId]: answer },
+    })),
+  
+  confirmAll: () => {
+    // Answers are already in state, just confirm
+    set((state) => ({
+      answers: { ...state.answers },
+    }));
+  },
+  
+  resetAnswers: () => set({ answers: { ...defaultAnswers } }),
+}));

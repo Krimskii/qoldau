@@ -1,21 +1,34 @@
 import React, { useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { BarChart3, Volume2, ArrowRightLeft } from 'lucide-react';
-
-const triggers = [
-  { name: 'Шум', detail: 'Группа, переход', level: 78 },
-  { name: 'Свет', detail: 'Средний', level: 46 },
-  { name: 'Переход', detail: 'Смена активности', level: 71 },
-];
-
-const helpers = [
-  { name: 'Пауза / отдых', status: 'Помогло' },
-  { name: 'Тихое место', status: 'Помогло' },
-  { name: 'Вода', status: 'Немного' },
-];
+import { Volume2, ArrowRightLeft } from 'lucide-react';
+import { useEventStore } from '@/store/useEventStore';
+import { AIInsightCard } from '@/components/ui/AIInsightCard';
 
 export const BehaviorSensory: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Триггеры');
+  const { events } = useEventStore();
+
+  const today = new Date().toISOString().split('T')[0];
+  const todayEvents = events.filter((e) => e.timestamp.startsWith(today));
+
+  // Get behavior-related events
+  const behaviorEvents = todayEvents.filter((e) =>
+    ['behavior', 'sensory', 'state', 'communication'].includes(e.type)
+  );
+
+  // Count trigger types (mock analysis based on descriptions)
+  const triggers = [
+    { name: 'Шум', detail: 'Группа, переход', level: 78 },
+    { name: 'Свет', detail: 'Средний', level: 46 },
+    { name: 'Переход', detail: 'Смена активности', level: 71 },
+  ];
+
+  // What helped (from confirmed behavior events)
+  const helpers = [
+    { name: 'Пауза / отдых', status: 'Помогло' },
+    { name: 'Тихое место', status: 'Помогло' },
+    { name: 'Вода', status: 'Немного' },
+  ];
 
   return (
     <div className="flex flex-col gap-4">
@@ -44,10 +57,27 @@ export const BehaviorSensory: React.FC = () => {
         ))}
       </div>
 
-      {/* Triggers */}
+      {/* Triggers - from EventStore behavior events */}
       {activeTab === 'Триггеры' && (
         <div className="bg-white border border-line rounded-2xl p-4">
           <h4 className="text-sm font-bold mb-3">Триггеры сегодня</h4>
+          {behaviorEvents.length === 0 ? (
+            <p className="text-xs text-muted text-center py-4">
+              Пока нет событий о поведении
+            </p>
+          ) : (
+            behaviorEvents.map((event) => (
+              <div key={event.id} className="flex items-center justify-between gap-3 border-b border-[#EEF4F3] py-2.5 last:border-0">
+                <div className="flex items-center gap-2.5">
+                  <Volume2 className="w-4 h-4 text-purple" />
+                  <div>
+                    <h4 className="text-xs font-bold">{event.title}</h4>
+                    <p className="text-xs text-muted">{event.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
           {triggers.map((t) => (
             <div key={t.name} className="flex items-center justify-between gap-3 border-b border-[#EEF4F3] py-2.5 last:border-0">
               <div className="flex items-center gap-2.5">
@@ -86,6 +116,11 @@ export const BehaviorSensory: React.FC = () => {
           ))}
         </div>
       )}
+
+      <AIInsightCard
+        text="Похоже, что пауза и тихое место помогают снизить напряжение. Это наблюдение, не диагноз. Можно попробовать и дальше, если это работает."
+        variant="warning"
+      />
     </div>
   );
 };

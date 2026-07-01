@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
+import { useRoleStore } from '@/store/useRoleStore';
+import { UserRole } from '@/types/qoldau';
 
 const methods = [
   'AAC',
@@ -24,8 +26,21 @@ const flowSteps = [
   { label: 'Единая лента событий', icon: '📋' },
 ];
 
+const roles = [
+  { role: 'Родитель' as UserRole, icon: '👩', desc: 'Голосовые наблюдения, подтверждение событий', path: '/parent/home' },
+  { role: 'Ребёнок' as UserRole, icon: '👦', desc: 'AAC карточки, голосовой ввод, любимые', path: '/child/home' },
+  { role: 'Тьютор' as UserRole, icon: '👨‍🏫', desc: 'Наблюдения, отчёты родителям', path: '/tutor/home' },
+  { role: 'Специалист' as UserRole, icon: '🧑‍⚕️', desc: 'ABC-анализ, паттерны, отчёты', path: '/specialist/dashboard' },
+];
+
 export const Overview: React.FC = () => {
   const navigate = useNavigate();
+  const { setRole } = useRoleStore();
+
+  const handleRoleClick = (role: UserRole, path: string) => {
+    setRole(role);
+    navigate(path);
+  };
 
   return (
     <div className="min-h-screen bg-bg pb-12">
@@ -77,15 +92,10 @@ export const Overview: React.FC = () => {
       <section className="max-w-6xl mx-auto px-8 mb-10">
         <h2 className="text-xl font-bold text-teal-dark mb-4">Роли</h2>
         <div className="grid grid-cols-4 gap-4">
-          {[
-            { role: 'Родитель', icon: '👩', desc: 'Голосовые наблюдения, подтверждение событий', path: '/parent/home' },
-            { role: 'Ребёнок', icon: '👦', desc: 'AAC карточки, голосовой ввод, любимые', path: '/child/home' },
-            { role: 'Тьютор', icon: '👨‍🏫', desc: 'Наблюдения, отчёты родителям', path: '/tutor/home' },
-            { role: 'Специалист', icon: '🧑‍⚕️', desc: 'ABC-анализ, паттерны, отчёты', path: '/specialist/dashboard' },
-          ].map((r) => (
+          {roles.map((r) => (
             <button
               key={r.role}
-              onClick={() => navigate(r.path)}
+              onClick={() => handleRoleClick(r.role, r.path)}
               className="bg-white border border-line rounded-2xl p-5 text-left hover:shadow-card-soft transition-all hover:border-teal"
             >
               <span className="text-3xl mb-2 block">{r.icon}</span>

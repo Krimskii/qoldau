@@ -1,30 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { MicButton } from '@/components/ui/MicButton';
 import { VoiceWave } from '@/components/ui/VoiceWave';
+import { useAppStore } from '@/store/useAppStore';
 
 export const VoiceObservation: React.FC = () => {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startRecording = useCallback(() => {
+    setIsRecording(true);
+    setDuration(0);
+    intervalRef.current = setInterval(() => {
+      setDuration((d) => d + 1);
+    }, 1000);
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsRecording(false);
+    navigate('/parent/ai-review');
+  }, [navigate]);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   const handleRecord = () => {
     if (isRecording) {
-      // Stop recording and go to AI review
-      setIsRecording(false);
-      navigate('/parent/ai-review');
+      stopRecording();
     } else {
-      // Start recording
-      setIsRecording(true);
-      setDuration(0);
-      const interval = setInterval(() => {
-        setDuration((d) => d + 1);
-      }, 1000);
-
-      // Store interval to clear later if needed
-      (window as unknown as { recordInterval: NodeJS.Timeout }).recordInterval = interval;
+      startRecording();
     }
   };
 

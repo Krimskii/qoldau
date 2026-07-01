@@ -2,23 +2,52 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic } from 'lucide-react';
 import { VoiceWave } from '@/components/ui/VoiceWave';
+import { useEventStore } from '@/store/useEventStore';
 
 export const ChildSpeak: React.FC = () => {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [heard, setHeard] = useState<string | null>(null);
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const { addEvent } = useEventStore();
 
   const handleMic = () => {
     if (isRecording) {
       setIsRecording(false);
+      // Simulate speech recognition
       setHeard('ва');
+      setSuggestion('вода');
     } else {
       setIsRecording(true);
+      setHeard(null);
+      setSuggestion(null);
       setTimeout(() => {
         setIsRecording(false);
         setHeard('ва');
+        setSuggestion('вода');
       }, 3000);
     }
+  };
+
+  const handleConfirm = () => {
+    // Create communication event
+    addEvent({
+      childId: 'child-1',
+      type: 'communication',
+      title: 'Голосовой запрос',
+      description: `Сказал: "${heard}"`,
+      timestamp: new Date().toISOString(),
+      sourceRole: 'child',
+      status: 'confirmed',
+      payload: { heard, suggestion },
+    });
+    setHeard(null);
+    setSuggestion(null);
+  };
+
+  const handleReject = () => {
+    setHeard(null);
+    setSuggestion(null);
   };
 
   const examples = ['вода', 'мама', 'домой'];
@@ -43,29 +72,40 @@ export const ChildSpeak: React.FC = () => {
         {isRecording && <VoiceWave bars={10} />}
 
         {heard && !isRecording && (
-          <div className="text-center">
+          <div className="text-center animate-fade-in">
             <p className="text-sm font-bold text-[#657a97] mb-2">Я услышал: «{heard}»</p>
-            <p className="text-sm font-bold text-teal">Возможно: вода</p>
-            <div className="flex gap-2 justify-center mt-4">
-              <button className="px-6 py-2 rounded-full bg-[#e8faef] font-bold">Да</button>
-              <button className="px-6 py-2 rounded-full bg-[#ffeceb] font-bold">Нет</button>
+            {suggestion && (
+              <p className="text-sm font-bold text-teal mb-4">Возможно: {suggestion}</p>
+            )}
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={handleConfirm}
+                className="px-6 py-3 rounded-full bg-[#e8faef] font-bold text-green"
+              >
+                Да ✓
+              </button>
+              <button
+                onClick={handleReject}
+                className="px-6 py-3 rounded-full bg-[#ffeceb] font-bold text-coral"
+              >
+                Нет ✕
+              </button>
             </div>
           </div>
         )}
       </div>
 
-      {!heard && (
-        <div className="text-center text-[#657a97] font-bold mb-4">Например:</div>
-      )}
-
-      {!heard && (
-        <div className="flex gap-2 justify-center flex-wrap">
-          {examples.map((ex) => (
-            <span key={ex} className="border border-[#dce9f4] bg-white rounded-full px-5 py-2 text-sm font-bold text-[#365579]">
-              {ex}
-            </span>
-          ))}
-        </div>
+      {!heard && !isRecording && (
+        <>
+          <div className="text-center text-[#657a97] font-bold mb-2">Например:</div>
+          <div className="flex gap-2 justify-center flex-wrap">
+            {examples.map((ex) => (
+              <span key={ex} className="border border-[#dce9f4] bg-white rounded-full px-5 py-2 text-sm font-bold text-[#365579]">
+                {ex}
+              </span>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
