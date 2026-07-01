@@ -1,53 +1,181 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
-import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { SuccessSparkle } from '@/components/illustrations/SuccessSparkle';
-import { QoldauCard } from '@/components/ui/QoldauCard';
-import { BackArrowIcon, DinoMascot2D } from '@/components/icons/child2d';
-import { X } from 'lucide-react';
+import { BackArrowIcon } from '@/components/icons/child2d';
+import { Trash2, Delete, Volume2 } from 'lucide-react';
+import {
+  User2DIcon,
+  Mom2DIcon,
+  Dad2DIcon,
+  Tutor2DIcon,
+  Heart2DIcon,
+  Water2DIcon,
+  Food2DIcon,
+  Walk2DIcon,
+  Play2DIcon,
+  Tired2DIcon,
+  Help2DIcon,
+  Home2DIcon,
+  Puzzle2DIcon,
+  Toilet2DIcon,
+  Hug2DIcon,
+  Yes2DIcon,
+  No2DIcon,
+  Cartoon2DIcon,
+  Car2DIcon,
+  Music2DIcon,
+} from '@/components/icons/child2d';
 
-interface WordChip {
+type IconComponent = React.FC<{ size?: number; animated?: boolean; className?: string }>;
+
+/** Грамматическая функция слова — определяет цвет в "Выбирай слова" и подсказке (legend). */
+type WordFunction = 'pron' | 'verb' | 'noun' | 'soc' | 'neg';
+
+interface Word {
   text: string;
-  bg: string;
-  color: string;
-  wide?: boolean;
+  icon: IconComponent;
+  func: WordFunction;
 }
 
-// Мягкая палитра, согласованная с дизайн-системой.
-const WORDS: WordChip[] = [
-  { text: 'Я',         bg: 'bg-[#EAF8F0]', color: 'text-[#158647]' },
-  { text: 'хочу',      bg: 'bg-[#FFF6DF]', color: 'text-[#9a7820]' },
-  { text: 'пить',      bg: 'bg-[#EAF5FF]', color: 'text-[#1c6cb8]' },
-  { text: 'воду',      bg: 'bg-[#EAF5FF]', color: 'text-[#1c6cb8]' },
-  { text: 'есть',      bg: 'bg-[#EAF6EF]', color: 'text-[#276b48]' },
-  { text: 'не хочу',   bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
-  { text: 'туалет',    bg: 'bg-[#F1EDFF]', color: 'text-[#5a3eb4]' },
-  { text: 'домой',     bg: 'bg-[#FBEDED]', color: 'text-[#a24545]' },
-  { text: 'гулять',    bg: 'bg-[#FBEDED]', color: 'text-[#a24545]' },
-  { text: 'ещё',       bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]' },
-  { text: 'пауза',     bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
+/**
+ * Цвета функций — вынесены в константы (как в phrase_ideal.html).
+ * Каждая функция имеет три оттенка: bg (иконка-фон), text (label), icon (иконка).
+ */
+const FUNC_STYLES: Record<
+  WordFunction,
+  { bg: string; text: string; icon: string; label: string }
+> = {
+  pron: { bg: '#e8f2f8', text: '#245f7d', icon: '#3a90bd', label: 'кто' },
+  verb: { bg: '#e9f4ee', text: '#2a6647', icon: '#3f9a6a', label: 'действие' },
+  noun: { bg: '#f4ede2', text: '#6f5228', icon: '#b0864a', label: 'что' },
+  soc:  { bg: '#eeecf7', text: '#564a86', icon: '#8172bd', label: 'вежливо' },
+  neg:  { bg: '#f7ecec', text: '#9c4d4d', icon: '#c56a6a', label: 'нет' },
+};
+
+/**
+ * Расширенный словарь для «Выбирай слова» (v0.3.22).
+ * Упорядочен по грамматической функции: pron → verb → noun → soc → neg.
+ * Иконки из child2d.tsx (2D inline SVG).
+ */
+const VOCAB: Word[] = [
+  // pron (кто)
+  { text: 'Я',       icon: User2DIcon,   func: 'pron' },
+  { text: 'мама',    icon: Mom2DIcon,    func: 'pron' },
+  { text: 'папа',    icon: Dad2DIcon,    func: 'pron' },
+  { text: 'тьютор',  icon: Tutor2DIcon,  func: 'pron' },
+
+  // verb (действие)
+  { text: 'хочу',    icon: Heart2DIcon,  func: 'verb' },
+  { text: 'пить',    icon: Water2DIcon,  func: 'verb' },
+  { text: 'есть',    icon: Food2DIcon,   func: 'verb' },
+  { text: 'гулять',  icon: Walk2DIcon,   func: 'verb' },
+  { text: 'играть',  icon: Play2DIcon,   func: 'verb' },
+  { text: 'спать',   icon: Tired2DIcon,  func: 'verb' },
+  { text: 'помочь',  icon: Help2DIcon,   func: 'verb' },
+
+  // noun (что)
+  { text: 'воду',    icon: Water2DIcon,  func: 'noun' },
+  { text: 'еду',     icon: Food2DIcon,   func: 'noun' },
+  { text: 'игрушку', icon: Puzzle2DIcon, func: 'noun' },
+  { text: 'туалет',  icon: Toilet2DIcon, func: 'noun' },
+  { text: 'домой',   icon: Home2DIcon,   func: 'noun' },
+  { text: 'мультик', icon: Cartoon2DIcon, func: 'noun' },
+  { text: 'машину',  icon: Car2DIcon,     func: 'noun' },
+  { text: 'музыку',  icon: Music2DIcon,   func: 'noun' },
+
+  // soc (вежливо)
+  { text: 'пожалуйста', icon: Hug2DIcon, func: 'soc' },
+  { text: 'спасибо',    icon: Heart2DIcon, func: 'soc' },
+  { text: 'да',         icon: Yes2DIcon, func: 'soc' },
+
+  // neg (нет)
+  { text: 'не хочу', icon: No2DIcon, func: 'neg' },
+  { text: 'нет',     icon: No2DIcon, func: 'neg' },
+  { text: 'не надо', icon: No2DIcon, func: 'neg' },
 ];
 
 /**
- * PhraseBuilderPage — сборка фразы из слов (v0.3.15).
+ * PhraseBuilderPage (v0.3.22) — редизайн под phrase_ideal.html.
  *
- * Структура (как в child_v2.html):
- * - Back + clear buttons.
- * - Phrase strip с чипами + DinoMascot2D.
- * - "Сказать фразу" big teal button (когда фраза не пустая).
- * - Word grid 3 cols.
+ * Структура (как в референсе):
+ * - Back + title.
+ * - **Phrase strip** (104px min-h, dashed border → solid teal когда заполнена)
+ *   с большими chips: иконка 26px + текст 15px font-black.
+ * - **Action row**:
+ *   - «Сказать фразу» (teal big, flex-1) — создаёт event.
+ *   - «Стереть последнее» (56px, иконка backspace) — удаляет последнее слово с fade.
+ *   - «Очистить» (56px, иконка trash) — очищает всю фразу.
+ * - **«ВЫБИРАЙ СЛОВА»** label (uppercase, small, ink-soft).
+ * - **Word grid 3-col** — 23 слова с color-coding по грамматической функции:
+ *   - pron (кто) — голубой
+ *   - verb (действие) — зелёный
+ *   - noun (что) — тёплый
+ *   - soc (вежливо) — фиолет
+ *   - neg (нет) — коралл
+ * - **Legend** (5 dots) внизу — объясняет цвета.
+ *
+ * Toggle механика: tap → add с speak-pulse, tap again → fade-out из фразы.
  */
 export const PhraseBuilderPage: React.FC = () => {
   const navigate = useNavigate();
+  const { addEvent } = useEventStore();
   const [phrase, setPhrase] = useState<string[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
-  const { addEvent } = useEventStore();
-  const { showToast } = useToastStore();
+  const [speaking, setSpeaking] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const addWord = (word: string) => setPhrase([...phrase, word]);
-  const clearPhrase = () => setPhrase([]);
+  useEffect(() => {
+    return () => {
+      if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
+    };
+  }, []);
+
+  /** Поиск иконки и функции по тексту (для рендера chips в phrase strip). */
+  const findWord = (text: string): Word | null => VOCAB.find((w) => w.text === text) ?? null;
+
+  /** Toggle: tap → add, tap again → remove. */
+  const toggleWord = (text: string) => {
+    if (removeTimerRef.current) {
+      clearTimeout(removeTimerRef.current);
+      removeTimerRef.current = null;
+    }
+    setRemoving(null);
+
+    if (phrase.includes(text)) {
+      setRemoving(text);
+      removeTimerRef.current = setTimeout(() => {
+        setPhrase((prev) => prev.filter((w) => w !== text));
+        setRemoving(null);
+        removeTimerRef.current = null;
+      }, 300);
+    } else {
+      setPhrase((prev) => [...prev, text]);
+      setSpeaking(text);
+      setTimeout(() => setSpeaking((cur) => (cur === text ? null : cur)), 320);
+    }
+  };
+
+  /** Стереть последнее слово с fade-анимацией. */
+  const eraseLast = () => {
+    if (phrase.length === 0) return;
+    const last = phrase[phrase.length - 1];
+    if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
+    setRemoving(last);
+    removeTimerRef.current = setTimeout(() => {
+      setPhrase((prev) => prev.slice(0, -1));
+      setRemoving(null);
+      removeTimerRef.current = null;
+    }, 300);
+  };
+
+  /** Очистить всю фразу. */
+  const clearPhrase = () => {
+    if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
+    setPhrase([]);
+    setRemoving(null);
+  };
 
   const sendPhrase = () => {
     if (phrase.length === 0) return;
@@ -56,116 +184,181 @@ export const PhraseBuilderPage: React.FC = () => {
       childId: DEMO_PRIMARY_CHILD.id,
       type: 'phrase',
       title: `Фраза: «${phraseText}»`,
-      description: `Ребёнок собрал фразу из AAC карточек: «${phraseText}»`,
+      description: `Ребёнок собрал фразу: «${phraseText}». Это наблюдение, не диагноз.`,
       timestamp: new Date().toISOString(),
       sourceRole: 'child',
       status: 'confirmed',
       payload: { phrase: phraseText, source: 'phrase_builder' },
     });
-    showToast('Мама увидит фразу', 'success');
     setShowSuccess(true);
     setPhrase([]);
-
     setTimeout(() => {
       setShowSuccess(false);
       navigate('/child/home');
-    }, 1600);
+    }, 1500);
   };
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)]">
-      {/* Header: back + clear */}
-      <div className="flex items-center gap-2.5 px-5 pt-1 pb-0.5">
+      {/* Back + title */}
+      <div className="flex items-center gap-2.5 px-5 pt-3.5 pb-1">
         <button
           onClick={() => navigate('/child/home')}
-          className="w-[42px] h-[42px] rounded-[14px] bg-white border-0 shadow-card flex items-center justify-center hover:bg-bg transition-colors"
+          className="w-[42px] h-[42px] rounded-[14px] bg-white border border-line flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
           <BackArrowIcon size={22} />
         </button>
         <div className="text-xl font-black text-ink">Собрать фразу</div>
-        {phrase.length > 0 && (
-          <button
-            onClick={clearPhrase}
-            className="ml-auto w-[42px] h-[42px] rounded-[14px] border-0 flex items-center justify-center transition-colors shadow-card"
-            style={{ background: '#f4eaea', color: '#c95f5f' }}
-            aria-label="Очистить фразу"
-          >
-            <X size={20} />
-          </button>
-        )}
       </div>
 
-      {/* Phrase strip + DinoMascot2D */}
-      <div className="mx-5 my-3.5 min-h-[80px] bg-white rounded-[20px] shadow-card flex items-center gap-2 p-3.5 flex-wrap">
+      {/* Phrase strip (large, dashed → solid) */}
+      <div
+        className="mx-5 mt-3.5 mb-2.5 min-h-[104px] bg-white rounded-[22px] flex items-center gap-2.5 p-4 flex-wrap transition-colors"
+        style={{
+          border: phrase.length > 0
+            ? '2px solid #7fd1c9'
+            : '2px dashed #cfe0df',
+        }}
+        aria-live="polite"
+      >
         {phrase.length === 0 ? (
-          <div className="flex items-center gap-3 w-full">
-            <DinoMascot2D size={56} animated />
-            <span className="text-muted font-bold">Выбирай слова →</span>
-          </div>
+          <span className="text-[#9fb3ba] font-bold text-base">
+            Собирай слова ниже ↓
+          </span>
         ) : (
-          <>
-            <DinoMascot2D size={56} animated />
-            {phrase.map((w, i) => (
-              <span
-                key={i}
-                className="qoldau-icon-pop font-black px-4 py-3 rounded-[14px] text-base"
-                style={{ background: '#e9f7f5', color: '#0d5c5c' }}
+          phrase.map((w, i) => {
+            const word = findWord(w);
+            const WordIcon = word?.icon;
+            const isRemoving = removing === w;
+            return (
+              <div
+                key={`${w}-${i}-${phrase.length}`}
+                className="flex flex-col items-center gap-1 rounded-[14px] px-3 pt-2 pb-1.5 transition-all duration-300 ease-out"
+                style={{
+                  background: '#e9f7f5',
+                  opacity: isRemoving ? 0 : 1,
+                  transform: isRemoving ? 'scale(0.85)' : 'scale(1)',
+                  animation: isRemoving ? undefined : 'phrase-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+                }}
               >
-                {w}
-              </span>
-            ))}
-            <button
-              onClick={clearPhrase}
-              className="ml-auto border-0 font-black rounded-xl px-3 py-2.5 cursor-pointer"
-              style={{ background: '#f4eaea', color: '#c95f5f' }}
-            >
-              ✕
-            </button>
-          </>
+                {WordIcon && (
+                  <WordIcon size={26} animated={false} />
+                )}
+                <span
+                  className="text-[15px] font-black leading-none"
+                  style={{ color: '#0d5c5c' }}
+                >
+                  {w}
+                </span>
+              </div>
+            );
+          })
         )}
       </div>
 
-      {/* Speak button (only when phrase has words) */}
-      {phrase.length > 0 && (
+      {/* Actions: Сказать + Стереть последнее + Очистить */}
+      <div className="flex gap-2.5 px-5 mb-3">
         <button
           onClick={sendPhrase}
-          className="mx-5 mb-3.5 border-0 rounded-[18px] p-4 text-white font-black text-[17px] cursor-pointer flex items-center justify-center gap-2.5"
+          disabled={phrase.length === 0}
+          className="flex-1 border-0 rounded-[18px] py-4 text-white font-black text-[17px] flex items-center justify-center gap-2.5 active:scale-[0.97] transition-transform"
           style={{
-            background: '#1ba39a',
-            boxShadow: '0 8px 20px rgba(27,163,154,0.28)',
+            background: phrase.length > 0
+              ? 'linear-gradient(135deg, #1ba39a 0%, #12807a 100%)'
+              : '#aacfca',
+            boxShadow: phrase.length > 0
+              ? '0 6px 16px rgba(27,163,154,0.26)'
+              : 'none',
+            cursor: phrase.length === 0 ? 'not-allowed' : 'pointer',
           }}
         >
-          <svg width={22} height={22} viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
-            <path d="M3 10v4h4l5 5V5L7 10H3z" />
-            <path d="M16 9a4 4 0 0 1 0 6" stroke="#fff" strokeWidth={2} fill="none" strokeLinecap="round" />
-          </svg>
+          <Volume2 className="w-5 h-5" />
           Сказать фразу
         </button>
-      )}
+        <button
+          onClick={eraseLast}
+          disabled={phrase.length === 0}
+          className="w-14 border border-line rounded-[18px] bg-white flex items-center justify-center active:scale-[0.94] transition-transform"
+          style={{ opacity: phrase.length === 0 ? 0.4 : 1 }}
+          aria-label="Стереть последнее"
+          title="Стереть последнее"
+        >
+          <Delete className="w-6 h-6 text-ink-soft" />
+        </button>
+        <button
+          onClick={clearPhrase}
+          disabled={phrase.length === 0}
+          className="w-14 border border-line rounded-[18px] bg-white flex items-center justify-center active:scale-[0.94] transition-transform"
+          style={{ opacity: phrase.length === 0 ? 0.4 : 1 }}
+          aria-label="Очистить"
+          title="Очистить"
+        >
+          <Trash2 className="w-6 h-6 text-[#c56a6a]" />
+        </button>
+      </div>
 
-      {/* Word grid 3-col */}
-      <div className="grid grid-cols-3 gap-2.5 px-5">
-        {WORDS.map((word, i) => {
+      {/* ВЫБИРАЙ СЛОВА label */}
+      <div className="px-5 pt-2 pb-1 text-[13px] font-black text-ink-soft tracking-wide">
+        ВЫБИРАЙ СЛОВА
+      </div>
+
+      {/* Word grid 3-col, color-coded by function */}
+      <div className="grid grid-cols-3 gap-3 px-5 pb-2">
+        {VOCAB.map((word, i) => {
+          const funcStyle = FUNC_STYLES[word.func];
           const used = phrase.includes(word.text);
+          const isSpeaking = speaking === word.text;
+          const WordIcon = word.icon;
           return (
             <button
-              key={i}
-              onClick={() => addWord(word.text)}
-              className={`min-h-[56px] rounded-2xl ${word.bg} flex items-center justify-center font-black text-base ${word.color} ${
-                word.wide ? 'col-span-3' : ''
-              } transition-all duration-200 ease-out active:scale-[0.92] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 shadow-card ${
-                used ? 'ring-2 ring-teal/50' : ''
-              }`}
-              aria-label={`Добавить слово ${word.text}`}
+              key={`${word.text}-${i}`}
+              onClick={() => toggleWord(word.text)}
+              className="bg-white border border-line rounded-[18px] cursor-pointer py-3 px-1.5 flex flex-col items-center gap-1.5 min-h-[92px] active:scale-[0.93] transition-transform"
+              style={{
+                boxShadow: '0 4px 14px rgba(23,48,57,0.07)',
+                opacity: used ? 0.5 : 1,
+                outline: used ? `2px solid ${funcStyle.icon}` : 'none',
+                outlineOffset: used ? '-2px' : 0,
+                animation: isSpeaking ? 'speak-pulse 280ms ease-out both' : undefined,
+              }}
+              aria-label={`Добавить «${word.text}»`}
+              aria-pressed={used}
             >
-              {word.text}
+              <div
+                className="w-10 h-10 rounded-[12px] flex items-center justify-center"
+                style={{ background: funcStyle.bg }}
+              >
+                <WordIcon size={30} animated={false} />
+              </div>
+              <div
+                className="text-sm font-black text-center leading-tight"
+                style={{ color: funcStyle.text }}
+              >
+                {word.text}
+              </div>
             </button>
           );
         })}
       </div>
 
-      <div style={{ height: 16 }} />
+      {/* Legend */}
+      <div className="flex flex-wrap gap-x-3.5 gap-y-1.5 px-5 pt-2 pb-1 text-[11px] text-ink-soft font-semibold">
+        {(Object.keys(FUNC_STYLES) as WordFunction[]).map((f) => {
+          const s = FUNC_STYLES[f];
+          return (
+            <span key={f} className="inline-flex items-center gap-1.5 font-bold">
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-sm"
+                style={{ background: s.icon }}
+              />
+              {s.label}
+            </span>
+          );
+        })}
+      </div>
+
+      <div style={{ height: 12 }} />
 
       {/* Success overlay */}
       {showSuccess && (
@@ -175,15 +368,25 @@ export const PhraseBuilderPage: React.FC = () => {
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ background: 'rgba(234,245,255,0.85)', backdropFilter: 'blur(4px)' }}
         >
-          <QoldauCard variant="elevated" padding="lg" className="max-w-xs text-center">
-            <div className="flex justify-center mb-3">
-              <SuccessSparkle className="w-20 h-20" />
-            </div>
+          <div className="bg-white rounded-3xl px-8 py-6 shadow-card-hover text-center max-w-xs">
+            <div className="text-5xl mb-2">✓</div>
             <p className="text-lg font-black text-ink">Мама увидит фразу</p>
             <p className="text-sm text-muted mt-1">Спасибо, что сказал</p>
-          </QoldauCard>
+          </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes phrase-pop {
+          0% { transform: scale(0.7); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes speak-pulse {
+          0%   { transform: scale(1);    box-shadow: 0 4px 14px rgba(23,48,57,0.07); }
+          35%  { transform: scale(1.07); box-shadow: 0 4px 14px rgba(7,149,139,0.32); }
+          100% { transform: scale(1);    box-shadow: 0 4px 14px rgba(23,48,57,0.07); }
+        }
+      `}</style>
     </div>
   );
 };

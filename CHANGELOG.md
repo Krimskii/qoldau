@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.22] — 2026-07-02 (PhraseBuilder: redesign + 23-word vocabulary)
+
+### Changed — PhraseBuilderPage (v0.3.22)
+- **`src/pages/child/PhraseBuilderPage.tsx`** — полный редизайн под `phrase_ideal.html` (эталон из Downloads):
+  - **Phrase strip** (104px min-h) — большая полоса с **dashed** border `#cfe0df` (когда пустая) → **solid teal** `#7fd1c9` (когда заполнена). Внутри — крупные chips с иконкой 26px + текст 15px font-black.
+  - **Action row**:
+    - `Сказать фразу` — teal big button (flex-1, disabled когда фраза пустая).
+    - `Стереть последнее` — 56px кнопка с иконкой `Delete` (Lucide).
+    - `Очистить` — 56px кнопка с иконкой `Trash2` (Lucide, coral).
+  - **`ВЫБИРАЙ СЛОВА`** label (uppercase, 13px font-black, ink-soft).
+  - **Word grid 3-col** — 23 слова (было 11), каждое с иконкой + текстом.
+  - **Legend** (5 точек) — объясняет цвета грамматических функций.
+  - Каждое слово в выбранном состоянии: outline того же цвета что и функция + opacity 0.5.
+  - Toggle: tap → add с `speak-pulse` 280мс, tap again → fade-out за 300мс.
+  - Использует `phrase-pop` cubic-bezier анимацию (как в эталоне).
+
+### Added — Function-based color coding (v0.3.22)
+- **`FUNC_STYLES`** константа в `PhraseBuilderPage.tsx` — 5 грамматических функций:
+  - **pron** (кто) — голубой `#3a90bd` — местоимения (Я, мама, папа, тьютор)
+  - **verb** (действие) — зелёный `#3f9a6a` — глаголы (хочу, пить, есть, гулять, играть, спать, помочь)
+  - **noun** (что) — тёплый `#b0864a` — существительные (воду, еду, игрушку, туалет, домой, мультик, машину, музыку)
+  - **soc** (вежливо) — фиолет `#8172bd` — социальные (пожалуйста, спасибо, да)
+  - **neg** (нет) — коралл `#c56a6a` — отрицание (не хочу, нет, не надо)
+
+### Verified
+- `npm run build` ✅ — 1675 modules, 0 TS errors, 7.33s.
+- CSS bundle 51.61 → 51.83 KB (+0.2 KB за новые утилитарные стили).
+- 23 слова в словаре (vs 11 ранее) — расширили «Выбирай слова».
+- Layout точно соответствует `phrase_ideal.html`.
+
+### Diff summary
+```
+2 файла изменено:
+
+apps/prototype/src/pages/child/PhraseBuilderPage.tsx    переписан (189 → 339 строк, новый дизайн, 23 слова, 5 функций)
+apps/prototype/package.json                             0.3.21 → 0.3.22
+```
+
+---
+
 ## [0.3.21] — 2026-07-02 (Restore mic + icon-based phrase builder)
 
 ### Changed — ChildActionSpeak: mic restored + icon-first design (v0.3.21)
