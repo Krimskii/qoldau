@@ -8,7 +8,7 @@
  * (`useEventStore`, `useRecordingsStore`), чтобы API был drop-in заменой.
  */
 import { nanoid } from 'nanoid';
-import type { QoldauEvent, EventType } from './types.js';
+import type { EventType } from './types.js';
 
 // ===================== TYPES =====================
 
