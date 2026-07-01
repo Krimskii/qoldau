@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { SpeakIcon, YesIcon, NoIcon } from '@/components/icons';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 
 const VoiceWave: React.FC<{ active?: boolean }> = ({ active = true }) => {
   return (
@@ -129,61 +130,61 @@ export const ChildSpeak: React.FC = () => {
           </div>
         )}
 
-        {/* Расшифровка */}
+        {/* Расшифровка — QoldauCard tinted-teal */}
         {heard && !isRecording && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="text-center bg-white border-2 border-[#DDF5F0] rounded-3xl px-8 py-5 qoldau-success-pop"
-          >
-            <p className="text-base font-black text-[#657a97] mb-1">Я услышал: «{heard}»</p>
-            {suggestion && (
-              <p className="text-base font-black text-[#00796F]">
-                Возможно: {suggestion}{' '}
-                <span className="text-muted text-xs font-bold">(нужно подтвердить)</span>
+          <div role="status" aria-live="polite" className="qoldau-success-pop">
+            <QoldauCard variant="tinted-teal" padding="lg" className="text-center">
+              <p className="text-base font-black text-muted mb-1">
+                Я услышал: «{heard}»
               </p>
-            )}
-            <div className="flex gap-3 justify-center mt-4">
-              <button
-                onClick={handleConfirm}
-                className="px-7 py-3 rounded-full bg-[#EAF8F0] font-black text-[#158647] text-base hover:bg-[#4EC28A] hover:text-white transition-colors flex items-center gap-1.5"
-              >
-                <YesIcon size={18} />
-                Да
-              </button>
-              <button
-                onClick={handleReject}
-                className="px-7 py-3 rounded-full bg-[#FFEAEA] font-black text-[#cc251d] text-base hover:bg-[#E56F5D] hover:text-white transition-colors flex items-center gap-1.5"
-              >
-                <NoIcon size={18} />
-                Нет
-              </button>
-            </div>
+              {suggestion && (
+                <p className="text-base font-black text-teal-dark">
+                  Возможно: {suggestion}{' '}
+                  <span className="text-muted text-xs font-bold">(нужно подтвердить)</span>
+                </p>
+              )}
+              <div className="flex gap-3 justify-center mt-4">
+                <button
+                  onClick={handleConfirm}
+                  className="px-7 py-3 rounded-full bg-[#EAF8F0] font-black text-[#158647] text-base hover:bg-[#4EC28A] hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <YesIcon size={18} />
+                  Да
+                </button>
+                <button
+                  onClick={handleReject}
+                  className="px-7 py-3 rounded-full bg-[#FFEAEA] font-black text-[#cc251d] text-base hover:bg-[#E56F5D] hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <NoIcon size={18} />
+                  Нет
+                </button>
+              </div>
+            </QoldauCard>
           </div>
         )}
 
         {!heard && !isRecording && (
-          <p className="text-center text-[#657a97] font-bold text-sm">
+          <p className="text-center text-muted font-bold text-sm">
             Нажми на кнопку и скажи слово
           </p>
         )}
       </div>
 
-      {/* Примеры */}
+      {/* Примеры — QoldauCard tinted-blue */}
       {!heard && !isRecording && (
-        <div>
-          <p className="text-center text-[#657a97] font-bold mb-3 text-sm">Например:</p>
+        <QoldauCard variant="tinted-blue" padding="md" className="text-center">
+          <p className="text-muted font-bold mb-3 text-sm">Например:</p>
           <div className="flex gap-2 justify-center flex-wrap">
             {examples.map((ex) => (
               <span
                 key={ex}
-                className="border-2 border-[#dce9f4] bg-white rounded-full px-6 py-2.5 text-sm font-black text-[#365579]"
+                className="border-2 border-[#dce9f4] bg-white rounded-full px-6 py-2.5 text-sm font-black text-ink-2"
               >
                 {ex}
               </span>
             ))}
           </div>
-        </div>
+        </QoldauCard>
       )}
     </div>
   );

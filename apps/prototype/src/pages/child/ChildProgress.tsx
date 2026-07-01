@@ -6,6 +6,7 @@ import { AchievementCard } from '@/components/game/AchievementCard';
 import { DailyProgressStrip } from '@/components/game/DailyProgressStrip';
 import { SparkleIcon, WaterIcon, ToiletIcon, HugIcon } from '@/components/icons';
 import { computeAchievements } from '@/lib/game/achievementRules';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 
 export const ChildProgress: React.FC = () => {
   const { events } = useEventStore();
@@ -38,16 +39,16 @@ export const ChildProgress: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4 min-h-[calc(100vh-80px)]">
-      {/* Celebratory hero */}
-      <div className="bg-gradient-to-br from-[#FFFCEC] via-[#FFF8F0] to-[#EAF5FF] border-2 border-[#f2e1b6] rounded-3xl p-6 text-center">
+      {/* Celebratory hero — QoldauCard tinted-yellow */}
+      <QoldauCard variant="tinted-yellow" padding="lg" className="text-center">
         <div className="flex justify-center mb-2">
           <SuccessSparkle className="w-20 h-20" />
         </div>
-        <strong className="text-lg font-black block mt-1 text-[#102544]">
+        <strong className="text-lg font-black block mt-1 text-ink">
           Ты молодец!
         </strong>
         <p className="text-sm text-muted mt-1">{stats.total} событий за неделю</p>
-      </div>
+      </QoldauCard>
 
       {/* Daily Progress Strip — горизонтальный soft strip */}
       <div>
@@ -65,8 +66,8 @@ export const ChildProgress: React.FC = () => {
         </div>
       </div>
 
-      {/* Любимые карточки */}
-      <div className="bg-white border-2 border-line rounded-2xl p-4">
+      {/* Любимые карточки — QoldauCard default */}
+      <QoldauCard variant="default" padding="md">
         <h3 className="text-sm font-black text-ink-2 mb-3 flex items-center gap-2">
           <SparkleIcon size={16} className="text-[#E3A62F]" />
           Любимые карточки
@@ -83,14 +84,18 @@ export const ChildProgress: React.FC = () => {
             <span className="text-sm font-black text-teal">{c.count} раз</span>
           </div>
         ))}
-      </div>
+      </QoldauCard>
 
-      {/* Поддерживающее завершение */}
-      <div className="mt-auto rounded-2xl bg-gradient-to-r from-[#EAF8F0] to-[#DDF5F0] p-5 font-black text-xl text-[#185d36] flex flex-col items-center justify-center gap-1.5 shadow-card">
+      {/* Поддерживающее завершение — QoldauCard tinted-green */}
+      <QoldauCard
+        variant="tinted-green"
+        padding="md"
+        className="mt-auto text-center flex flex-col items-center gap-1.5"
+      >
         <SparkleIcon size={26} className="text-[#185d36]" />
-        <span>У тебя получается</span>
-        <span className="text-sm font-bold opacity-90">Спасибо, что показал</span>
-      </div>
+        <span className="font-black text-xl text-[#185d36]">У тебя получается</span>
+        <span className="text-sm font-bold opacity-90 text-[#185d36]">Спасибо, что показал</span>
+      </QoldauCard>
 
       <p className="text-xs text-muted text-center italic">
         Только позитивная динамика. Это профиль достижений, не оценка.

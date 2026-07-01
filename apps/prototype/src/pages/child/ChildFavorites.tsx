@@ -6,6 +6,7 @@ import { useRoleStore } from '@/store/useRoleStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { IconRenderer } from '@/components/assets/IconRenderer';
 import { AssetPicker } from '@/components/assets/AssetPicker';
+import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Settings } from 'lucide-react';
 import type { QoldauAsset, AACCardConfig } from '@/types/assets';
 
@@ -93,11 +94,13 @@ export const ChildFavorites: React.FC = () => {
         )}
       </div>
 
-      {/* Edit mode banner */}
+      {/* Edit mode banner — QoldauCard tinted-yellow */}
       {editingCardId && (
-        <div className="bg-[#FFFCEC] border border-[#f7e5a3] rounded-xl px-4 py-3 text-sm text-ink-2">
-          Нажмите на карточку, чтобы изменить её иконку.
-        </div>
+        <QoldauCard variant="tinted-yellow" padding="sm">
+          <p className="text-sm text-ink-2">
+            Нажмите на карточку, чтобы изменить её иконку.
+          </p>
+        </QoldauCard>
       )}
 
       {/* Favorites grid */}
@@ -171,12 +174,18 @@ export const ChildFavorites: React.FC = () => {
         />
       )}
 
-      {/* Success feedback */}
+      {/* Success feedback — QoldauCard tinted-teal */}
       {selected && (
-        <div className="fixed bottom-24 left-4 right-4 bg-teal text-white text-center py-4 rounded-xl font-bold animate-fade-in shadow-card">
-          ✓ Мама увидит запрос
-          <div className="text-sm font-normal opacity-90 mt-1">Событие добавлено в Event Timeline</div>
-        </div>
+        <QoldauCard
+          variant="tinted-teal"
+          padding="md"
+          className="fixed bottom-24 left-4 right-4 z-40 text-center animate-fade-in shadow-card"
+        >
+          <p className="font-black text-ink">✓ Мама увидит запрос</p>
+          <p className="text-sm font-normal text-ink-2 opacity-90 mt-1">
+            Событие добавлено в Event Timeline
+          </p>
+        </QoldauCard>
       )}
     </div>
   );

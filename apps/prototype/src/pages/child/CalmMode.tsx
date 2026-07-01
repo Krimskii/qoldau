@@ -4,6 +4,9 @@ import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { CloudMascot } from '@/components/illustrations/CloudMascot';
+import { QoldauCard } from '@/components/ui/QoldauCard';
+import { QoldauIconCard, type QoldauIconColor } from '@/components/ui/QoldauIconCard';
+import { PrimaryAction } from '@/components/ui/Primitives';
 import {
   MusicIcon,
   BreathIcon,
@@ -20,20 +23,18 @@ interface CalmOption {
   id: string;
   label: string;
   Icon: React.FC<IconProps>;
-  iconColor: string;
-  bg: string;
-  textColor: string;
+  color: QoldauIconColor;
   path?: string;
 }
 
-// 6 спокойных опций — flat SVG вместо эмодзи.
+// 6 спокойных опций — flat SVG через QoldauIconCard для единого стиля.
 const OPTIONS: CalmOption[] = [
-  { id: 'music', label: 'Тихая музыка', Icon: MusicIcon, iconColor: 'text-[#5a3eb4]', bg: 'bg-[#F1EDFF]', textColor: 'text-[#173760]' },
-  { id: 'breath', label: 'Дыхание', Icon: BreathIcon, iconColor: 'text-[#1c6cb8]', bg: 'bg-[#EAF5FF]', textColor: 'text-[#173760]' },
-  { id: 'headphones', label: 'Наушники', Icon: HeadphonesIcon, iconColor: 'text-[#158647]', bg: 'bg-[#EAF8F0]', textColor: 'text-[#173760]' },
-  { id: 'dark', label: 'Темно', Icon: MoonIcon, iconColor: 'text-[#EAF5FF]', bg: 'bg-[#244a85]', textColor: 'text-white' },
-  { id: 'pause', label: 'Пауза', Icon: PauseIcon, iconColor: 'text-[#9a7820]', bg: 'bg-[#FFF6DF]', textColor: 'text-[#173760]' },
-  { id: 'call-mom', label: 'Позвать маму', Icon: HugIcon, iconColor: 'text-[#5a3eb4]', bg: 'bg-[#F1EDFF]', textColor: 'text-[#173760]', path: '/child/call' },
+  { id: 'music', label: 'Тихая музыка', Icon: MusicIcon, color: 'purple' },
+  { id: 'breath', label: 'Дыхание', Icon: BreathIcon, color: 'blue' },
+  { id: 'headphones', label: 'Наушники', Icon: HeadphonesIcon, color: 'green' },
+  { id: 'pause', label: 'Пауза', Icon: PauseIcon, color: 'yellow' },
+  { id: 'dark', label: 'Темно', Icon: MoonIcon, color: 'teal' },
+  { id: 'call-mom', label: 'Позвать маму', Icon: HugIcon, color: 'coral', path: '/child/call' },
 ];
 
 export const CalmMode: React.FC = () => {
@@ -85,8 +86,23 @@ export const CalmMode: React.FC = () => {
     }
     showToast(
       feltCalmer ? 'Отмечено: стало спокойнее' : 'Отмечено: завершено',
-      'success'
+      'success',
     );
+    navigate('/child/home');
+  };
+
+  const handleExitToHome = () => {
+    if (currentEventId) {
+      updateEvent(currentEventId, {
+        description: 'Calm Mode прерван. Выход.',
+        payload: {
+          startedAt: startedAt ? new Date(startedAt).toISOString() : undefined,
+          finishedAt: new Date().toISOString(),
+          duration: TIMER_SECONDS - remaining,
+          interrupted: true,
+        },
+      });
+    }
     navigate('/child/home');
   };
 
@@ -97,22 +113,37 @@ export const CalmMode: React.FC = () => {
     <div className="flex flex-col gap-4 min-h-[calc(100vh-80px)] bg-gradient-to-br from-[#EAF5FF] via-[#F9FCFC] to-[#F1EDFF] -mx-4 -mt-2 px-4 pt-2 pb-4 rounded-t-3xl">
       {/* Hero — CloudMascot + поддерживающие тексты */}
       <div className="flex flex-col items-center pt-4">
-        <CloudMascot mood={startedAt ? 'happy' : 'calm'} animated className="w-28 h-auto" />
-        <h2 className="text-xl font-black text-[#143259] mt-3">Можно отдохнуть</h2>
-        <p className="text-sm text-muted mt-1">Ты в безопасности</p>
+        <CloudMascot
+          mood={startedAt ? 'happy' : 'calm'}
+          animated
+          className="w-28 h-auto"
+        />
+        <h2 className="text-xl font-black text-ink mt-3">Можно отдохнуть</h2>
+        <p className="text-sm text-muted mt-1">Ты в безопасности · Я рядом</p>
       </div>
 
       {/* Таймер / кнопка старта */}
-      <div className="bg-white/70 backdrop-blur-sm border-2 border-[#DDF5F0] rounded-3xl p-6 text-center">
+      <QoldauCard variant="elevated" padding="lg">
         {startedAt === null ? (
-          <button
-            onClick={handleStart}
-            className="px-8 py-4 bg-gradient-to-br from-teal to-teal-dark text-white font-black rounded-2xl text-lg shadow-card transition-transform duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
-          >
-            Начать (1 минута)
-          </button>
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-sm text-ink-2 text-center leading-relaxed">
+              Таймер на 1 минуту. В любой момент можно выйти.
+            </p>
+            <PrimaryAction
+              label="Начать (1 минута)"
+              onClick={handleStart}
+              variant="primary"
+              size="lg"
+            />
+            <button
+              onClick={handleExitToHome}
+              className="text-xs text-muted hover:text-ink transition-colors"
+            >
+              Вернуться на главную
+            </button>
+          </div>
         ) : (
-          <div>
+          <div className="text-center">
             <div className="text-5xl font-black text-teal-dark tabular-nums">
               {minutes}:{String(seconds).padStart(2, '0')}
             </div>
@@ -133,26 +164,25 @@ export const CalmMode: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+      </QoldauCard>
 
-      {/* 6 опций — flat SVG-иконки на pastel-фонах */}
+      {/* 6 опций через QoldauIconCard */}
       <div className="grid grid-cols-3 gap-3">
-        {OPTIONS.map(({ id, label, Icon, iconColor, bg, textColor, path }) => (
-          <button
+        {OPTIONS.map(({ id, label, Icon, color, path }) => (
+          <QoldauIconCard
             key={id}
-            aria-label={label}
+            icon={Icon}
+            label={label}
+            color={color}
+            size="md"
             onClick={() => {
               if (path) navigate(path);
             }}
-            className={`min-h-[100px] rounded-2xl border border-[#d8e8f3] ${bg} flex flex-col items-center justify-center gap-2 text-sm font-black transition-transform duration-200 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 ${textColor}`}
-          >
-            <Icon size={36} className={iconColor} />
-            {label}
-          </button>
+          />
         ))}
       </div>
 
-      <p className="text-center font-black text-[#2c5e9e] mt-2 text-sm">
+      <p className="text-center font-black text-ink-2 mt-2 text-sm">
         Я рядом <span className="text-[#4EC28A] text-lg" aria-hidden="true">♥</span>
       </p>
     </div>

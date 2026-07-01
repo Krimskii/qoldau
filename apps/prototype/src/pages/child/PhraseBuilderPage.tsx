@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, Eraser } from 'lucide-react';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { DinoMascot } from '@/components/illustrations/DinoMascot';
 import { SuccessSparkle } from '@/components/illustrations/SuccessSparkle';
+import { QoldauCard } from '@/components/ui/QoldauCard';
+import { PrimaryAction } from '@/components/ui/Primitives';
 
 interface WordChip {
   text: string;
@@ -72,24 +75,28 @@ export const PhraseBuilderPage: React.FC = () => {
           className="w-10 h-10 rounded-2xl bg-white border border-[#dce9f4] flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
-          <span className="text-2xl text-[#53677e]">‹</span>
+          <ChevronLeft className="w-6 h-6 text-[#53677e]" />
         </button>
         <button
           onClick={clearPhrase}
           className="w-10 h-10 rounded-2xl bg-white border border-[#dce9f4] flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Очистить"
         >
-          <span className="text-2xl text-[#53677e]">⌫</span>
+          <Eraser className="w-5 h-5 text-[#53677e]" />
         </button>
       </div>
 
-      {/* Блок собранной фразы — DinoMascot + крупный текст */}
-      <div className="bg-gradient-to-br from-[#F0FBFF] to-[#EAF5FF] border-2 border-[#bee1f4] rounded-3xl p-5 flex items-center gap-4 min-h-[96px]">
+      {/* Блок собранной фразы — QoldauCard tinted-blue + DinoMascot + крупный текст */}
+      <QoldauCard
+        variant="tinted-blue"
+        padding="md"
+        className="flex items-center gap-4 min-h-[96px]"
+      >
         <DinoMascot animated={!showSuccess} className="w-16 h-16 flex-shrink-0" />
-        <div className="flex-1 text-center text-3xl font-black tracking-tight text-[#102544] min-h-[36px] flex items-center justify-center">
+        <div className="flex-1 text-center text-3xl font-black tracking-tight text-ink min-h-[36px] flex items-center justify-center">
           {phrase.length > 0 ? phrase.join(' ') : <span className="text-muted">...</span>}
         </div>
-      </div>
+      </QoldauCard>
 
       {/* Сетка слов — 4 колонки, мягкая подсветка выбранных (через ring) */}
       <div className="grid grid-cols-4 gap-2.5">
@@ -112,30 +119,31 @@ export const PhraseBuilderPage: React.FC = () => {
         })}
       </div>
 
-      {/* Кнопка отправки */}
+      {/* Кнопка отправки через PrimaryAction */}
       {phrase.length > 0 && (
-        <button
+        <PrimaryAction
+          label="Отправить маме"
           onClick={sendPhrase}
-          className="w-full py-5 bg-gradient-to-br from-teal to-[#037A76] text-white font-black rounded-2xl text-lg shadow-card hover:shadow-card-soft transition-shadow mt-auto active:scale-[0.98]"
-        >
-          Отправить маме
-        </button>
+          variant="primary"
+          size="lg"
+          className="mt-auto"
+        />
       )}
 
-      {/* Success overlay — мягкая success-карточка */}
+      {/* Success overlay — QoldauCard elevated + SuccessSparkle */}
       {showSuccess && (
         <div
           role="status"
           aria-live="polite"
           className="fixed inset-0 bg-[#EAF5FF]/85 backdrop-blur-sm z-50 flex items-center justify-center"
         >
-          <div className="bg-white border-2 border-[#DDF5F0] rounded-3xl px-8 py-7 shadow-card max-w-xs text-center">
+          <QoldauCard variant="elevated" padding="lg" className="max-w-xs text-center">
             <div className="flex justify-center mb-3">
               <SuccessSparkle className="w-20 h-20" />
             </div>
             <p className="text-lg font-black text-ink">Мама увидит фразу</p>
             <p className="text-sm text-muted mt-1">Спасибо, что сказал</p>
-          </div>
+          </QoldauCard>
         </div>
       )}
     </div>
