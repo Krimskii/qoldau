@@ -64,3 +64,35 @@ body {
 .wave-animation span:nth-child(4n) { animation-delay: 0.32s; }
 
 /* Sensory-safe анимации вынесены в src/styles/animations.css. */
+
+/* === Child personalization (v0.3.16) === */
+
+/* Font scale: html data-font-scale="1.1" → умножаем font-size на 1.1 */
+html[data-font-scale="1.1"] {
+  font-size: 110%;
+}
+html[data-font-scale="1.2"] {
+  font-size: 120%;
+}
+
+/* High contrast: убираем muted текст, делаем чётче */
+html.qoldau-high-contrast {
+  --muted: #344B68; /* ink-2 вместо #6B7C8F */
+}
+html.qoldau-high-contrast .text-muted {
+  color: #344B68 !important;
+}
+
+/* Calm visual: убираем градиенты, тени, transitions */
+html.qoldau-calm-visual [style*="linear-gradient"] {
+  background: #FFFFFF !important;
+}
+html.qoldau-calm-visual [style*="box-shadow"] {
+  box-shadow: none !important;
+}
+html.qoldau-calm-visual .shadow-card,
+html.qoldau-calm-visual .shadow-card-soft,
+html.qoldau-calm-visual .shadow-card-hover,
+html.qoldau-calm-visual .shadow-card-lg {
+  box-shadow: none !important;
+}

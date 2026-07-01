@@ -2,6 +2,54 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.16] — 2026-07-02 (Child UI: Design Rules compliance + Personalization)
+
+### Changed
+- **Phone frame удалён** — `/child/*` рендерится как обычное приложение (max-w 430), без тёмной обёртки 390×844. `AppShell` для child роли больше НЕ оборачивает в PhoneFrame. Файл `PhoneFrame.tsx` удалён.
+- **`src/styles/animations.css`** — удалены все ambient-анимации (float / sway / pulse / blink / cloud-float / breathe / heartbeat). Оставлены только:
+  - `qoldau-success-pop` (one-shot, 280ms) — success feedback.
+  - `qoldau-fade-in` / `qoldau-fade-in-up` (240ms) — page entrance.
+  - `qoldau-tap` (200ms) — one-shot tap feedback.
+  - `qoldau-press` — press-state.
+  - `html.qoldau-paused *` — глобальное отключение анимации (см. settings ниже).
+- **`src/components/icons/child2d.tsx`** — все `wrap()` вызовы стали no-op. `animated` prop deprecated. Иконки статичны. Соответствует DESIGN_RULES: «Запрещена постоянная фоновая анимация».
+
+### Added
+- **`src/store/useChildSettingsStore.ts`** — Zustand store с persist (`qoldau-child-settings-v1`):
+  - `calmVisual: boolean` — убирает градиенты, тени, анимации (CSS-класс `html.qoldau-calm-visual`).
+  - `largeIcons: boolean` — флаг для будущих per-component укрупнений.
+  - `highContrast: boolean` — bolder text (CSS-класс `html.qoldau-high-contrast`).
+  - `paused: boolean` — глобальная «Тишина» (CSS-класс `html.qoldau-paused`).
+  - `fontScale: 1 | 1.1 | 1.2` — масштаб шрифта (`html[data-font-scale="1.1"]`).
+- **`src/components/child/ChildSettingsSheet.tsx`** — bottom-sheet настроек ребёнка (DESIGN_RULES § Персонализация).
+- **`src/components/layout/ChildTopBar.tsx`** — добавлены 2 кнопки:
+  - **«Тишина»** — глобальная пауза анимаций/звука.
+  - **Settings gear** → ChildSettingsSheet.
+  - Avatar + brand + bell + новые кнопки.
+- **`src/styles/globals.css`** — CSS-хуки для `html[data-font-scale]`, `html.qoldau-calm-visual`, `html.qoldau-high-contrast`.
+
+### Compliance с DESIGN_RULES (v0.3.16)
+- ✅ Старт = `/overview` (выбор роли), редирект с `/`.
+- ✅ Цвет: только soft teal/blue/green/purple/amber/coral. Red только для экстренного.
+- ✅ Без ambient-анимации (float, pulse, blink loops удалены).
+- ✅ Анимация только one-shot (≤ 300ms) как реакция на действие.
+- ✅ `prefers-reduced-motion: reduce` отключает всё.
+- ✅ `html.qoldau-paused` глобально отключает анимации.
+- ✅ AAC color coding (need/do/feel/fav/help) — белый фон + цветной icon-container + label.
+- ✅ Tap-zones ≥ 64px (все кнопки 96-128px, primary CTA 68px).
+- ✅ BottomNav: 3 пункта максимум.
+- ✅ Soft tone: «Ты в безопасности», «Я рядом», без диагнозов.
+- ✅ Personalization: icon size (флаг готов), calm visual, contrast, font size, глобальная «Тишина».
+
+### Verified
+- `npm run build` passes — 1671 modules.
+- `npx tsc --noEmit` clean.
+- Dev server живой на 5173.
+- `/` → `/overview` (выбор роли).
+- `/child/*` — обычный max-w 430 layout, без phone mockup.
+
+---
+
 ## [0.3.15] — 2026-07-02 (MVP: 2D-only icons + Phone frame + Onboarding)
 
 ### Changed — Icon system unified to 2D

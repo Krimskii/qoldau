@@ -57,7 +57,7 @@ export const ChildProgress: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4 min-h-[calc(100vh-80px)]">
-      <ChildTopBar showSettings={false} />
+      <ChildTopBar />
 
       {/* Hero — celebratory tinted card */}
       <QoldauCard variant="tinted-yellow" padding="lg" className="text-center mx-5">

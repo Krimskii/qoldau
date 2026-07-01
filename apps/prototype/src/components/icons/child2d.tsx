@@ -1,24 +1,29 @@
 import React from 'react';
 
 /**
- * Child 2D icon set (v0.3.15) — inline SVG, gradient-filled, animated.
+ * Child 2D icon set (v0.3.16) — inline SVG, gradient-filled, STATIC.
  *
  * Используется в child UI (ChildHome / ChildCards / CalmMode / ChildSpeak /
  * PhraseBuilderPage). Каждая иконка — самодостаточный SVG с градиентом.
  *
- * API:
- *   <Water2DIcon size={56} animated />       // animated = true по умолчанию
- *   <Water2DIcon size={56} animated={false} />
+ * ПРАВИЛА ДИЗАЙНА (см. DESIGN_RULES для child UI):
+ * - Один символ = одно значение, всегда одинаковый во всём приложении.
+ * - Без постоянных ambient-анимаций (запрещены float/pulse/blink loops).
+ * - Анимация только как реакция на действие пользователя, ≤ 300 мс.
  *
- * Все иконки используют 48x48 viewBox, и анимированная обёртка (`g.qoldau-icon-*`)
- * применяет CSS-анимации (float / sway / pulse / blink). При prefers-reduced-motion
- * анимации отключаются глобально через animations.css.
+ * API:
+ *   <Water2DIcon size={56} />                  // статичная
+ *   <Water2DIcon size={56} animated />          // prop сохранён для обратной совместимости, но ничего не делает
+ *
+ * Все иконки используют 48x48 viewBox. При prefers-reduced-motion анимации
+ * отключаются глобально через animations.css.
  */
 
-export type Child2DAnimation = 'float' | 'sway' | 'pulse' | 'blink' | 'heartbeat' | 'none';
+export type Child2DAnimation = string;
 
 interface Child2DProps {
   size?: number;
+  /** @deprecated анимации отключены по правилам сенсорной безопасности */
   animated?: boolean;
   className?: string;
   ariaLabel?: string;
@@ -31,20 +36,14 @@ const defGrad = (id: string, c1: string, c2: string): React.ReactNode => (
   </linearGradient>
 );
 
+// Все wrap() вызовы теперь no-op — иконки статичны (правила UI).
+// Анимации убраны согласно DESIGN_RULES для child UI (запрещена ambient-анимация).
 const wrap = (
-  anim: Child2DAnimation,
+  _anim: Child2DAnimation,
   children: React.ReactNode,
   _size: number,
-  withAnim: boolean,
-): React.ReactNode => {
-  if (!withAnim || anim === 'none') return children;
-  const cls = `qoldau-icon-${anim}`;
-  return (
-    <g className={cls} style={{ transformOrigin: '50% 50%', transformBox: 'fill-box' }}>
-      {children}
-    </g>
-  );
-};
+  _withAnim: boolean,
+): React.ReactNode => children;
 
 const SvgShell: React.FC<{
   size: number;

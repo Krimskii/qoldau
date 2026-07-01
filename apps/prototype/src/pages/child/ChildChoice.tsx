@@ -65,7 +65,7 @@ export const ChildChoice: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)]">
-      <ChildTopBar showSettings={false} />
+      <ChildTopBar />
 
       <div className="flex items-center gap-2.5 px-5 pt-1 pb-0.5">
         <button
