@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Utensils, Droplet, Smile, Brain } from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -8,123 +8,146 @@ import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
 import { ParsedEvent } from '@/lib/aiParser.mock';
 
-const eventIcons: Record<string, React.ElementType> = {
-  food: Utensils,
-  toilet: Droplet,
-  behavior: Smile,
-  communication: Brain,
+interface ParsedDisplay {
+  type: string;
+  title: string;
+  description: string;
+  color: 'teal' | 'blue' | 'purple' | 'yellow' | 'green';
+  emoji: string;
+}
+
+const COLOR_MAP: Record<string, ParsedDisplay['color']> = {
+  food: 'green',
+  toilet: 'blue',
+  behavior: 'yellow',
+  communication: 'purple',
+  sensory: 'yellow',
+  water: 'blue',
+  state: 'teal',
 };
 
-const eventColors: Record<string, 'food' | 'behavior' | 'toilet' | 'sensory'> = {
-  food: 'food',
-  behavior: 'behavior',
-  toilet: 'toilet',
-  communication: 'behavior',
+const EMOJI_MAP: Record<string, string> = {
+  food: '🍎',
+  toilet: '🚽',
+  behavior: '⚡',
+  communication: '💬',
+  sensory: '👂',
+  water: '💧',
+  state: '😐',
 };
 
-/**
- * AIReview no longer creates events directly.
- * It only stores the AI-parsed observation in useVoiceObservationStore,
- * and lets the user proceed to ClarifyingQuestions, which is the single
- * place that creates confirmed QoldauEvents from voice observations.
- *
- * This prevents the previous bug where events were created twice (here
- * and again in ClarifyingQuestions) with status: ai_parsed instead of confirmed.
- */
 export const AIReview: React.FC = () => {
   const navigate = useNavigate();
-  const { parsedObservation, isProcessing, processTranscript, transcript, reset } = useVoiceObservationStore();
+  const {
+    parsedObservation,
+    transcript,
+    isProcessing,
+    processTranscript,
+    reset,
+  } = useVoiceObservationStore();
   const [events, setEvents] = useState<ParsedEvent[]>([]);
 
   useEffect(() => {
     if (!parsedObservation) {
-      processTranscript().then((result) => {
-        setEvents(result.events);
-      });
+      processTranscript().then((result) => setEvents(result.events));
     } else {
       setEvents(parsedObservation.events);
     }
   }, [parsedObservation, processTranscript]);
 
   const handleContinue = () => {
-    // Do NOT create events here. The user must answer clarifying questions
-    // and confirm. ClarifyingQuestions will read transcript, parsedObservation
-    // and answers from stores, then create the confirmed events.
+    // Не создаём события — ClarifyingQuestions сделает это после подтверждения
     navigate('/parent/clarify');
   };
 
-  const handleEdit = () => {
-    navigate('/parent/voice');
-  };
-
-  const handleDiscard = () => {
+  const handleSkip = () => {
     reset();
     navigate('/parent/home');
   };
 
   if (isProcessing) {
     return (
-      <div className="flex flex-col gap-4 items-center justify-center py-20">
-        <Sparkles className="w-8 h-8 text-teal animate-pulse" />
-        <p className="text-muted">AI обрабатывает...</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center">
+          <Sparkles className="w-8 h-8 text-white animate-pulse" />
+        </div>
+        <p className="text-sm font-bold text-muted">AI обрабатывает...</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title="AI-разбор наблюдения"
-        subtitle="Проверьте, всё ли правильно"
-        rightAction={<Sparkles className="w-5 h-5 text-teal" />}
-      />
+      <PageHeader title="AI-разбор" subtitle="Проверьте, всё ли правильно" showBack />
 
       {/* Transcript */}
       {transcript && (
-        <div className="bg-white border border-line rounded-2xl p-4">
-          <p className="text-xs font-bold text-muted mb-2">Расшифровка</p>
-          <p className="text-sm text-ink-2 italic">"{transcript}"</p>
+        <Card variant="tinted-blue">
+          <p className="text-xs font-bold text-blue uppercase tracking-wide mb-2">
+            Расшифровка
+          </p>
+          <p className="text-sm text-ink italic leading-relaxed">"{transcript}"</p>
+        </Card>
+      )}
+
+      {/* Parsed Events — цветные карточки */}
+      <div>
+        <p className="text-xs font-bold text-muted uppercase tracking-wide mb-2 px-1">
+          AI предложил {events.length} событий
+        </p>
+        <div className="flex flex-col gap-3">
+          {events.map((event, i) => {
+            const color = COLOR_MAP[event.type] ?? 'teal';
+            const emoji = EMOJI_MAP[event.type] ?? '📋';
+            const variantMap: Record<typeof color, any> = {
+              teal: 'tinted-teal',
+              blue: 'tinted-blue',
+              purple: 'tinted-purple',
+              yellow: 'tinted-yellow',
+              green: 'tinted-green',
+            };
+            return (
+              <Card key={i} variant={variantMap[color]} className="flex items-start gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-2xl flex-shrink-0 shadow-card-soft">
+                  {emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-ink">{event.title}</p>
+                  <p className="text-xs text-muted leading-relaxed mt-0.5">
+                    {event.description}
+                  </p>
+                  <p className="text-xs text-muted mt-1 font-bold">{event.timestamp}</p>
+                </div>
+              </Card>
+            );
+          })}
         </div>
-      )}
+      </div>
 
-      {/* Parsed Events */}
-      {events.map((event, i) => {
-        const Icon = eventIcons[event.type] || Brain;
-        return (
-          <Card key={i} variant={eventColors[event.type] || 'default'}>
-            <div className="flex gap-3 items-start">
-              <div className="w-10 h-10 rounded-xl bg-white border border-black/[0.04] flex items-center justify-center text-teal-dark">
-                <Icon className="w-4 h-4" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-bold">{event.title}</h4>
-                <p className="text-xs text-ink-2 leading-relaxed">
-                  {event.description}
-                  <br />
-                  <strong>{event.timestamp}</strong>
-                </p>
-              </div>
-            </div>
-          </Card>
-        );
-      })}
-
-      {/* AI Note */}
+      {/* AI note */}
       {parsedObservation && (
-        <AIInsightCard text={parsedObservation.insight} variant="warning" />
+        <AIInsightCard
+          text={parsedObservation.insight}
+          variant="warning"
+          title="AI-заметка"
+        />
       )}
 
-      <p className="text-xs text-muted text-center">
-        События будут созданы после вашего подтверждения на следующем шаге.
+      <p className="text-xs text-muted text-center italic px-4">
+        События сохранятся после вашего подтверждения на следующем шаге.
       </p>
 
       {/* Actions */}
       <div className="flex flex-col gap-2 mt-2">
-        <Button onClick={handleContinue}>Подтвердить и продолжить</Button>
-        <Button variant="secondary" onClick={handleEdit}>
-          Исправить запись
+        <Button
+          block
+          size="lg"
+          onClick={handleContinue}
+          iconRight={<ArrowRight className="w-4 h-4" />}
+        >
+          Подтвердить и продолжить
         </Button>
-        <Button variant="ghost" onClick={handleDiscard}>
+        <Button block size="lg" variant="outline" onClick={handleSkip}>
           Не сохранять
         </Button>
       </div>

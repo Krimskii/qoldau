@@ -1,81 +1,57 @@
 import React, { useMemo } from 'react';
+import { Copy, Send, Calendar, CheckCircle, Lightbulb, Clock } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
-import { Copy, Send, CheckCircle, Clock, Lightbulb, Calendar } from 'lucide-react';
+import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { QoldauEvent } from '@/types/qoldau';
 
 export const TutorReport: React.FC = () => {
   const { events } = useEventStore();
   const { showToast } = useToastStore();
 
-  // Get tutor events from last 7 days
   const tutorEvents = useMemo(() => {
     const now = Date.now();
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-    return events.filter(
-      (e) => e.sourceRole === 'tutor' && new Date(e.timestamp).getTime() >= sevenDaysAgo
-    );
+    return events
+      .filter(
+        (e) =>
+          e.childId === DEMO_PRIMARY_CHILD.id &&
+          (e.sourceRole === 'tutor' || e.sourceRole === 'specialist') &&
+          new Date(e.timestamp).getTime() >= sevenDaysAgo
+      )
+      .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
   }, [events]);
 
-  // Group events by date
-  const eventsByDate = useMemo(() => {
-    const grouped: Record<string, typeof tutorEvents> = {};
-    tutorEvents.forEach(event => {
-      const date = new Date(event.timestamp).toLocaleDateString('ru-RU');
-      if (!grouped[date]) grouped[date] = [];
-      grouped[date].push(event);
-    });
-    return grouped;
-  }, [tutorEvents]);
-
-  // Generate summary
   const summary = useMemo(() => {
-    if (tutorEvents.length === 0) {
-      return {
-        total: 4,
-        positive: 2,
-        needsAttention: 1,
-        neutral: 1,
-      };
-    }
-    
-    const communication = tutorEvents.filter(e => e.type === 'communication' || e.type === 'aac_card').length;
-    const sensory = tutorEvents.filter(e => e.type === 'sensory').length;
-    
-    return {
-      total: tutorEvents.length || 4,
-      positive: communication || 2,
-      needsAttention: sensory || 1,
-      neutral: (tutorEvents.length || 4) - (communication || 2) - (sensory || 1),
-    };
+    const total = tutorEvents.length;
+    const positive = tutorEvents.filter(
+      (e) => e.type === 'communication' || e.type === 'aac_card' || e.type === 'state'
+    ).length;
+    const attention = tutorEvents.filter(
+      (e) => e.type === 'sensory' || e.type === 'behavior' || e.type === 'sos'
+    ).length;
+    return { total: total || 4, positive: positive || 2, attention: attention || 1 };
   }, [tutorEvents]);
 
-  // Generate AI recommendation
-  const recommendation = useMemo(() => {
-    const hasSensory = tutorEvents.some(e => e.type === 'sensory');
-    const hasCommunication = tutorEvents.some(e => e.type === 'communication' || e.type === 'aac_card');
-    
-    if (hasSensory && hasCommunication) {
-      return 'Похоже, ребёнок хорошо использует коммуникацию. Сенсорные события можно отслеживать и заранее готовить поддержку. Это наблюдение, не диагноз.';
-    }
-    if (hasSensory) {
-      return 'Замечены сенсорные реакции. Возможно, поможет заранее подготовить тихое место. Можно обсудить со специалистом.';
-    }
-    if (hasCommunication) {
-      return 'Хороший прогресс в коммуникации! Продолжайте поддерживать использование AAC.';
-    }
-    return 'Собрано достаточно наблюдений. Продолжайте фиксировать события.';
-  }, [tutorEvents]);
+  // Group by date
+  const grouped: Record<string, QoldauEvent[]> = {};
+  tutorEvents.slice(0, 8).forEach((e) => {
+    const day = new Date(e.timestamp).toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+    });
+    if (!grouped[day]) grouped[day] = [];
+    grouped[day].push(e);
+  });
 
   const handleCopy = () => {
-    const reportText = generateReportText();
-    navigator.clipboard.writeText(reportText).then(() => {
-      showToast('Отчёт скопирован в буфер обмена', 'success');
-    }).catch(() => {
-      showToast('Не удалось скопировать', 'error');
-    });
+    const text = generateReportText();
+    navigator.clipboard?.writeText(text).then(
+      () => showToast('Отчёт скопирован в буфер обмена', 'success'),
+      () => showToast('Не удалось скопировать', 'error')
+    );
   };
 
   const handleSend = () => {
@@ -87,141 +63,124 @@ export const TutorReport: React.FC = () => {
     let text = `📋 Отчёт тьютора за ${today}\n\n`;
     text += `Всего событий: ${summary.total}\n`;
     text += `Хороших моментов: ${summary.positive}\n`;
-    text += `Требуют внимания: ${summary.needsAttention}\n\n`;
-    
+    text += `Требуют внимания: ${summary.attention}\n\n`;
     if (tutorEvents.length > 0) {
       text += `📅 События:\n`;
-      tutorEvents.slice(0, 5).forEach(e => {
+      tutorEvents.slice(0, 5).forEach((e) => {
         const time = new Date(e.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
         text += `• ${time} — ${e.title}\n`;
       });
-    } else {
-      text += `📅 События за неделю:\n`;
-      text += `• 10:00 — Наблюдалась нервозность\n`;
-      text += `• 10:15 — Пауза, похоже помогла\n`;
-      text += `• 10:30 — Еда, каша с сыром\n`;
-      text += `• 11:00 — Закрывал уши\n`;
     }
-    
-    text += `\n💡 ${recommendation}\n\n`;
+    text += `\n💡 Похоже, ребёнок хорошо использовал паузы и визуальные подсказки. Это наблюдение, не диагноз.\n`;
     text += `---\nОтправлено через Qoldau AI`;
-    
     return text;
   };
 
   return (
-    <div className="flex flex-col gap-4 pb-8">
-      <PageHeader
-        title="Отчёт родителю"
-        subtitle="Сводка за 7 дней"
-        showBack
-      />
+    <div className="flex flex-col gap-4">
+      <PageHeader title="Отчёт родителю" subtitle="Сводка за 7 дней" showBack />
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2.5">
         <Card variant="default" className="text-center">
           <p className="text-2xl font-black text-teal">{summary.total}</p>
-          <p className="text-xs text-muted">Всего событий</p>
+          <p className="text-[11px] text-muted">Всего</p>
         </Card>
-        <Card variant="default" className="text-center">
+        <Card variant="tinted-green" className="text-center">
           <p className="text-2xl font-black text-green">{summary.positive}</p>
-          <p className="text-xs text-muted">Хороших</p>
+          <p className="text-[11px] text-muted">Хороших</p>
         </Card>
-        <Card variant="default" className="text-center">
-          <p className="text-2xl font-black text-yellow">{summary.needsAttention}</p>
-          <p className="text-xs text-muted">Требуют внимания</p>
+        <Card variant="tinted-yellow" className="text-center">
+          <p className="text-2xl font-black text-yellow">{summary.attention}</p>
+          <p className="text-[11px] text-muted">Внимания</p>
         </Card>
       </div>
 
-      {/* Today's Events */}
+      {/* What happened */}
       <Card variant="default">
-        <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-3">
           <Calendar className="w-4 h-4 text-teal" />
-          События за неделю
-        </h4>
-        {tutorEvents.length > 0 ? (
-          <div className="space-y-3">
-            {Object.entries(eventsByDate).slice(0, 3).map(([date, dateEvents]) => (
-              <div key={date}>
-                <p className="text-xs font-bold text-muted mb-2">{date}</p>
-                {dateEvents.slice(0, 3).map((e) => {
-                  const time = new Date(e.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                  return (
-                    <div key={e.id} className="flex items-start gap-2 py-1.5">
-                      <Clock className="w-3 h-3 text-muted mt-1 flex-shrink-0" />
-                      <div>
-                        <span className="text-xs font-bold">{time}</span>
-                        <span className="text-xs text-ink-2 ml-2">{e.title}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+          <h4 className="text-sm font-black text-ink">События</h4>
+        </div>
+        {Object.keys(grouped).length === 0 ? (
+          <p className="text-sm text-muted text-center py-3">Событий пока нет</p>
         ) : (
-          <div className="space-y-2 text-xs text-ink-2">
-            <div className="flex items-start gap-2">
-              <Clock className="w-3 h-3 text-muted mt-1 flex-shrink-0" />
-              <span>10:00 — Наблюдалась нервозность</span>
+          Object.entries(grouped).map(([day, items]) => (
+            <div key={day}>
+              <p className="text-xs font-black text-muted uppercase tracking-wide mb-2 px-1 mt-2">
+                {day}
+              </p>
+              <div className="space-y-2">
+                {items.map((e) => (
+                  <div
+                    key={e.id}
+                    className="flex items-center gap-3 p-3 bg-bg rounded-2xl"
+                  >
+                    <Clock className="w-4 h-4 text-muted" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-ink truncate">{e.title}</p>
+                      <p className="text-xs text-muted truncate">{e.description}</p>
+                    </div>
+                    <span className="text-xs text-muted tabular-nums">
+                      {new Date(e.timestamp).toLocaleTimeString('ru-RU', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex items-start gap-2">
-              <Clock className="w-3 h-3 text-muted mt-1 flex-shrink-0" />
-              <span>10:15 — Пауза, похоже помогла</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <Clock className="w-3 h-3 text-muted mt-1 flex-shrink-0" />
-              <span>10:30 — Еда, каша с сыром</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <Clock className="w-3 h-3 text-muted mt-1 flex-shrink-0" />
-              <span>11:00 — Закрывал уши</span>
-            </div>
-          </div>
+          ))
         )}
       </Card>
 
-      {/* What happened */}
-      <Card variant="default">
-        <h4 className="text-sm font-bold mb-3">Что произошло</h4>
-        <ul className="space-y-2 text-sm text-ink-2">
-          <li className="flex items-start gap-2">
-            <CheckCircle className="w-4 h-4 text-green mt-0.5 flex-shrink-0" />
-            Использовал AAC карточки для запросов
-          </li>
-          <li className="flex items-start gap-2">
-            <CheckCircle className="w-4 h-4 text-green mt-0.5 flex-shrink-0" />
-            Спонтанно использовал звук "ва" для воды
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="w-4 h-4 flex items-center justify-center text-yellow mt-0.5 flex-shrink-0">!</span>
-            Закрывал уши при громком звуке
-          </li>
+      {/* What helped */}
+      <Card variant="tinted-green">
+        <div className="flex items-center gap-2 mb-2">
+          <CheckCircle className="w-4 h-4 text-green" />
+          <h4 className="text-sm font-black text-ink">Что помогло</h4>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="px-3 py-1 rounded-full bg-white text-green text-xs font-bold border border-green/30">Пауза</span>
+          <span className="px-3 py-1 rounded-full bg-white text-green text-xs font-bold border border-green/30">Тихое место</span>
+          <span className="px-3 py-1 rounded-full bg-white text-green text-xs font-bold border border-green/30">Визуальное расписание</span>
+        </div>
+      </Card>
+
+      {/* To clarify */}
+      <Card variant="tinted-yellow">
+        <div className="flex items-center gap-2 mb-2">
+          <Lightbulb className="w-4 h-4 text-yellow" />
+          <h4 className="text-sm font-black text-ink">Что стоит подтвердить дома</h4>
+        </div>
+        <ul className="space-y-1.5 text-sm text-ink-2">
+          <li className="leading-relaxed">• Связь шума и закрывания ушей</li>
+          <li className="leading-relaxed">• Эффект визуального расписания</li>
+          <li className="leading-relaxed">• Как часто используется AAC «Вода»</li>
         </ul>
       </Card>
 
-      {/* AI Recommendation */}
-      <Card variant="default" className="bg-gradient-to-r from-blue-soft to-purple-soft border border-blue/20">
-        <h4 className="text-sm font-bold mb-2 flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-blue" />
-          Рекомендация
-        </h4>
-        <p className="text-sm text-ink-2 leading-relaxed">{recommendation}</p>
-        <p className="text-xs text-muted mt-3 italic">
-          Это наблюдение на основе данных. Не является медицинским советом.
-        </p>
-      </Card>
+      <p className="text-[11px] text-muted text-center italic px-4">
+        Формулировки нейтральные. Это наблюдения, не оценка. Не являются медицинским диагнозом.
+      </p>
 
       {/* Actions */}
-      <div className="flex flex-col gap-3 mt-auto">
-        <Button onClick={handleCopy}>
-          <Copy className="w-4 h-4 mr-2" />
+      <div className="flex flex-col gap-2 mt-2">
+        <button
+          onClick={handleCopy}
+          className="w-full h-13 rounded-2xl bg-teal text-white font-bold text-base flex items-center justify-center gap-2 shadow-card hover:bg-teal-dark transition-colors"
+        >
+          <Copy className="w-4 h-4" />
           Скопировать отчёт
-        </Button>
-        <Button variant="secondary" onClick={handleSend}>
-          <Send className="w-4 h-4 mr-2" />
+        </button>
+        <button
+          onClick={handleSend}
+          className="w-full h-13 rounded-2xl bg-white border-2 border-teal/30 text-teal-dark font-bold text-base flex items-center justify-center gap-2 hover:bg-teal-soft transition-colors"
+        >
+          <Send className="w-4 h-4" />
           Отправить родителю
-        </Button>
+        </button>
       </div>
     </div>
   );

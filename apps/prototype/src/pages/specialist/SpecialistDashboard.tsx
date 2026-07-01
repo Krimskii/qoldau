@@ -1,25 +1,40 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Bell, Sparkles, FileText, TrendingUp, MessageCircle, Brain, CheckCircle } from 'lucide-react';
+import {
+  Calendar,
+  Bell,
+  Sparkles,
+  FileText,
+  TrendingUp,
+  MessageCircle,
+  Brain,
+  CheckCircle,
+  Activity,
+} from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
 import { DEMO_CHILDREN } from '@/data/demoDataset';
 
-const periods = ['7', '14', '30'];
+const periods = ['7', '14', '30'] as const;
+type Period = typeof periods[number];
+
+const PERIOD_LABELS: Record<Period, string> = {
+  '7': '7 дней',
+  '14': '14 дней',
+  '30': '30 дней',
+};
 
 export const SpecialistDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [period, setPeriod] = useState('7');
+  const [period, setPeriod] = useState<Period>('7');
   const { events } = useEventStore();
   const { selectedChildId } = useDemoControlsStore();
-
   const currentChild = DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
 
-  // Calculate KPIs based on events for the currently selected child
   const kpis = useMemo(() => {
     const now = Date.now();
     const days = parseInt(period);
@@ -37,11 +52,8 @@ export const SpecialistDashboard: React.FC = () => {
     );
     const confirmedEvents = periodEvents.filter((e) => e.status === 'confirmed');
 
-    // New signals approximation — unique signal-ish tokens from rawText or descriptions
     const uniqueSignals = new Set(
-      periodEvents
-        .map((e) => e.rawText?.slice(0, 10) ?? e.description?.slice(0, 10))
-        .filter(Boolean)
+      periodEvents.map((e) => e.rawText?.slice(0, 10) ?? e.description?.slice(0, 10)).filter(Boolean)
     );
 
     return {
@@ -56,7 +68,6 @@ export const SpecialistDashboard: React.FC = () => {
     };
   }, [events, period, selectedChildId]);
 
-  // Generate AI summary
   const aiSummary = useMemo(() => {
     if (kpis.sensoryCount >= 3) {
       return 'Похоже, замечены сенсорные реакции. Возможно, стоит обратить внимание на сенсорную поддержку в занятиях. Это наблюдение, не диагноз. Можно обсудить с семьёй.';
@@ -67,7 +78,6 @@ export const SpecialistDashboard: React.FC = () => {
     return 'Собрано достаточно данных для анализа. Чем больше наблюдений — тем точнее паттерны.';
   }, [kpis]);
 
-  // Get recent signals — derived from currentChild.mainSignals
   const recentSignals = useMemo(() => {
     if (currentChild.mainSignals.length > 0) {
       return currentChild.mainSignals.slice(0, 3).map((s) => ({
@@ -85,45 +95,27 @@ export const SpecialistDashboard: React.FC = () => {
     ];
   }, [currentChild]);
 
-  // Get repeating situations for selected child
   const repeatingSituations = useMemo(() => {
     const childEvents = events.filter((e) => e.childId === selectedChildId);
-
-    if (childEvents.length === 0) {
-      return [
-        { situation: 'Закрывает уши при шуме', count: 4, trend: 'stable' },
-        { situation: 'Просит воду звуком "ва"', count: 6, trend: 'up' },
-        { situation: 'Активная коммуникация', count: 3, trend: 'up' },
-      ];
-    }
-
     const situations: Record<string, number> = {};
     childEvents.forEach((e) => {
-      if (e.type === 'sensory') {
-        situations['Сенсорные реакции'] = (situations['Сенсорные реакции'] || 0) + 1;
-      }
-      if (e.type === 'communication' || e.type === 'aac_card') {
-        situations['Коммуникация'] = (situations['Коммуникация'] || 0) + 1;
-      }
-      if (e.type === 'calm_mode') {
-        situations['Спокойный режим использовался'] = (situations['Спокойный режим использовался'] || 0) + 1;
-      }
+      if (e.type === 'sensory') situations['Сенсорные реакции'] = (situations['Сенсорные реакции'] || 0) + 1;
+      if (e.type === 'communication' || e.type === 'aac_card') situations['Коммуникация'] = (situations['Коммуникация'] || 0) + 1;
+      if (e.type === 'calm_mode') situations['Спокойный режим использовался'] = (situations['Спокойный режим использовался'] || 0) + 1;
     });
-
-    return Object.entries(situations)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([situation, count]) => ({
-        situation,
-        count,
-        trend: count >= 3 ? 'up' : 'stable',
-      }));
+    return Object.entries(situations).sort((a, b) => b[1] - a[1]).slice(0, 3);
   }, [events, selectedChildId]);
 
+  const whatHelped = [
+    'Пауза / отдых',
+    'Тихое место',
+    'Визуальное расписание',
+  ];
+
   return (
-    <div className="flex flex-col gap-4 pb-8">
+    <div className="flex flex-col gap-5">
       <PageHeader
-        title={`Панель специалиста`}
+        title="Панель специалиста"
         subtitle={`${DEMO_CHILDREN.length} ребёнка · обзор за период`}
         rightAction={<Bell className="w-5 h-5 text-muted" />}
       />
@@ -136,181 +128,154 @@ export const SpecialistDashboard: React.FC = () => {
           <button
             key={p}
             onClick={() => setPeriod(p)}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            className={`flex-1 h-11 rounded-2xl text-sm font-bold transition-all ${
               period === p
-                ? 'bg-teal text-white shadow-md'
+                ? 'bg-teal text-white shadow-card-soft'
                 : 'bg-white border border-line text-muted hover:border-teal'
             }`}
           >
-            {p} дней
+            {PERIOD_LABELS[p]}
           </button>
         ))}
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards — 4 KPI */}
       <div className="grid grid-cols-2 gap-3">
-        <Card variant="default" className="bg-gradient-to-br from-teal-soft to-white">
+        <Card variant="tinted-teal">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-3xl font-black text-teal">{kpis.totalEvents}</p>
               <p className="text-xs text-muted mt-1">Событий</p>
             </div>
-            <Calendar className="w-8 h-8 text-teal/30" />
+            <Calendar className="w-8 h-8 text-teal/40" />
           </div>
         </Card>
-        <Card variant="default" className="bg-gradient-to-br from-purple-soft to-white">
+        <Card variant="tinted-purple">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-3xl font-black text-purple">{kpis.newSignals}</p>
               <p className="text-xs text-muted mt-1">Новых сигналов</p>
             </div>
-            <Sparkles className="w-8 h-8 text-purple/30" />
+            <Sparkles className="w-8 h-8 text-purple/40" />
           </div>
         </Card>
-        <Card variant="default" className="bg-gradient-to-br from-blue-soft to-white">
+        <Card variant="tinted-blue">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-3xl font-black text-blue">{kpis.communications}</p>
               <p className="text-xs text-muted mt-1">Коммуникаций</p>
             </div>
-            <MessageCircle className="w-8 h-8 text-blue/30" />
+            <MessageCircle className="w-8 h-8 text-blue/40" />
           </div>
         </Card>
-        <Card variant="default" className="bg-gradient-to-br from-green-soft to-white">
+        <Card variant="tinted-green">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-3xl font-black text-green">+{kpis.dynamics}%</p>
               <p className="text-xs text-muted mt-1">Подтверждений</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-green/30" />
+            <TrendingUp className="w-8 h-8 text-green/40" />
           </div>
         </Card>
       </div>
 
       {/* AI Summary */}
-      <Card variant="default" className="bg-gradient-to-r from-blue-soft to-purple-soft border border-blue/20">
-        <div className="flex items-start gap-3">
-          <Brain className="w-6 h-6 text-blue mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="text-sm font-bold text-ink mb-1">AI-наблюдение</h4>
-            <p className="text-sm text-ink-2 leading-relaxed">{aiSummary}</p>
-            <p className="text-xs text-muted mt-2 italic">
-              Это наблюдение на основе данных. Не является медицинским диагнозом.
-            </p>
-          </div>
-        </div>
-      </Card>
+      <AIInsightCard text={aiSummary} />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => navigate('/specialist/abc')}
-          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-teal hover:shadow-md transition-all"
+          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-teal hover:shadow-card-soft transition-all"
         >
-          <div className="text-sm font-bold mb-1 flex items-center gap-2">
-            <Brain className="w-4 h-4 text-teal" />
-            ABC-анализ
-          </div>
-          <p className="text-xs text-muted">Триггеры и последствия</p>
+          <Brain className="w-5 h-5 text-teal mb-2" />
+          <p className="text-sm font-bold text-ink">ABC-анализ</p>
+          <p className="text-xs text-muted">До / наблюдалось / после</p>
         </button>
         <button
           onClick={() => navigate('/specialist/communication-profile')}
-          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-purple hover:shadow-md transition-all"
+          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-purple hover:shadow-card-soft transition-all"
         >
-          <div className="text-sm font-bold mb-1 flex items-center gap-2">
-            <MessageCircle className="w-4 h-4 text-purple" />
-            Коммуникации
-          </div>
+          <MessageCircle className="w-5 h-5 text-purple mb-2" />
+          <p className="text-sm font-bold text-ink">Коммуникации</p>
           <p className="text-xs text-muted">Сигналы ребёнка</p>
         </button>
         <button
           onClick={() => navigate('/specialist/care-patterns')}
-          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-blue hover:shadow-md transition-all"
+          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-blue hover:shadow-card-soft transition-all"
         >
-          <div className="text-sm font-bold mb-1 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-blue" />
-            Паттерны
-          </div>
-          <p className="text-xs text-muted">Уход и режим</p>
+          <Activity className="w-5 h-5 text-blue mb-2" />
+          <p className="text-sm font-bold text-ink">Паттерны</p>
+          <p className="text-xs text-muted">Связи в данных</p>
         </button>
         <button
           onClick={() => navigate('/specialist/reports')}
-          className="bg-gradient-to-br from-teal to-[#037A76] text-white rounded-2xl p-4 flex items-center gap-3 shadow-md hover:shadow-lg transition-shadow"
+          className="bg-gradient-to-br from-teal to-teal-dark text-white rounded-2xl p-4 flex items-center gap-3 shadow-card hover:shadow-card-hover transition-shadow"
         >
           <FileText className="w-6 h-6" />
           <div>
-            <div className="text-sm font-bold">Отчёт</div>
+            <p className="text-sm font-black">Отчёт</p>
             <p className="text-xs opacity-80">Сформировать</p>
           </div>
         </button>
       </div>
 
-      {/* Repeating Situations */}
-      <Card variant="default">
-        <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-teal" />
-          Часто повторяющиеся ситуации
-        </h4>
-        <div className="space-y-2">
-          {repeatingSituations.map((s, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-line last:border-0">
+      {/* Repeating situations */}
+      {repeatingSituations.length > 0 && (
+        <Card variant="default">
+          <h4 className="text-sm font-black text-ink mb-3">Повторяющиеся ситуации</h4>
+          {repeatingSituations.map(([name, count]) => (
+            <div
+              key={name}
+              className="flex items-center justify-between py-2.5 border-b border-line-soft last:border-0"
+            >
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-teal" />
-                <span className="text-sm">{s.situation}</span>
+                <span className="text-sm font-bold text-ink">{name}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-teal-soft text-teal">{s.count} раз</Badge>
-                {s.trend === 'up' && <TrendingUp className="w-4 h-4 text-green" />}
-                {s.trend === 'stable' && <span className="text-xs text-muted">стабильно</span>}
-              </div>
+              <span className="text-xs font-bold text-teal">{count} раз</span>
+            </div>
+          ))}
+        </Card>
+      )}
+
+      {/* What helped */}
+      <Card variant="tinted-green">
+        <h4 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 text-green" />
+          Что помогало
+        </h4>
+        <div className="space-y-2">
+          {whatHelped.map((h) => (
+            <div key={h} className="flex items-center gap-2 text-sm text-ink-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-green" />
+              {h}
             </div>
           ))}
         </div>
       </Card>
 
-      {/* New Signals */}
-      <Card variant="default">
-        <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-purple" />
-          Новые сигналы
-        </h4>
-        <div className="space-y-2">
+      {/* New signals */}
+      {recentSignals.length > 0 && (
+        <Card variant="default">
+          <h4 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-purple" />
+            Новые сигналы
+          </h4>
           {recentSignals.map((s, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-line last:border-0">
+            <div
+              key={i}
+              className="flex items-center justify-between py-2.5 border-b border-line-soft last:border-0"
+            >
               <div>
-                <span className="text-sm font-bold">{s.signal}</span>
+                <p className="text-sm font-bold text-ink">{s.signal}</p>
                 <p className="text-xs text-muted">{s.meaning}</p>
               </div>
               <span className="text-xs text-muted">{s.date}</span>
             </div>
           ))}
-        </div>
-      </Card>
-
-      {/* What helped */}
-      <Card variant="default">
-        <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
-          <CheckCircle className="w-4 h-4 text-green" />
-          Что помогало
-        </h4>
-        <div className="space-y-2 text-sm text-ink-2">
-          <div className="flex items-start gap-2">
-            <CheckCircle className="w-4 h-4 text-green mt-0.5 flex-shrink-0" />
-            Пауза при нервозности
-          </div>
-          <div className="flex items-start gap-2">
-            <CheckCircle className="w-4 h-4 text-green mt-0.5 flex-shrink-0" />
-            AAC карточки для запросов
-          </div>
-          <div className="flex items-start gap-2">
-            <CheckCircle className="w-4 h-4 text-green mt-0.5 flex-shrink-0" />
-            Визуальное расписание
-          </div>
-        </div>
-        <p className="text-xs text-muted mt-3 italic">
-          Это наблюдения на основе данных. Можно обсудить со специалистом.
-        </p>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 };

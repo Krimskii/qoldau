@@ -1,28 +1,69 @@
-feat(ui): child interface polish per visual reference
+feat(ui): v0.3.4 visual design alignment
 
-Visual reference: 10-screen design from product brief.
+Design system (new):
+- src/styles/designTokens.ts — palette/radii/spacing/motion/typography tokens
+- tailwind.config.js — teal light/dark/tint, green #4EC28A,
+  coral #E56F5D, yellow #F7C948, shadows card/card-soft/card-hover
+  /inner/ring-teal, keyframes fade-in/breathe/pulse-soft/slideUp
+- docs/DESIGN_SYSTEM.md — full design documentation
+- docs/CHILD_INTERFACE_GUIDE.md — child UI rules
 
-New screens:
-- /child/choice — "Что ты хочешь?" 2x2 large image options
-- /child/interface-guide — "Что важно в детском интерфейсе" + методы
+Unified components (rewritten):
+- Button: primary/secondary/outline/ghost/danger/success/icon × sm/md/lg/xl
+- Card: default/soft + tinted-{teal,blue,purple,yellow,coral,green}
+- Badge: 8 color variants
+- PageHeader: ink title + subtitle + back + rightAction + accent
+- AIInsightCard: pastel teal + Sparkles
+- EmptyState: empty/loading component
+- AppShell: phone-panel layout (430 for parent/child/tutor,
+  1100 for specialist). Sticky header w/ role avatar + bell w/ badge
+- BottomNav: floating pill + central floating mic button for parent
 
-Improved screens (match reference):
-- ChildHome: status-badge "Я в порядке", larger avatar header,
-  3x2 action grid + wide "Выбрать из вариантов" CTA, Now/Next timer
-- ChildCards: 11 cards in 4-column grid, large emoji, gradient feedback
-- ChildSpeak: 180px mic button with glow ring, animated voice wave
-  (14 bars, breathe keyframes), inline confirm card
-- PhraseBuilder: chips with semantic colors, dino mascot, send button
-- NowNext: schedule cards with arrow, 60-min timer + progress bar
-- CalmMode: breathing cloud mascot, 6 options grid, soft pastel bgs
-- CallMom: contact cards with 64px avatar + 56px action buttons,
-  large red SOS, message button
-- ChildProgress: celebration card with star, 2x2 achievements,
-  favorite cards with emoji
+Parent pages rewritten (12):
+- ParentHome: hero card + 192px mic CTA + 6 quick actions + AI insight + last events
+- VoiceObservation: 192px mic w/ glow ring + waveform + timer + examples
+- AIReview: colored pastel cards + transcript + AI insight + actions
+- ClarifyingQuestions: 3 colored cards w/ pill buttons
+- EventTimeline: timeline-style (date, dot, time, 3 badges) + chips
+- EventDetails: cards w/ source, raw, linked, AI, suggestions, 3 actions
+- CareDiary: 5 tabs + EmptyState + AI insight
+- BehaviorSensory: 3 tabs (situations/helped/calm)
+- ParentAIChat: bubbles + presets + disclaimer
+- ParentAnalytics: donut + triggers + helpers + dynamics + AI insight
+- ParentNotifications: cards from child/tutor/specialist/system
+- ParentProfile: child card + team + settings + disclaimer
+
+Tutor pages rewritten (5):
+- TutorHome: status + schedule + hints + mic CTA + recent
+- TutorVoice: same 192px mic pattern
+- TutorAIReview: pastel cards + transcript + helped + to-confirm + AI
+- TutorReport: 3 KPI + events + helped + to-confirm + copy/send
+- TutorChildProfile: signals + helps + avoid + preferences + ChildSelector
+
+Specialist:
+- SpecialistDashboard: ChildSelector + period (7/14/30) + 4 tinted KPIs
+  + AI insight + 4 quick actions + situations + helped + signals
+- SpecialistEvents, ABCAnalysis, CommunicationProfile, CarePatterns,
+  SupportPlan, Reports — kept with refactor to unified Card
+
+Overview:
+- Full investor-deck style: sticky header + hero w/ badge + 5-step chain
+  + 4 role pastel cards + 3 features + MVP/Phase2 + disclaimer
+
+Safety wording scan:
+- "паттерны поведения" → "повторяющиеся ситуации и реакции"
+- "триггеры поведения" → "ситуации, которые могли повлиять"
+- "отказ" → "не включился / нужна была пауза"
+- All AI hints use "Похоже…", "Возможно…", "Можно попробовать…"
+
+Versioning:
+- apps/prototype/package.json → 0.3.4
+- docs/VERSIONING.md → Current Version v0.3.4
+- CHANGELOG.md → [0.3.4] section
 
 Build:
-- npm run build passes (TypeScript strict)
-- New routes registered in router.tsx
-
-Docs:
-- docs/UI_IMPROVEMENT_PLAN.md — full roadmap with 5 phases
+- npm run build passes (TypeScript strict mode)
+- 1637 modules transformed
+- dist/index.html 0.46 kB
+- dist/assets/*.css 48.62 kB
+- dist/assets/*.js 355.06 kB

@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] — 2026-07-01 (Visual Design Alignment)
+
+### Added — Design system
+- **`src/styles/designTokens.ts`** — palette, radii, spacing, motion, typography tokens.
+- **`tailwind.config.js`** — расширен темизацией: новые оттенки teal (light, dark, tint), green (#4EC28A), coral (#E56F5D), yellow (#F7C948), новые тени (card, card-soft, card-hover, inner, ring-teal), keyframes (fade-in, breathe, pulse-soft, slideUp).
+- **`docs/DESIGN_SYSTEM.md`** — полная документация: цвета, типографика, скругления, тени, отступы, компоненты, layout, child UI, анимации.
+- **`docs/CHILD_INTERFACE_GUIDE.md`** — правила построения детского UI.
+
+### Changed — UI components
+- **Button** — variants: primary / secondary / outline / ghost / danger / success / icon. Sizes: sm / md / lg / xl. Block.
+- **Card** — variants: default / soft / tinted-{teal,blue,purple,yellow,coral,green,orange}.
+- **Badge** — variants: default / outline / teal / blue / purple / yellow / coral / green.
+- **PageHeader** — ink заголовок + subtitle + back + rightAction. accent.
+- **AIInsightCard** — pastel teal-карточка с Sparkles.
+- **EmptyState** — универсальный компонент.
+
+### Changed — Layout
+- **AppShell** — phone-panel layout (max-w-430 / 1100). Sticky header с колокольчиком.
+- **BottomNav** — floating pill. Для parent — центральная teal-кнопка с микрофоном.
+
+### Changed — Parent pages
+- ParentHome / VoiceObservation / AIReview / ClarifyingQuestions / EventTimeline / EventDetails / CareDiary / BehaviorSensory / ParentAIChat / ParentAnalytics / ParentNotifications / ParentProfile — все переписаны под референс.
+
+### Changed — Tutor pages
+- TutorHome / TutorVoice / TutorAIReview / TutorReport / TutorChildProfile — все переписаны.
+
+### Changed — Specialist
+- SpecialistDashboard — обновлён с ChildSelector, периодом, KPI tinted-карточками.
+
+### Changed — Overview
+- Полностью переработан в стиле investor deck.
+
+### UX Text / Safety
+- «паттерны поведения» → «повторяющиеся ситуации и реакции»
+- «триггеры поведения» → «ситуации, которые могли повлиять»
+- «отказ» → «не включился / нужна была пауза»
+- Все AI-выводы начинаются с «Похоже…», «Возможно…»
+- Все suggestions — «Можно попробовать…»
+
+### Build
+- `npm run build` passes
+- `apps/prototype/package.json` → version `0.3.4`
+- `docs/VERSIONING.md` → Current Version `v0.3.4`
+
+---
+
 ## [0.3.0] — 2026-07-01
 
 ### Full Demo MVP

@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Filter, Brain, FileText, AlertCircle, CheckCircle, Edit } from 'lucide-react';
+import { Calendar, FileText } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { TimelineItem } from '@/components/ui/TimelineItem';
+import { Card } from '@/components/ui/Card';
+import { AIInsightCard } from '@/components/ui/AIInsightCard';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useEventStore } from '@/store/useEventStore';
 import { EventType, QoldauEvent } from '@/types/qoldau';
 import {
@@ -10,6 +12,7 @@ import {
   getEventStatusClassName,
   getEventSourceLabel,
   getEventSourceClassName,
+  getEventTypeClassName,
 } from '@/utils/eventLabels';
 
 type FilterType = 'all' | EventType;
@@ -17,33 +20,113 @@ type FilterType = 'all' | EventType;
 interface FilterConfig {
   key: FilterType;
   label: string;
-  color: string;
 }
 
-// Filters must match real EventType values defined in src/types/qoldau.ts.
-// Colors must use tokens defined in tailwind.config.js.
 const FILTERS: FilterConfig[] = [
-  { key: 'all', label: 'Все', color: 'bg-teal' },
-  { key: 'voice_observation', label: 'Голос', color: 'bg-teal' },
-  { key: 'food', label: 'Питание', color: 'bg-green' },
-  { key: 'water', label: 'Вода', color: 'bg-blue' },
-  { key: 'toilet', label: 'Туалет', color: 'bg-blue' },
-  { key: 'sleep', label: 'Сон', color: 'bg-purple' },
-  { key: 'behavior', label: 'Поведение', color: 'bg-yellow' },
-  { key: 'sensory', label: 'Сенсорика', color: 'bg-yellow' },
-  { key: 'communication', label: 'Коммуникация', color: 'bg-purple' },
-  { key: 'aac_card', label: 'AAC', color: 'bg-teal' },
-  { key: 'phrase', label: 'Фразы', color: 'bg-teal' },
-  { key: 'tutor_note', label: 'Тьютор', color: 'bg-purple' },
-  { key: 'sos', label: 'SOS', color: 'bg-coral' },
+  { key: 'all', label: 'Все' },
+  { key: 'voice_observation', label: 'Голос' },
+  { key: 'food', label: 'Питание' },
+  { key: 'water', label: 'Вода' },
+  { key: 'toilet', label: 'Туалет' },
+  { key: 'sleep', label: 'Сон' },
+  { key: 'behavior', label: 'Поведение' },
+  { key: 'sensory', label: 'Сенсорика' },
+  { key: 'communication', label: 'Коммуникация' },
+  { key: 'aac_card', label: 'AAC' },
+  { key: 'phrase', label: 'Фразы' },
+  { key: 'tutor_note', label: 'Тьютор' },
+  { key: 'sos', label: 'SOS' },
 ];
 
-const STATUS_ICON = {
-  confirmed: <CheckCircle className="w-3 h-3" />,
-  ai_parsed: <AlertCircle className="w-3 h-3" />,
-  corrected: <Edit className="w-3 h-3" />,
-  draft: <span className="text-xs">○</span>,
-  rejected: <span className="text-xs">✕</span>,
+const DOT_COLOR: Record<string, string> = {
+  voice_observation: 'bg-teal',
+  food: 'bg-green',
+  water: 'bg-blue',
+  toilet: 'bg-blue',
+  sleep: 'bg-purple',
+  behavior: 'bg-yellow',
+  sensory: 'bg-yellow',
+  communication: 'bg-purple',
+  aac_card: 'bg-teal',
+  phrase: 'bg-teal',
+  media_request: 'bg-purple',
+  sos: 'bg-coral',
+  calm_mode: 'bg-blue',
+  tutor_note: 'bg-purple',
+  specialist_note: 'bg-blue',
+  state: 'bg-teal',
+};
+
+const formatTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+const formatDay = (iso: string) =>
+  new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+
+interface TimelineRowProps {
+  event: QoldauEvent;
+  onClick: () => void;
+}
+
+const TimelineRow: React.FC<TimelineRowProps> = ({ event, onClick }) => {
+  const dotColor = DOT_COLOR[event.type] ?? 'bg-teal';
+  const typeClass = getEventTypeClassName(event.type);
+  const sourceClass = getEventSourceClassName(event.sourceRole);
+  const statusClass = getEventStatusClassName(event.status);
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex gap-3 items-start text-left py-3 px-2 -mx-2 rounded-2xl hover:bg-bg transition-colors group"
+    >
+      {/* Time + dot */}
+      <div className="flex flex-col items-center min-w-[44px] pt-0.5">
+        <span className="text-xs font-bold text-ink tabular-nums">
+          {formatTime(event.timestamp)}
+        </span>
+        <div
+          className={`mt-2 w-3 h-3 rounded-full ${dotColor} ring-4 ring-bg shadow-card-soft flex-shrink-0`}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 pb-2 border-b border-line-soft group-last:border-0">
+        <h4 className="text-sm font-bold text-ink leading-tight">{event.title}</h4>
+        <p className="text-xs text-muted leading-relaxed mt-0.5 line-clamp-2">
+          {event.description}
+        </p>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${typeClass}`}>
+            {event.type === 'voice_observation' && 'Голос'}
+            {event.type === 'food' && 'Питание'}
+            {event.type === 'water' && 'Вода'}
+            {event.type === 'toilet' && 'Туалет'}
+            {event.type === 'sleep' && 'Сон'}
+            {event.type === 'behavior' && 'Поведение'}
+            {event.type === 'sensory' && 'Сенсорика'}
+            {event.type === 'communication' && 'Коммуникация'}
+            {event.type === 'aac_card' && 'AAC'}
+            {event.type === 'phrase' && 'Фраза'}
+            {event.type === 'media_request' && 'Медиа'}
+            {event.type === 'sos' && 'SOS'}
+            {event.type === 'calm_mode' && 'Спокойствие'}
+            {event.type === 'tutor_note' && 'Тьютор'}
+            {event.type === 'specialist_note' && 'Специалист'}
+            {event.type === 'state' && 'Состояние'}
+          </span>
+          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${sourceClass}`}>
+            {getEventSourceLabel(event.sourceRole)}
+          </span>
+          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${statusClass}`}>
+            {getEventStatusLabel(event.status)}
+          </span>
+        </div>
+      </div>
+    </button>
+  );
 };
 
 export const EventTimeline: React.FC = () => {
@@ -51,76 +134,65 @@ export const EventTimeline: React.FC = () => {
   const { events } = useEventStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
-  const filteredEvents = useMemo(() => {
+  const filtered = useMemo(() => {
     if (activeFilter === 'all') return events;
     return events.filter((e) => e.type === activeFilter);
   }, [events, activeFilter]);
 
-  const groupedByTime = useMemo(() => {
-    const groups: { label: string; events: QoldauEvent[] }[] = [
-      { label: 'Утро', events: [] },
-      { label: 'День', events: [] },
-      { label: 'Вечер', events: [] },
-      { label: 'Ночь', events: [] },
-    ];
+  // Group by date (descending)
+  const grouped = useMemo(() => {
+    const map: Record<string, QoldauEvent[]> = {};
+    [...filtered]
+      .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+      .forEach((e) => {
+        const day = formatDay(e.timestamp);
+        if (!map[day]) map[day] = [];
+        map[day].push(e);
+      });
+    return Object.entries(map);
+  }, [filtered]);
 
-    filteredEvents.forEach((event) => {
-      const hour = new Date(event.timestamp).getHours();
-      if (hour >= 6 && hour < 12) groups[0].events.push(event);
-      else if (hour >= 12 && hour < 18) groups[1].events.push(event);
-      else if (hour >= 18 && hour < 23) groups[2].events.push(event);
-      else groups[3].events.push(event);
-    });
-
-    return groups.filter((g) => g.events.length > 0);
-  }, [filteredEvents]);
-
-  // AI observation — cautious wording only
   const aiObservation = useMemo(() => {
-    if (events.length === 0) return null;
-
     const sensoryCount = events.filter((e) => e.type === 'sensory').length;
     const communicationCount = events.filter(
       (e) => e.type === 'communication' || e.type === 'aac_card'
     ).length;
-    const foodCount = events.filter((e) => e.type === 'food').length;
-
     if (sensoryCount >= 2) {
       return 'Похоже, сегодня несколько событий связаны с сенсорной чувствительностью. Это наблюдение, не диагноз. Можно обсудить со специалистом.';
     }
     if (communicationCount >= 2) {
       return 'Похоже, ребёнок активно использовал коммуникацию сегодня. Это хороший знак! Нужно подтвердить наблюдениями.';
     }
-    if (foodCount >= 3) {
-      return 'Похоже, сегодня было несколько событий, связанных с питанием. Это может быть полезной информацией для специалиста.';
-    }
     return 'Сегодня собрано достаточно наблюдений. Чем больше данных — тем точнее паттерны.';
   }, [events]);
 
   return (
-    <div className="flex flex-col gap-4 pb-20">
+    <div className="flex flex-col gap-4">
       <PageHeader
-        title="Event Timeline"
-        subtitle="Все события в одном месте"
+        title="События"
+        subtitle={`${filtered.length} событий`}
         rightAction={
-          <button className="flex items-center gap-2 text-sm font-bold text-teal">
+          <button
+            onClick={() => navigate('/specialist/reports')}
+            className="w-10 h-10 rounded-2xl bg-white border border-line flex items-center justify-center text-teal hover:bg-teal-soft transition-colors shadow-card-soft"
+            aria-label="В отчёт"
+          >
             <FileText className="w-4 h-4" />
-            В отчёт
           </button>
         }
       />
 
-      {/* Filters */}
-      <div className="px-4 overflow-x-auto">
-        <div className="flex gap-2 min-w-max pb-1">
+      {/* Filter chips */}
+      <div className="overflow-x-auto -mx-5 px-5 pb-1">
+        <div className="flex gap-2 min-w-max">
           {FILTERS.map((f) => (
             <button
               key={f.key}
               onClick={() => setActiveFilter(f.key)}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
                 activeFilter === f.key
-                  ? `${f.color} text-white`
-                  : 'bg-white border border-line text-ink-2 hover:border-teal'
+                  ? 'bg-teal text-white shadow-card-soft'
+                  : 'bg-white border border-line text-ink-2 hover:border-teal hover:text-teal-dark'
               }`}
             >
               {f.label}
@@ -129,74 +201,44 @@ export const EventTimeline: React.FC = () => {
         </div>
       </div>
 
-      {/* AI Observation */}
-      {aiObservation && (
-        <div className="mx-4 bg-gradient-to-r from-blue-soft to-purple-soft border border-blue/20 rounded-2xl p-4">
-          <div className="flex items-start gap-3">
-            <Brain className="w-5 h-5 text-blue mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-sm text-ink leading-relaxed">{aiObservation}</p>
-              <p className="text-xs text-muted mt-2 italic">
-                Это AI-наблюдение, не медицинский факт
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* AI observation */}
+      <AIInsightCard text={aiObservation} />
 
-      {/* Timeline */}
-      {groupedByTime.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-16 h-16 rounded-full bg-teal-soft flex items-center justify-center mb-4">
-            <Filter className="w-8 h-8 text-teal" />
-          </div>
-          <h3 className="font-bold text-ink mb-2">Нет событий этого типа</h3>
-          <p className="text-sm text-muted px-6">
-            Попробуйте другой фильтр или добавьте наблюдение голосом
-          </p>
-        </div>
+      {/* Timeline by day */}
+      {grouped.length === 0 ? (
+        <EmptyState
+          icon="📋"
+          title="Нет событий этого типа"
+          description="Попробуйте другой фильтр или добавьте наблюдение голосом"
+          action={
+            <button
+              onClick={() => navigate('/parent/voice')}
+              className="px-5 py-3 rounded-2xl bg-teal text-white font-bold text-sm hover:bg-teal-dark transition-colors"
+            >
+              Сказать наблюдение
+            </button>
+          }
+        />
       ) : (
-        groupedByTime.map((group) => (
-          <div key={group.label} className="px-4">
-            <h3 className="text-xs font-bold text-muted mb-3 uppercase tracking-wide">
-              {group.label}
-            </h3>
-            <div className="relative">
-              <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-line" />
-              {group.events.map((event) => {
-                const sourceClassName = getEventSourceClassName(event.sourceRole);
-                const statusClassName = getEventStatusClassName(event.status);
-
-                return (
-                  <div key={event.id} className="relative mb-3">
-                    <div className="absolute left-4 top-4 w-2.5 h-2.5 rounded-full bg-teal shadow-[0_0_0_5px_#E7F8F5]" />
-                    <div
-                      className="ml-12 bg-white border border-line rounded-xl p-3 hover:shadow-card-soft transition-shadow cursor-pointer"
-                      onClick={() => navigate(`/parent/events/${event.id}`)}
-                    >
-                      {/* Badges row */}
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-bold ${sourceClassName}`}
-                        >
-                          {getEventSourceLabel(event.sourceRole)}
-                        </span>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 ${statusClassName}`}
-                        >
-                          {STATUS_ICON[event.status]}
-                          {getEventStatusLabel(event.status)}
-                        </span>
-                      </div>
-                      {/* Event content */}
-                      <div className="flex items-start gap-2">
-                        <TimelineItem event={event} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+        grouped.map(([day, items]) => (
+          <div key={day}>
+            <div className="flex items-center gap-2 mb-1 px-1">
+              <Calendar className="w-4 h-4 text-muted" />
+              <h3 className="text-xs font-bold text-muted uppercase tracking-wide">
+                {day}
+              </h3>
             </div>
+            <Card variant="default" padding="sm">
+              <div>
+                {items.map((event) => (
+                  <TimelineRow
+                    key={event.id}
+                    event={event}
+                    onClick={() => navigate(`/parent/events/${event.id}`)}
+                  />
+                ))}
+              </div>
+            </Card>
           </div>
         ))
       )}

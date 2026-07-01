@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Bell } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 
@@ -12,47 +13,54 @@ interface Notification {
   time: string;
   source: 'child' | 'tutor' | 'specialist' | 'system';
   read: boolean;
+  icon: string;
+  bg: string;
 }
+
+const SOURCE_STYLES = {
+  child: { icon: '👦', bg: 'bg-coral-soft text-coral' },
+  tutor: { icon: '👨‍🏫', bg: 'bg-purple-soft text-purple' },
+  specialist: { icon: '🧑‍⚕️', bg: 'bg-blue-soft text-blue' },
+  system: { icon: '🔔', bg: 'bg-yellow-soft text-yellow' },
+};
 
 export const ParentNotifications: React.FC = () => {
   const { events } = useEventStore();
 
-  // Derive mock notifications from Event Timeline
   const notifications = useMemo<Notification[]>(() => {
-    const childEvents = events.filter(
-      (e) =>
-        e.childId === DEMO_PRIMARY_CHILD.id &&
-        (e.sourceRole === 'child' || e.sourceRole === 'tutor' || e.sourceRole === 'specialist')
-    );
-
-    const fromEvents = childEvents
-      .slice(-8)
+    const childEvents = events
+      .filter(
+        (e) =>
+          e.childId === DEMO_PRIMARY_CHILD.id &&
+          (e.sourceRole === 'child' || e.sourceRole === 'tutor' || e.sourceRole === 'specialist')
+      )
+      .slice(-6)
       .reverse()
-      .map((e, idx): Notification => ({
-        id: `notif-${e.id}`,
-        title:
-          e.sourceRole === 'child'
-            ? `${DEMO_PRIMARY_CHILD.name}: ${e.title}`
-            : e.sourceRole === 'tutor'
-              ? `Тьютор: ${e.title}`
-              : `Специалист: ${e.title}`,
-        description: e.description,
-        time: new Date(e.timestamp).toLocaleString('ru-RU', {
-          day: 'numeric',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        source:
-          e.sourceRole === 'child'
-            ? 'child'
-            : e.sourceRole === 'tutor'
-              ? 'tutor'
-              : 'specialist',
-        read: idx > 1, // first 2 unread
-      }));
+      .map((e, idx): Notification => {
+        const src = e.sourceRole as 'child' | 'tutor' | 'specialist';
+        const style = SOURCE_STYLES[src];
+        return {
+          id: `notif-${e.id}`,
+          title:
+            e.sourceRole === 'child'
+              ? `${DEMO_PRIMARY_CHILD.name}: ${e.title}`
+              : e.sourceRole === 'tutor'
+                ? `Тьютор: ${e.title}`
+                : `Специалист: ${e.title}`,
+          description: e.description,
+          time: new Date(e.timestamp).toLocaleString('ru-RU', {
+            day: 'numeric',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          source: src,
+          read: idx > 1,
+          icon: style.icon,
+          bg: style.bg,
+        };
+      });
 
-    // Add a couple of system notifications
     return [
       {
         id: 'sys-1',
@@ -61,8 +69,10 @@ export const ParentNotifications: React.FC = () => {
         time: '1 июля, 15:30',
         source: 'system',
         read: false,
+        icon: SOURCE_STYLES.system.icon,
+        bg: SOURCE_STYLES.system.bg,
       },
-      ...fromEvents,
+      ...childEvents,
     ];
   }, [events]);
 
@@ -78,45 +88,39 @@ export const ParentNotifications: React.FC = () => {
       />
 
       {notifications.length === 0 ? (
-        <Card variant="default">
-          <div className="text-center py-6">
-            <p className="text-sm font-bold mb-1">Нет уведомлений</p>
-            <p className="text-xs text-muted">
-              Здесь будут уведомления о событиях от ребёнка, тьютора и специалиста
-            </p>
-          </div>
-        </Card>
+        <EmptyState
+          icon="🔔"
+          title="Нет уведомлений"
+          description="Здесь будут события от ребёнка, тьютора и специалиста"
+        />
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           {notifications.map((notif) => (
             <Card
               key={notif.id}
               variant="default"
-              className={!notif.read ? 'border-teal/30 bg-teal-soft/30' : ''}
+              className={!notif.read ? 'border-teal/30 bg-teal-tint' : ''}
             >
               <div className="flex items-start gap-3">
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    notif.source === 'child'
-                      ? 'bg-coral-soft text-coral'
-                      : notif.source === 'tutor'
-                        ? 'bg-purple-soft text-purple'
-                        : notif.source === 'specialist'
-                          ? 'bg-blue-soft text-blue'
-                          : 'bg-yellow-soft text-yellow'
-                  }`}
+                  className={`w-11 h-11 rounded-2xl ${notif.bg} flex items-center justify-center text-2xl flex-shrink-0`}
+                  aria-hidden="true"
                 >
-                  <Bell className="w-4 h-4" />
+                  {notif.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-sm font-bold flex-1">{notif.title}</h4>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h4 className="text-sm font-black text-ink flex-1 min-w-0 truncate">
+                      {notif.title}
+                    </h4>
                     {!notif.read && (
                       <span className="w-2 h-2 rounded-full bg-teal flex-shrink-0" />
                     )}
                   </div>
-                  <p className="text-xs text-muted leading-relaxed">{notif.description}</p>
-                  <p className="text-xs text-muted mt-1">{notif.time}</p>
+                  <p className="text-xs text-muted leading-relaxed line-clamp-2">
+                    {notif.description}
+                  </p>
+                  <p className="text-[11px] text-muted mt-1">{notif.time}</p>
                 </div>
               </div>
             </Card>
@@ -124,9 +128,9 @@ export const ParentNotifications: React.FC = () => {
         </div>
       )}
 
-      <Card variant="default" className="bg-bg border-line">
+      <Card variant="soft">
         <p className="text-xs text-muted text-center leading-relaxed">
-          Все уведомления — только информационные. Это не сигналы тревоги и не медицинские сообщения.
+          Уведомления информационные. Это не сигналы тревоги и не медицинские сообщения.
         </p>
       </Card>
     </div>

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Mic, MicOff } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { MicButton } from '@/components/ui/MicButton';
 import { VoiceWave } from '@/components/ui/VoiceWave';
 
 export const VoiceObservation: React.FC = () => {
@@ -29,85 +29,105 @@ export const VoiceObservation: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
   const handleRecord = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
+    if (isRecording) stopRecording();
+    else startRecording();
   };
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const formatDuration = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
   const examples = [
     'Он поел кашу с сыром',
-    'Сходили в туалет, стул жидкий',
+    'Сходили в туалет, стул нормальный',
     'Начал нервничать, закрывал уши',
-    'Сказал «ба» и потянулся к воде',
+    'Сказал «ва» и потянулся к воде',
   ];
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 min-h-[70vh]">
       <PageHeader
         title="Говорите обычным языком"
-        subtitle="AI поймёт и структурирует"
+        subtitle="AI поймёт и предложит структуру"
         showBack
       />
 
-      {/* Recording Zone */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 py-8">
-        <MicButton isRecording={isRecording} onClick={handleRecord} size="xl" />
+      {/* Recording zone — центральный фокус */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
+        {/* Большая круглая кнопка-микрофон */}
+        <button
+          onClick={handleRecord}
+          aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
+          className={`w-48 h-48 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+            isRecording
+              ? 'bg-gradient-to-br from-coral to-[#cc251d]'
+              : 'bg-gradient-to-br from-teal to-teal-dark'
+          }`}
+          style={{
+            boxShadow: isRecording
+              ? '0 0 0 20px rgba(229,111,93,0.10), 0 0 0 40px rgba(229,111,93,0.05), 0 24px 40px rgba(229,111,93,0.30)'
+              : '0 0 0 20px rgba(0,150,136,0.08), 0 0 0 40px rgba(0,150,136,0.045), 0 24px 40px rgba(0,150,136,0.25)',
+          }}
+        >
+          {isRecording ? (
+            <MicOff className="w-24 h-24 text-white" strokeWidth={2.5} />
+          ) : (
+            <Mic className="w-24 h-24 text-white" strokeWidth={2.5} />
+          )}
+        </button>
 
+        {/* Волна */}
         {isRecording && (
-          <>
+          <div className="w-full max-w-xs">
             <VoiceWave />
-            <div className="text-3xl font-black tracking-wider">
-              {formatDuration(duration)}
-              <span className="inline-block w-2 h-2 rounded-full bg-[#EF5A5A] ml-2 animate-pulse" />
-            </div>
-          </>
+          </div>
         )}
 
+        {/* Таймер */}
+        {isRecording && (
+          <div className="text-3xl font-black text-ink tabular-nums">
+            {formatDuration(duration)}
+          </div>
+        )}
+
+        {/* Hint text */}
         {!isRecording && (
-          <p className="text-center text-muted">
-            Нажмите на кнопку и начните говорить
+          <p className="text-sm text-muted text-center max-w-xs">
+            Нажмите на кнопку и расскажите, что произошло.
+            AI предложит структуру наблюдения.
           </p>
         )}
       </div>
 
-      {/* Examples */}
+      {/* Примеры фраз */}
       <div>
-        <p className="text-xs font-bold text-ink-2 mb-2">Примеры фраз</p>
+        <p className="text-xs font-bold text-muted mb-2 px-1">
+          Примеры наблюдений
+        </p>
         <div className="flex flex-col gap-2">
-          {examples.map((example, i) => (
+          {examples.map((ex, i) => (
             <div
               key={i}
-              className="text-xs border border-line bg-white rounded-xl p-2.5 flex gap-2 items-center text-ink-2"
+              className="text-sm border border-line-soft bg-white rounded-2xl px-4 py-2.5 text-ink-2"
             >
-              <span className="w-5 h-5 rounded-lg bg-[#F7FBFA] flex items-center justify-center">
-                <span className="text-[8px]">💬</span>
-              </span>
-              {example}
+              {ex}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Stop Button */}
+      {/* Stop button */}
       {isRecording && (
         <button
           onClick={handleRecord}
-          className="w-full border border-teal rounded-xl bg-white text-teal-dark font-bold py-3"
+          className="w-full h-13 rounded-2xl bg-coral text-white font-bold text-base shadow-card active:scale-[0.98] transition-all"
         >
           Остановить запись
         </button>

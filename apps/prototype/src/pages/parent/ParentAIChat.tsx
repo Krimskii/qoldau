@@ -8,7 +8,7 @@ interface Message {
   text: string;
 }
 
-const PRESET_QUESTIONS = [
+const PRESETS = [
   'Что сегодня чаще повторялось?',
   'Какие сигналы появились?',
   'Что помогало?',
@@ -43,7 +43,6 @@ export const ParentAIChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const summary = getDemoTimelineSummary(DEMO_PRIMARY_CHILD.id);
 
   useEffect(() => {
@@ -55,43 +54,36 @@ export const ParentAIChat: React.FC = () => {
     if (!question) return;
     setMessages((prev) => [...prev, { role: 'user', text: question }]);
     setInput('');
-
     setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'ai', text: generateAnswer(question, summary) },
-      ]);
+      setMessages((prev) => [...prev, { role: 'ai', text: generateAnswer(question, summary) }]);
     }, 600);
   };
 
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-160px)]">
+    <div className="flex flex-col gap-3 h-[calc(100vh-180px)]">
       <PageHeader
         title="AI-помощник"
-        subtitle={`Спросите по данным ${DEMO_PRIMARY_CHILD.name}`}
+        subtitle={`Спросите по наблюдениям ${DEMO_PRIMARY_CHILD.name}`}
         showBack
         rightAction={<Sparkles className="w-5 h-5 text-teal" />}
       />
 
-      {/* Chat */}
       <div ref={scrollRef} className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1">
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`max-w-[88%] p-3 rounded-2xl text-sm leading-relaxed ${
+            className={`max-w-[88%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
               msg.role === 'user'
-                ? 'self-end bg-teal text-white rounded-br-md'
-                : 'self-start bg-teal-soft border border-mint text-ink-2 rounded-bl-md'
+                ? 'self-end bg-teal text-white rounded-br-md shadow-card-soft'
+                : 'self-start bg-teal-soft border border-teal/20 text-ink rounded-bl-md'
             }`}
           >
             {msg.text}
           </div>
         ))}
-
-        {/* Preset questions */}
         {messages.length <= 1 && (
           <div className="flex flex-wrap gap-2 mt-2">
-            {PRESET_QUESTIONS.map((q) => (
+            {PRESETS.map((q) => (
               <button
                 key={q}
                 onClick={() => handleSend(q)}
@@ -104,12 +96,10 @@ export const ParentAIChat: React.FC = () => {
         )}
       </div>
 
-      {/* Disclaimer */}
-      <div className="text-[11px] text-muted text-center italic px-4">
+      <p className="text-[11px] text-muted text-center italic px-2">
         Ответы AI — гипотезы, не медицинский диагноз. Можно обсудить со специалистом.
-      </div>
+      </p>
 
-      {/* Input */}
       <div className="flex items-center gap-2 border border-line rounded-2xl p-2 bg-white shadow-card-soft">
         <input
           type="text"
@@ -121,7 +111,7 @@ export const ParentAIChat: React.FC = () => {
         />
         <button
           onClick={() => handleSend()}
-          className="w-9 h-9 rounded-xl bg-teal flex items-center justify-center text-white hover:bg-teal-dark transition-colors"
+          className="w-10 h-10 rounded-xl bg-teal text-white flex items-center justify-center hover:bg-teal-dark transition-colors"
           aria-label="Отправить"
         >
           <Send className="w-4 h-4" />

@@ -1,44 +1,52 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Volume2, ArrowRightLeft, Mic, Lightbulb, TrendingUp } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useEventStore } from '@/store/useEventStore';
-import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 
 const TABS = [
-  { key: 'triggers', label: 'Триггеры' },
+  { key: 'triggers', label: 'Ситуации' },
   { key: 'helped', label: 'Что помогло' },
   { key: 'calm', label: 'Спокойный режим' },
 ] as const;
 
 export const BehaviorSensory: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<typeof TABS[number]['key']>('triggers');
   const { events } = useEventStore();
-  const { showToast } = useToastStore();
 
-  const childEvents = events.filter((e) => e.childId === DEMO_PRIMARY_CHILD.id);
+  const childEvents = useMemo(
+    () => events.filter((e) => e.childId === DEMO_PRIMARY_CHILD.id),
+    [events]
+  );
 
-  // Triggers — sensory + behavior events
   const sensoryEvents = useMemo(
-    () => childEvents.filter((e) => e.type === 'sensory' || e.type === 'behavior').slice(-10),
+    () =>
+      childEvents
+        .filter((e) => e.type === 'sensory' || e.type === 'behavior')
+        .slice(-8),
     [childEvents]
   );
 
-  // What helped — calm_mode events
   const calmEvents = useMemo(
     () => childEvents.filter((e) => e.type === 'calm_mode').slice(-5),
     [childEvents]
   );
 
-  // Triggers by tag
   const triggerStats = useMemo(() => {
-    const stats: Record<string, number> = { 'Шум': 0, 'Переход': 0, 'Новый вкус': 0, 'Громкий звук': 0 };
+    const stats: Record<string, number> = {
+      Шум: 0,
+      'Смена активности': 0,
+      'Громкий звук': 0,
+    };
     sensoryEvents.forEach((e) => {
       const text = (e.description + ' ' + (e.tags?.join(' ') || '')).toLowerCase();
       if (text.includes('шум') || text.includes('громк') || text.includes('уши')) stats['Шум']++;
-      if (text.includes('переход') || text.includes('новой активности')) stats['Переход']++;
+      if (text.includes('переход') || text.includes('новой активности')) stats['Смена активности']++;
     });
     return stats;
   }, [sensoryEvents]);
@@ -53,18 +61,15 @@ export const BehaviorSensory: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title="Поведение и сенсорика"
-        subtitle="Триггеры и что помогло"
-      />
+      <PageHeader title="Сенсорика и поведение" subtitle="Что повторяется и что помогает" />
 
       {/* Tabs */}
-      <div className="flex bg-bg border border-line rounded-xl p-1 gap-1">
+      <div className="bg-bg border border-line-soft rounded-2xl p-1 flex gap-1">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all ${
+            className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all ${
               activeTab === tab.key
                 ? 'bg-white text-teal-dark shadow-card-soft'
                 : 'text-muted'
@@ -77,10 +82,9 @@ export const BehaviorSensory: React.FC = () => {
 
       {activeTab === 'triggers' && (
         <>
-          {/* Triggers from EventStore */}
           <Card variant="default">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-bold">Сенсорные события</h4>
+              <h4 className="text-sm font-black text-ink">Сенсорные события</h4>
               <span className="text-xs text-muted">{sensoryEvents.length} за неделю</span>
             </div>
             {sensoryEvents.length === 0 ? (
@@ -88,40 +92,42 @@ export const BehaviorSensory: React.FC = () => {
                 Пока нет сенсорных событий
               </p>
             ) : (
-              sensoryEvents.map((event) => (
-                <button
+              sensoryEvents.map((event, i) => (
+                <div
                   key={event.id}
-                  className="w-full flex items-center justify-between gap-3 border-b border-line py-2.5 last:border-0 text-left hover:bg-bg rounded-xl px-2 transition-colors"
+                  className={`flex items-center gap-3 py-2.5 ${
+                    i < sensoryEvents.length - 1 ? 'border-b border-line-soft' : ''
+                  }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Volume2 className="w-4 h-4 text-purple" />
-                    <div>
-                      <h4 className="text-xs font-bold">{event.title}</h4>
-                      <p className="text-xs text-muted">{event.description}</p>
-                    </div>
+                  <Volume2 className="w-4 h-4 text-purple flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-ink">{event.title}</p>
+                    <p className="text-xs text-muted truncate">{event.description}</p>
                   </div>
-                  <span className="text-xs text-muted">
-                    {new Date(event.timestamp).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                  <span className="text-xs text-muted tabular-nums">
+                    {new Date(event.timestamp).toLocaleDateString('ru-RU', {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
                   </span>
-                </button>
+                </div>
               ))
             )}
           </Card>
 
-          {/* Trigger stats */}
           <Card variant="default">
-            <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+            <h4 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-coral" />
-              Частые триггеры (гипотезы)
+              Повторяющиеся ситуации (гипотезы)
             </h4>
             {Object.entries(triggerStats).map(([name, count]) => (
               <div
                 key={name}
-                className="flex items-center justify-between gap-3 border-b border-line py-2.5 last:border-0"
+                className="flex items-center justify-between gap-3 py-2.5 border-b border-line-soft last:border-0"
               >
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-coral" />
-                  <span className="text-sm font-bold">{name}</span>
+                  <span className="text-sm font-bold text-ink">{name}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted">{count} раз</span>
@@ -134,8 +140,8 @@ export const BehaviorSensory: React.FC = () => {
                 </div>
               </div>
             ))}
-            <p className="text-xs text-muted mt-3 italic">
-              Это гипотезы на основе данных. Не являются медицинским диагнозом.
+            <p className="text-[11px] text-muted mt-3 italic">
+              Это гипотезы на основе наблюдений. Не являются медицинским диагнозом.
             </p>
           </Card>
         </>
@@ -143,24 +149,26 @@ export const BehaviorSensory: React.FC = () => {
 
       {activeTab === 'helped' && (
         <Card variant="default">
-          <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+          <h4 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
             <Lightbulb className="w-4 h-4 text-yellow" />
             Что помогало
           </h4>
           {helpers.map((h, i) => (
             <div
               key={i}
-              className="flex items-center justify-between gap-3 border-b border-line py-2.5 last:border-0"
+              className={`flex items-center justify-between gap-3 py-2.5 ${
+                i < helpers.length - 1 ? 'border-b border-line-soft' : ''
+              }`}
             >
               <div className="flex items-center gap-2.5">
-                <ArrowRightLeft className="w-4 h-4 text-green" />
+                <ArrowRightLeft className="w-4 h-4 text-green flex-shrink-0" />
                 <div>
-                  <h4 className="text-xs font-bold">{h.name}</h4>
-                  <p className="text-xs text-muted">{h.count} раз за неделю</p>
+                  <p className="text-xs font-bold text-ink">{h.name}</p>
+                  <p className="text-[11px] text-muted">{h.count} раз за неделю</p>
                 </div>
               </div>
               <span
-                className={`text-xs font-bold px-2 py-1 rounded-full ${
+                className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                   h.status === 'Помогло'
                     ? 'bg-green-soft text-green'
                     : 'bg-yellow-soft text-yellow'
@@ -176,26 +184,33 @@ export const BehaviorSensory: React.FC = () => {
       {activeTab === 'calm' && (
         <>
           <Card variant="default">
-            <h4 className="text-sm font-bold mb-3">Спокойный режим</h4>
+            <h4 className="text-sm font-black text-ink mb-3">Спокойный режим</h4>
             {calmEvents.length === 0 ? (
-              <p className="text-xs text-muted text-center py-4">
-                Пока не было запусков Calm Mode
-              </p>
+              <EmptyState
+                icon="☁️"
+                title="Пока не было Calm Mode"
+                description="Можно запустить в любое время"
+              />
             ) : (
-              calmEvents.map((event) => (
+              calmEvents.map((event, i) => (
                 <div
                   key={event.id}
-                  className="flex items-center gap-3 border-b border-line py-2.5 last:border-0"
+                  className={`flex items-center gap-3 py-2.5 ${
+                    i < calmEvents.length - 1 ? 'border-b border-line-soft' : ''
+                  }`}
                 >
-                  <span className="w-8 h-8 rounded-xl bg-blue-soft flex items-center justify-center text-blue">
-                    🧘
-                  </span>
-                  <div className="flex-1">
-                    <h4 className="text-xs font-bold">{event.title}</h4>
-                    <p className="text-xs text-muted">{event.description}</p>
+                  <div className="w-10 h-10 rounded-2xl bg-blue-soft flex items-center justify-center text-2xl flex-shrink-0">
+                    ☁️
                   </div>
-                  <span className="text-xs text-muted">
-                    {new Date(event.timestamp).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-ink">{event.title}</p>
+                    <p className="text-xs text-muted truncate">{event.description}</p>
+                  </div>
+                  <span className="text-xs text-muted tabular-nums">
+                    {new Date(event.timestamp).toLocaleDateString('ru-RU', {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
                   </span>
                 </div>
               ))
@@ -203,16 +218,15 @@ export const BehaviorSensory: React.FC = () => {
           </Card>
           <AIInsightCard
             text="Похоже, короткие паузы и тихое место помогают снизить напряжение. Это наблюдение, не диагноз. Можно попробовать и дальше, если это работает."
-            variant="warning"
           />
         </>
       )}
 
       <button
-        onClick={() => showToast('Опишите наблюдение голосом — например: «Закрывал уши при громкой музыке»', 'info')}
-        className="w-full border border-teal rounded-xl bg-teal-soft text-teal-dark font-bold py-3 flex items-center justify-center gap-2"
+        onClick={() => navigate('/parent/voice')}
+        className="w-full h-13 rounded-2xl bg-teal-soft border-2 border-teal/30 text-teal-dark font-black text-base flex items-center justify-center gap-2 hover:bg-teal hover:text-white transition-colors"
       >
-        <Mic className="w-4 h-4" />
+        <Mic className="w-5 h-5" />
         Добавить голосом
       </button>
     </div>

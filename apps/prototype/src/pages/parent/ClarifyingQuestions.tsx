@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Droplet, Utensils, Brain } from 'lucide-react';
+import { Droplet, Utensils, Volume2, ArrowRight } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
@@ -12,7 +13,7 @@ const questions = [
   {
     id: 'water-amount',
     icon: Droplet,
-    color: 'blue',
+    color: 'blue' as const,
     question: 'Сколько воды выпил?',
     options: ['Мало', 'Нормально', 'Много', 'Не знаю'],
     defaultSelected: 'Нормально',
@@ -20,22 +21,21 @@ const questions = [
   {
     id: 'toilet-better',
     icon: Utensils,
-    color: 'blue',
+    color: 'green' as const,
     question: 'После туалета стало легче?',
     options: ['Да', 'Нет', 'Не заметил(а)'],
     defaultSelected: 'Да',
   },
   {
     id: 'noise-around',
-    icon: Brain,
-    color: 'purple',
+    icon: Volume2,
+    color: 'yellow' as const,
     question: 'Был ли шум вокруг?',
     options: ['Да', 'Нет', 'Не заметил(а)'],
     defaultSelected: 'Да',
   },
 ];
 
-// Map AI-parsed event types to QoldauEvent types
 const EVENT_TYPE_MAP: Record<string, EventType> = {
   food: 'food',
   toilet: 'toilet',
@@ -46,43 +46,23 @@ const EVENT_TYPE_MAP: Record<string, EventType> = {
   state: 'state',
 };
 
-/**
- * ClarifyingQuestions is the SINGLE place where confirmed QoldauEvents are
- * created from a voice observation.
- *
- * It pulls:
- *   - transcript from useVoiceObservationStore
- *   - parsedObservation.events from useVoiceObservationStore
- *   - clarifying answers from useClarifyingStore
- *
- * It writes:
- *   - status: 'confirmed' on every created event
- *   - rawText: <transcript> (the original phrase)
- *   - linkedEventIds: all created events are linked to each other
- *   - payload.clarifyingAnswers + payload.aiInsight + payload.source = 'voice_observation'
- */
 export const ClarifyingQuestions: React.FC = () => {
   const navigate = useNavigate();
   const { answers, setAnswer } = useClarifyingStore();
-  const {
-    transcript,
-    parsedObservation,
-    reset: resetVoiceObservation,
-  } = useVoiceObservationStore();
+  const { transcript, parsedObservation, reset: resetVoiceObservation } =
+    useVoiceObservationStore();
   const { addEvents } = useEventStore();
 
-  const handleAnswer = (questionId: string, option: string) => {
+  const handleAnswer = (questionId: string, option: string) =>
     setAnswer(questionId, option);
-  };
 
   const handleSave = () => {
     const parsed = parsedObservation?.events ?? [];
 
-    // If no parsed events (e.g. user skipped AI), create a single voice observation
     const eventData =
       parsed.length > 0
         ? parsed.map((event) => ({
-            childId: 'child-1',
+            childId: 'child-alikhan',
             type: EVENT_TYPE_MAP[event.type] || 'voice_observation',
             title: event.title,
             description: event.description,
@@ -91,7 +71,7 @@ export const ClarifyingQuestions: React.FC = () => {
             status: 'confirmed' as const,
             confidence: event.confidence,
             rawText: transcript,
-            linkedEventIds: [], // filled below
+            linkedEventIds: [],
             payload: {
               clarifyingAnswers: { ...answers },
               aiInsight: parsedObservation?.insight ?? '',
@@ -100,7 +80,7 @@ export const ClarifyingQuestions: React.FC = () => {
           }))
         : [
             {
-              childId: 'child-1',
+              childId: 'child-alikhan',
               type: 'voice_observation' as const,
               title: 'Голосовое наблюдение',
               description: transcript || 'Наблюдение без расшифровки',
@@ -119,7 +99,6 @@ export const ClarifyingQuestions: React.FC = () => {
 
     const created = addEvents(eventData);
 
-    // Link the created events to each other
     const linkedIds = created.map((e) => e.id);
     created.forEach((event) => {
       useEventStore.getState().updateEvent(event.id, {
@@ -127,9 +106,7 @@ export const ClarifyingQuestions: React.FC = () => {
       });
     });
 
-    // Only reset voice store AFTER events are created
     resetVoiceObservation();
-
     navigate('/parent/events');
   };
 
@@ -145,41 +122,59 @@ export const ClarifyingQuestions: React.FC = () => {
         const Icon = q.icon;
         const selected = answers[q.id] || q.defaultSelected;
 
+        const variantMap = {
+          blue: 'tinted-blue',
+          green: 'tinted-green',
+          yellow: 'tinted-yellow',
+          purple: 'tinted-purple',
+        } as const;
+
         return (
-          <div key={q.id} className="bg-white border border-line rounded-2xl p-4">
-            <div className="flex items-center gap-2.5 mb-3 font-bold text-sm">
-              <Icon className="w-4 h-4 text-blue" />
-              {q.question}
+          <Card key={q.id} variant={variantMap[q.color]}>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-card-soft">
+                <Icon className="w-5 h-5 text-ink" />
+              </div>
+              <p className="text-sm font-black text-ink flex-1">{q.question}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {q.options.map((option) => (
                 <button
                   key={option}
                   onClick={() => handleAnswer(q.id, option)}
-                  className={`border rounded-full px-3 py-2 text-xs font-bold transition-colors ${
+                  className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${
                     selected === option
-                      ? 'border-teal bg-teal-soft text-teal-dark'
-                      : 'border-line bg-white text-ink-2 hover:border-teal'
+                      ? 'bg-teal text-white border-teal shadow-card-soft'
+                      : 'bg-white border-line text-ink-2 hover:border-teal hover:text-teal-dark'
                   }`}
                 >
                   {option}
                 </button>
               ))}
             </div>
-          </div>
+          </Card>
         );
       })}
 
-      <AIInsightCard text="Я не додумываю недостающие детали — лучше задать короткий вопрос и сохранить только подтверждённое." />
+      <AIInsightCard
+        text="Лучше задать короткий вопрос и сохранить только подтверждённое наблюдение."
+        variant="default"
+        title="Подсказка"
+      />
 
-      <Button onClick={handleSave} className="mt-auto">
+      <Button
+        block
+        size="lg"
+        onClick={handleSave}
+        iconRight={<ArrowRight className="w-4 h-4" />}
+      >
         Сохранить и подтвердить
       </Button>
     </div>
   );
 };
 
-// Local store for clarifying answers
+// Local store
 interface ClarifyingState {
   answers: Record<string, string>;
   setAnswer: (questionId: string, answer: string) => void;
@@ -195,7 +190,6 @@ const defaultAnswers: Record<string, string> = {
 
 export const useClarifyingStore = create<ClarifyingState>((set) => ({
   answers: { ...defaultAnswers },
-  
   setAnswer: (questionId, answer) =>
     set((state) => ({
       answers: { ...state.answers, [questionId]: answer },

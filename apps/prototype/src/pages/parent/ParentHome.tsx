@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, ChevronRight, Bell, Sparkles, Calendar, FileText } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
+import {
+  ChevronRight,
+  Mic,
+  Settings,
+} from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { useEventStore } from '@/store/useEventStore';
-import { DEMO_PRIMARY_CHILD, DEMO_PARENTS, getDemoTimelineSummary } from '@/data/demoDataset';
+import { DEMO_PRIMARY_CHILD, DEMO_PARENTS } from '@/data/demoDataset';
 
 export const ParentHome: React.FC = () => {
   const navigate = useNavigate();
@@ -18,10 +21,9 @@ export const ParentHome: React.FC = () => {
     () => events.filter((e) => e.timestamp.startsWith(today)),
     [events]
   );
-  const lastEvents = todayEvents.slice(0, 4);
-  const summary = getDemoTimelineSummary(child.id);
 
-  // Cautious AI observation
+  const lastEvents = todayEvents.slice(0, 4);
+
   const aiObservation = useMemo(() => {
     const sensoryCount = todayEvents.filter((e) => e.type === 'sensory').length;
     const communicationCount = todayEvents.filter(
@@ -30,88 +32,90 @@ export const ParentHome: React.FC = () => {
     if (sensoryCount >= 1 && communicationCount >= 2) {
       return 'Похоже, сегодня было несколько сенсорных событий и активная коммуникация. Это наблюдение, не диагноз. Можно обсудить со специалистом.';
     }
-    return 'Похоже, сегодня собрано достаточно наблюдений. Продолжайте фиксировать — это помогает видеть паттерны.';
+    return 'Похоже, сегодня собрано достаточно наблюдений. Продолжайте фиксировать — это помогает видеть повторяющиеся ситуации и реакции.';
   }, [todayEvents]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <PageHeader
-        title={`${child.name}, ${child.age} лет`}
-        subtitle={`Сегодня, 1 июля · ${summary.total} событий за неделю`}
-        rightAction={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate('/parent/notifications')}
-              className="relative w-10 h-10 rounded-xl bg-white border border-line flex items-center justify-center hover:bg-bg transition-colors"
-            >
-              <Bell className="w-4 h-4 text-ink" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-coral text-white text-xs font-bold rounded-full flex items-center justify-center">2</span>
-            </button>
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#DDF5F0] to-[#E8F3FF] border border-line flex items-center justify-center font-bold text-teal-dark">
-              {child.avatar}
+    <div className="flex flex-col gap-5">
+      {/* Hero — карточка ребёнка */}
+      <Card variant="tinted-teal" className="overflow-hidden">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#FFE7BE] to-[#E4F8FF] border-2 border-white flex items-center justify-center text-3xl flex-shrink-0 shadow-card-soft">
+            👦
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-black text-ink leading-tight">
+              {child.name}, {child.age} лет
+            </h2>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="w-2 h-2 rounded-full bg-green" />
+              <span className="text-xs font-bold text-green">
+                Сейчас: {child.currentState}
+              </span>
             </div>
           </div>
-        }
-      />
+          <button
+            onClick={() => navigate('/parent/profile')}
+            className="w-9 h-9 rounded-xl bg-white border border-line flex items-center justify-center hover:bg-bg transition-colors"
+            aria-label="Профиль"
+          >
+            <Settings className="w-4 h-4 text-ink-2" />
+          </button>
+        </div>
+      </Card>
 
-      {/* Status */}
-      <div className="bg-gradient-to-br from-[#E9F8F0] to-[#F6FFFC] border border-[#BDE6D0] rounded-2xl p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="w-3 h-3 rounded-full bg-green shadow-[0_0_0_5px_rgba(46,159,110,0.12)]" />
-          <div>
-            <strong className="text-sm">Сейчас: {child.currentState}</strong>
-            <p className="text-xs text-muted">Обновлено только что</p>
-          </div>
+      {/* Большая CTA — голос */}
+      <button
+        onClick={() => navigate('/parent/voice')}
+        className="w-full rounded-3xl p-5 bg-gradient-to-br from-teal to-teal-dark text-white shadow-card hover:shadow-card-hover transition-all active:scale-[0.98] flex items-center gap-4"
+      >
+        <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0">
+          <Mic className="w-7 h-7" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-xs opacity-90 font-bold uppercase tracking-wide">
+            Главное действие
+          </p>
+          <p className="text-xl font-black leading-tight mt-0.5">Сказать наблюдение</p>
+        </div>
+        <ChevronRight className="w-5 h-5 opacity-90" />
+      </button>
+
+      {/* Быстрые действия — 2×3 */}
+      <div>
+        <p className="text-xs font-black text-muted uppercase tracking-wide mb-2 px-1">
+          Быстрые действия
+        </p>
+        <div className="grid grid-cols-3 gap-2.5">
+          {[
+            { icon: '🍎', label: 'Еда', path: '/parent/care', color: 'bg-[#EAF8F0]' },
+            { icon: '🚽', label: 'Туалет', path: '/parent/care', color: 'bg-[#EAF5FF]' },
+            { icon: '💧', label: 'Вода', path: '/parent/care', color: 'bg-[#EAF5FF]' },
+            { icon: '😊', label: 'Поведение', path: '/parent/behavior', color: 'bg-[#FFF6DF]' },
+            { icon: '🌙', label: 'Сон', path: '/parent/care', color: 'bg-[#F1EDFF]' },
+            { icon: '💬', label: 'Коммуникация', path: '/specialist/communication-profile', color: 'bg-[#F1EDFF]' },
+          ].map((a) => (
+            <button
+              key={a.label}
+              onClick={() => navigate(a.path)}
+              className={`min-h-[88px] rounded-2xl ${a.color} border border-line flex flex-col items-center justify-center gap-1.5 p-2 hover:scale-[0.97] active:scale-[0.94] transition-transform`}
+            >
+              <span className="text-3xl" aria-hidden="true">
+                {a.icon}
+              </span>
+              <span className="text-xs font-bold text-ink">{a.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Voice CTA */}
-      <button
-        onClick={() => navigate('/parent/voice')}
-        className="w-full border-0 rounded-2xl p-4 bg-gradient-to-br from-teal to-[#037A76] text-white font-bold text-base flex items-center justify-center gap-3 shadow-[0_14px_26px_rgba(7,149,139,0.22)] hover:shadow-card transition-shadow"
-      >
-        <Mic className="w-5 h-5" />
-        Сказать наблюдение
-      </button>
+      {/* AI observation */}
+      <AIInsightCard text={aiObservation} />
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-3 gap-2.5">
-        <button
-          onClick={() => navigate('/parent/events')}
-          className="min-h-[80px] border border-line bg-white rounded-xl flex flex-col items-center justify-center gap-1.5 p-2 hover:shadow-card-soft transition-shadow"
-        >
-          <span className="w-9 h-9 rounded-xl flex items-center justify-center bg-teal-soft text-teal">
-            <Calendar className="w-4 h-4" />
-          </span>
-          <span className="text-xs font-bold text-ink">Лента</span>
-        </button>
-        <button
-          onClick={() => navigate('/specialist/reports')}
-          className="min-h-[80px] border border-line bg-white rounded-xl flex flex-col items-center justify-center gap-1.5 p-2 hover:shadow-card-soft transition-shadow"
-        >
-          <span className="w-9 h-9 rounded-xl flex items-center justify-center bg-blue-soft text-blue">
-            <FileText className="w-4 h-4" />
-          </span>
-          <span className="text-xs font-bold text-ink">Отчёт</span>
-        </button>
-        <button
-          onClick={() => navigate('/parent/assistant')}
-          className="min-h-[80px] border border-line bg-white rounded-xl flex flex-col items-center justify-center gap-1.5 p-2 hover:shadow-card-soft transition-shadow"
-        >
-          <span className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-soft text-purple">
-            <Sparkles className="w-4 h-4" />
-          </span>
-          <span className="text-xs font-bold text-ink">AI-помощник</span>
-        </button>
-      </div>
-
-      {/* AI Observation */}
-      <AIInsightCard text={aiObservation} variant="warning" />
-
-      {/* Recent Events */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-bold text-ink-2">Последние события</p>
+      {/* Последние события */}
+      <Card variant="default">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-black text-ink">Сегодня</p>
           <button
             onClick={() => navigate('/parent/events')}
             className="text-xs font-bold text-teal flex items-center gap-1"
@@ -119,41 +123,43 @@ export const ParentHome: React.FC = () => {
             Все <ChevronRight className="w-3 h-3" />
           </button>
         </div>
-        <div className="flex flex-col gap-2">
-          {lastEvents.length === 0 ? (
-            <Card variant="default">
-              <p className="text-sm text-muted text-center py-2">
-                Сегодня пока нет событий
-              </p>
-            </Card>
-          ) : (
-            lastEvents.map((event) => (
-              <Card
+        {lastEvents.length === 0 ? (
+          <p className="text-sm text-muted text-center py-3">
+            Сегодня пока нет событий
+          </p>
+        ) : (
+          <div>
+            {lastEvents.map((event, idx) => (
+              <button
                 key={event.id}
-                variant="default"
-                className="cursor-pointer hover:shadow-card-soft transition-shadow"
                 onClick={() => navigate(`/parent/events/${event.id}`)}
+                className={`w-full flex items-center gap-3 py-2.5 text-left ${
+                  idx < lastEvents.length - 1 ? 'border-b border-line-soft' : ''
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted font-bold min-w-[42px]">
-                    {new Date(event.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold">{event.title}</div>
-                    <div className="text-xs text-muted truncate">{event.description}</div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted" />
+                <span className="text-xs text-muted font-bold tabular-nums min-w-[40px]">
+                  {new Date(event.timestamp).toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-ink truncate">
+                    {event.title}
+                  </p>
+                  <p className="text-xs text-muted truncate">{event.description}</p>
                 </div>
-              </Card>
-            ))
-          )}
-        </div>
-      </div>
+                <ChevronRight className="w-4 h-4 text-muted flex-shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+      </Card>
 
       {/* Disclaimer */}
-      <div className="text-xs text-muted text-center italic mt-2">
-        Это профиль наблюдений {mother.name}. Не является медицинским диагнозом.
-      </div>
+      <p className="text-[11px] text-muted text-center italic px-4">
+        Это профиль наблюдений {mother.name}. Не медицинский диагноз.
+      </p>
     </div>
   );
 };

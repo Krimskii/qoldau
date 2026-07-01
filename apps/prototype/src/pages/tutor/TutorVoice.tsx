@@ -1,8 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MicButton } from '@/components/ui/MicButton';
-import { VoiceWave } from '@/components/ui/VoiceWave';
+import { Mic, MicOff } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { VoiceWave } from '@/components/ui/VoiceWave';
 import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
 
 export const TutorVoice: React.FC = () => {
@@ -12,16 +12,14 @@ export const TutorVoice: React.FC = () => {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { startRecording, stopRecording } = useVoiceObservationStore();
 
-  const handleStart = useCallback(() => {
+  const startRec = useCallback(() => {
     setIsRecording(true);
     setDuration(0);
     startRecording();
-    intervalRef.current = setInterval(() => {
-      setDuration((d) => d + 1);
-    }, 1000);
+    intervalRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
   }, [startRecording]);
 
-  const handleStop = useCallback(() => {
+  const stopRec = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -37,13 +35,10 @@ export const TutorVoice: React.FC = () => {
     };
   }, []);
 
-  const handleRecord = () => (isRecording ? handleStop() : handleStart());
+  const handleRecord = () => (isRecording ? stopRec() : startRec());
 
-  const formatDuration = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-  };
+  const formatDuration = (s: number) =>
+    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
   const examples = [
     'Использовал визуальное расписание, переходы прошли спокойнее',
@@ -52,40 +47,60 @@ export const TutorVoice: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 min-h-[70vh]">
       <PageHeader
         title="Запись наблюдения"
         subtitle="Говорите обычным языком"
         showBack
       />
 
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 py-8">
-        <MicButton isRecording={isRecording} onClick={handleRecord} size="xl" />
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
+        <button
+          onClick={handleRecord}
+          aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
+          className={`w-48 h-48 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+            isRecording
+              ? 'bg-gradient-to-br from-coral to-[#cc251d]'
+              : 'bg-gradient-to-br from-teal to-teal-dark'
+          }`}
+          style={{
+            boxShadow: isRecording
+              ? '0 0 0 20px rgba(229,111,93,0.10), 0 0 0 40px rgba(229,111,93,0.05), 0 24px 40px rgba(229,111,93,0.30)'
+              : '0 0 0 20px rgba(0,150,136,0.08), 0 0 0 40px rgba(0,150,136,0.045), 0 24px 40px rgba(0,150,136,0.25)',
+          }}
+        >
+          {isRecording ? (
+            <MicOff className="w-24 h-24 text-white" strokeWidth={2.5} />
+          ) : (
+            <Mic className="w-24 h-24 text-white" strokeWidth={2.5} />
+          )}
+        </button>
 
         {isRecording && (
           <>
-            <VoiceWave />
-            <div className="text-3xl font-black tracking-wider">
+            <div className="w-full max-w-xs">
+              <VoiceWave />
+            </div>
+            <div className="text-3xl font-black text-ink tabular-nums">
               {formatDuration(duration)}
-              <span className="inline-block w-2 h-2 rounded-full bg-[#EF5A5A] ml-2 animate-pulse" />
             </div>
           </>
         )}
 
         {!isRecording && (
-          <p className="text-center text-muted text-sm">
+          <p className="text-sm text-muted text-center max-w-xs">
             Опишите, что произошло на занятии. AI предложит структуру.
           </p>
         )}
       </div>
 
       <div>
-        <p className="text-xs font-bold text-ink-2 mb-2">Примеры наблюдений</p>
+        <p className="text-xs font-bold text-muted mb-2 px-1">Примеры наблюдений</p>
         <div className="flex flex-col gap-2">
           {examples.map((ex, i) => (
             <div
               key={i}
-              className="text-xs border border-line bg-white rounded-xl p-2.5 text-ink-2"
+              className="text-sm border border-line-soft bg-white rounded-2xl px-4 py-2.5 text-ink-2"
             >
               {ex}
             </div>
@@ -96,7 +111,7 @@ export const TutorVoice: React.FC = () => {
       {isRecording && (
         <button
           onClick={handleRecord}
-          className="w-full border border-teal rounded-xl bg-white text-teal-dark font-bold py-3"
+          className="w-full h-13 rounded-2xl bg-coral text-white font-bold text-base shadow-card active:scale-[0.98] transition-all"
         >
           Остановить запись
         </button>

@@ -1,10 +1,9 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Link2, FileText, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Edit, Link2, FileText, Lightbulb, Copy, Mic } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
-import { VoiceWave } from '@/components/ui/VoiceWave';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import {
@@ -26,9 +25,11 @@ export const EventDetails: React.FC = () => {
     return (
       <div className="flex flex-col gap-4">
         <PageHeader title="Событие не найдено" showBack />
-        <p className="text-sm text-muted px-4">
-          Возможно, событие было удалено или вы перешли по устаревшей ссылке.
-        </p>
+        <Card variant="default">
+          <p className="text-sm text-muted text-center py-4">
+            Возможно, событие было удалено или вы перешли по устаревшей ссылке.
+          </p>
+        </Card>
       </div>
     );
   }
@@ -37,8 +38,7 @@ export const EventDetails: React.FC = () => {
     .map((id) => events.find((e) => e.id === id))
     .filter((e): e is NonNullable<typeof e> => e !== undefined);
 
-  // Cautious AI hypothesis — no medical claims, ever.
-  const aiHypothesis = React.useMemo(() => {
+  const aiHypothesis = (() => {
     const type = event.type;
     if (type === 'sensory' || type === 'behavior') {
       return 'Похоже, это событие может быть связано с сенсорной чувствительностью. Это наблюдение, не диагноз. Нужно подтвердить дополнительными наблюдениями.';
@@ -47,13 +47,12 @@ export const EventDetails: React.FC = () => {
       return 'Похоже, ребёнок использовал коммуникацию в этот момент. Это хороший знак! Можно отметить в коммуникационном профиле.';
     }
     if (type === 'food' || type === 'water') {
-      return 'Похоже, это событие связано с базовыми потребностями. Такие наблюдения помогают видеть паттерны.';
+      return 'Похоже, это событие связано с базовыми потребностями. Такие наблюдения помогают видеть повторяющиеся ситуации и реакции.';
     }
     return 'Это событие добавлено в Event Timeline. Чем больше наблюдений — тем точнее паттерны.';
-  }, [event.type]);
+  })();
 
-  // Cautious suggestions — only what to try, never prescriptions.
-  const suggestions = React.useMemo(() => {
+  const suggestions = (() => {
     if (event.type === 'sensory' || event.type === 'behavior') {
       return [
         'Можно попробовать тихое место',
@@ -67,30 +66,17 @@ export const EventDetails: React.FC = () => {
         'Можно поддержать попытку коммуникации',
       ];
     }
-    return [
-      'Можно обсудить со специалистом',
-      'Можно отметить в отчёте',
-    ];
-  }, [event.type]);
+    return ['Можно обсудить со специалистом', 'Можно отметить в отчёте'];
+  })();
 
-  const handleEdit = () => {
-    showToast('Функция редактирования будет доступна в следующей версии', 'info');
+  const handleEdit = () => showToast('Редактирование будет в следующей версии', 'info');
+  const handleCopy = () => {
+    showToast('Событие скопировано', 'success');
   };
-
-  const handleShowRelated = () => {
-    if (linkedEvents.length > 0) {
-      navigate(`/parent/events/${linkedEvents[0].id}`);
-    } else {
-      showToast('Связанных событий пока нет', 'info');
-    }
-  };
-
-  const handleAddToReport = () => {
-    showToast('Событие добавлено в отчёт', 'success');
-  };
+  const handleAddToReport = () => showToast('Событие добавлено в отчёт', 'success');
 
   return (
-    <div className="flex flex-col gap-4 pb-8">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Детали события"
         subtitle={new Date(event.timestamp).toLocaleDateString('ru-RU', {
@@ -100,24 +86,32 @@ export const EventDetails: React.FC = () => {
         showBack
       />
 
-      {/* Main Event Card */}
+      {/* Main Event */}
       <Card variant="default">
-        <div className="flex gap-3 items-start">
-          <div className="w-12 h-12 rounded-xl bg-teal-soft flex items-center justify-center text-teal">
-            <span className="text-lg font-bold">{event.title[0]}</span>
+        <div className="flex gap-3 items-start mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-teal-soft flex items-center justify-center text-teal flex-shrink-0">
+            <Mic className="w-6 h-6" />
           </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-lg">{event.title}</h3>
-            <p className="text-sm text-muted mt-1">{event.description}</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-black text-ink leading-tight">{event.title}</h3>
+            <p className="text-sm text-muted mt-1 leading-relaxed">
+              {event.description}
+            </p>
           </div>
         </div>
-
-        {/* Badges */}
-        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-line">
-          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getEventSourceClassName(event.sourceRole)}`}>
+        <div className="flex flex-wrap gap-1.5 pt-3 border-t border-line-soft">
+          <span
+            className={`px-2.5 py-1 rounded-full text-xs font-bold ${getEventSourceClassName(
+              event.sourceRole
+            )}`}
+          >
             {getEventSourceLabel(event.sourceRole)}
           </span>
-          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getEventStatusClassName(event.status)}`}>
+          <span
+            className={`px-2.5 py-1 rounded-full text-xs font-bold ${getEventStatusClassName(
+              event.status
+            )}`}
+          >
             {getEventStatusLabel(event.status)}
           </span>
         </div>
@@ -125,37 +119,40 @@ export const EventDetails: React.FC = () => {
 
       {/* Original phrase */}
       {event.rawText && (
-        <Card variant="default">
-          <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-muted" />
+        <Card variant="tinted-blue">
+          <p className="text-xs font-black text-blue uppercase tracking-wide mb-2">
             Исходная фраза
-          </h4>
-          <p className="text-sm text-ink-2 italic mb-3">"{event.rawText}"</p>
-          <VoiceWave bars={6} />
+          </p>
+          <p className="text-sm text-ink italic leading-relaxed">"{event.rawText}"</p>
         </Card>
       )}
 
       {/* Linked Events */}
       {linkedEvents.length > 0 && (
         <Card variant="default">
-          <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-3">
             <Link2 className="w-4 h-4 text-muted" />
-            Связанные события ({linkedEvents.length})
-          </h4>
+            <p className="text-sm font-black text-ink">Связанные события</p>
+            <span className="ml-auto text-xs font-bold text-muted">
+              {linkedEvents.length}
+            </span>
+          </div>
           <div className="space-y-2">
             {linkedEvents.map((linked) => (
               <button
                 key={linked.id}
                 onClick={() => navigate(`/parent/events/${linked.id}`)}
-                className="w-full flex items-center gap-3 p-3 bg-bg rounded-xl text-left hover:bg-teal-soft transition-colors"
+                className="w-full flex items-center gap-3 p-3 bg-bg rounded-2xl text-left hover:bg-teal-soft transition-colors"
               >
-                <span className="text-xs text-muted">
+                <span className="text-xs text-muted font-bold tabular-nums">
                   {new Date(linked.timestamp).toLocaleTimeString('ru-RU', {
                     hour: '2-digit',
                     minute: '2-digit',
                   })}
                 </span>
-                <span className="text-sm font-medium flex-1">{linked.title}</span>
+                <span className="text-sm font-bold text-ink flex-1 truncate">
+                  {linked.title}
+                </span>
                 <ArrowLeft className="w-4 h-4 text-muted rotate-180" />
               </button>
             ))}
@@ -164,46 +161,49 @@ export const EventDetails: React.FC = () => {
       )}
 
       {/* AI Hypothesis */}
-      <AIInsightCard text={aiHypothesis} variant="default" />
+      <AIInsightCard text={aiHypothesis} variant="warning" />
 
       {/* Suggestions */}
-      <Card variant="default">
-        <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+      <Card variant="tinted-yellow">
+        <div className="flex items-center gap-2 mb-3">
           <Lightbulb className="w-4 h-4 text-yellow" />
-          Что можно попробовать
-        </h4>
+          <p className="text-sm font-black text-ink">Что можно попробовать</p>
+        </div>
         <ul className="space-y-2">
           {suggestions.map((s, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-ink-2">
+            <li
+              key={i}
+              className="flex items-start gap-2 text-sm text-ink-2 leading-relaxed"
+            >
               <span className="text-teal mt-1">•</span>
               {s}
             </li>
           ))}
         </ul>
-        <p className="text-xs text-muted mt-4 italic">
-          Это возможные шаги. Не являются медицинским советом. Можно обсудить со специалистом.
+        <p className="text-[11px] text-muted mt-3 italic">
+          Это возможные шаги. Не медицинский совет. Можно обсудить со специалистом.
         </p>
       </Card>
 
       {/* Actions */}
-      <div className="grid grid-cols-3 gap-2 mt-4">
+      <div className="grid grid-cols-3 gap-2 mt-2">
         <button
           onClick={handleEdit}
-          className="flex items-center justify-center gap-2 border border-line rounded-xl bg-white py-3 text-sm font-bold text-ink hover:bg-bg transition-colors"
+          className="flex items-center justify-center gap-1.5 h-12 rounded-2xl bg-white border border-line text-ink hover:bg-bg transition-colors text-sm font-bold"
         >
           <Edit className="w-4 h-4" />
-          Редактировать
+          Изменить
         </button>
         <button
-          onClick={handleShowRelated}
-          className="flex items-center justify-center gap-2 border border-line rounded-xl bg-white py-3 text-sm font-bold text-ink hover:bg-bg transition-colors"
+          onClick={handleCopy}
+          className="flex items-center justify-center gap-1.5 h-12 rounded-2xl bg-white border border-line text-ink hover:bg-bg transition-colors text-sm font-bold"
         >
-          <Link2 className="w-4 h-4" />
-          Связанные
+          <Copy className="w-4 h-4" />
+          Копировать
         </button>
         <button
           onClick={handleAddToReport}
-          className="flex items-center justify-center gap-2 border border-teal rounded-xl bg-teal-soft py-3 text-sm font-bold text-teal hover:bg-teal hover:text-white transition-colors"
+          className="flex items-center justify-center gap-1.5 h-12 rounded-2xl bg-teal-soft border border-teal/30 text-teal-dark hover:bg-teal hover:text-white transition-colors text-sm font-bold"
         >
           <FileText className="w-4 h-4" />
           В отчёт
