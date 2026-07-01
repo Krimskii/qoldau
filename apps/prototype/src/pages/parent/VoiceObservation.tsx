@@ -127,7 +127,7 @@ export const VoiceObservation: React.FC = () => {
             aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
             className={`w-48 h-48 rounded-full flex items-center justify-center transition-all active:scale-95 ${
               isRecording
-                ? 'bg-gradient-to-br from-coral to-[#cc251d] qoldau-soft-pulse'
+                ? 'bg-gradient-to-br from-coral to-[#cc251d] qoldau-rec-pulse'
                 : 'bg-gradient-to-br from-teal to-teal-dark'
             }`}
             style={{

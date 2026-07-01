@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { ArrowRight, Brain, Sparkles, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
@@ -6,6 +7,13 @@ import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
 import { DEMO_CHILDREN } from '@/data/demoDataset';
+
+interface AbcCard {
+  id: string;
+  title: string;
+  description: string;
+  timestamp: string;
+}
 
 export const ABCAnalysis: React.FC = () => {
   const { events } = useEventStore();
@@ -16,25 +24,47 @@ export const ABCAnalysis: React.FC = () => {
   const abc = useMemo(() => {
     const childEvents = events.filter((e) => e.childId === selectedChildId);
 
-    const antecedent = childEvents
+    const antecedent: AbcCard[] = childEvents
       .filter(
         (e) =>
           e.type === 'sensory' ||
-          (e.tags && (e.tags.includes('шум') || e.tags.includes('переход')))
+          (e.tags && (e.tags.includes('шум') || e.tags.includes('переход'))),
       )
-      .slice(-3);
+      .slice(-3)
+      .map((e) => ({
+        id: e.id,
+        title: e.title,
+        description: e.description,
+        timestamp: e.timestamp,
+      }));
 
-    const behavior = childEvents.filter((e) => e.type === 'behavior').slice(-3);
+    const behavior: AbcCard[] = childEvents
+      .filter((e) => e.type === 'behavior')
+      .slice(-3)
+      .map((e) => ({
+        id: e.id,
+        title: e.title,
+        description: e.description,
+        timestamp: e.timestamp,
+      }));
 
-    const consequence = childEvents
+    const consequence: AbcCard[] = childEvents
       .filter((e) => e.type === 'calm_mode' || e.type === 'state')
-      .slice(-3);
+      .slice(-3)
+      .map((e) => ({
+        id: e.id,
+        title: e.title,
+        description: e.description,
+        timestamp: e.timestamp,
+      }));
 
     return { antecedent, behavior, consequence };
   }, [events, selectedChildId]);
 
+  const totalIncidents = abc.behavior.length;
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <PageHeader
         title="ABC-анализ"
         subtitle={`${currentChild.name} · триггеры и последствия`}
@@ -43,83 +73,218 @@ export const ABCAnalysis: React.FC = () => {
 
       <ChildSelector />
 
-      {/* ABC Columns */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-blue-soft border border-blue/20 rounded-2xl p-3">
-          <h4 className="text-center font-bold text-sm mb-3 text-blue">A — До</h4>
-          <div className="space-y-2">
-            {abc.antecedent.length === 0 ? (
-              <p className="text-xs text-muted text-center">Нет данных</p>
-            ) : (
-              abc.antecedent.map((e) => (
-                <div key={e.id} className="bg-white rounded-xl p-2 text-xs">
-                  <p className="font-bold">{e.title}</p>
-                  <p className="text-muted">{e.description}</p>
-                </div>
-              ))
-            )}
+      {/* ABC explanation */}
+      <QoldauCard variant="tinted-teal" padding="md">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center flex-shrink-0">
+            <Brain className="w-5 h-5 text-teal" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-ink mb-1">Что такое ABC</p>
+            <p className="text-xs text-ink-2 leading-snug">
+              A — что было ДО поведения (триггер). B — само поведение. C — что произошло ПОСЛЕ.
+              Анализ паттернов помогает понять, что вызывает трудности и что помогает.
+            </p>
           </div>
         </div>
+      </QoldauCard>
 
-        <div className="bg-purple-soft border border-purple/20 rounded-2xl p-3">
-          <h4 className="text-center font-bold text-sm mb-3 text-purple">B — Что</h4>
-          <div className="space-y-2">
-            {abc.behavior.length === 0 ? (
-              <p className="text-xs text-muted text-center">Нет данных</p>
-            ) : (
-              abc.behavior.map((e) => (
-                <div key={e.id} className="bg-white rounded-xl p-2 text-xs">
-                  <p className="font-bold">{e.title}</p>
-                  <p className="text-muted">{e.description}</p>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="bg-teal-soft border border-teal/20 rounded-2xl p-3">
-          <h4 className="text-center font-bold text-sm mb-3 text-teal-dark">C — После</h4>
-          <div className="space-y-2">
-            {abc.consequence.length === 0 ? (
-              <p className="text-xs text-muted text-center">Нет данных</p>
-            ) : (
-              abc.consequence.map((e) => (
-                <div key={e.id} className="bg-white rounded-xl p-2 text-xs">
-                  <p className="font-bold">{e.title}</p>
-                  <p className="text-muted">{e.description}</p>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <QoldauCard variant="default" padding="sm" className="text-center">
+          <p className="text-2xl font-black text-blue">{abc.antecedent.length}</p>
+          <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wide">Триггеров</p>
+        </QoldauCard>
+        <QoldauCard variant="default" padding="sm" className="text-center">
+          <p className="text-2xl font-black text-purple">{totalIncidents}</p>
+          <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wide">Случаев</p>
+        </QoldauCard>
+        <QoldauCard variant="default" padding="sm" className="text-center">
+          <p className="text-2xl font-black text-teal">{abc.consequence.length}</p>
+          <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wide">Реакций</p>
+        </QoldauCard>
       </div>
 
-      {/* Patterns from data */}
-      <QoldauCard variant="default">
-        <h4 className="text-sm font-bold mb-3">Замеченные паттерны</h4>
-        <ul className="space-y-3">
-          <li className="text-sm">
-            <span className="font-bold">Триггер:</span> Шум (громкая музыка, группа)
-            <br />
-            <span className="text-muted text-xs">→ Закрывает уши, отводит взгляд</span>
-          </li>
-          <li className="text-sm">
-            <span className="font-bold">Триггер:</span> Смена активности
-            <br />
-            <span className="text-muted text-xs">→ Нервозность, отказ от задания</span>
-          </li>
-          <li className="text-sm">
-            <span className="font-bold">Что помогло:</span> Пауза 2–3 минуты
-            <br />
-            <span className="text-muted text-xs">→ Похоже, стало спокойнее</span>
-          </li>
-        </ul>
+      {/* ABC Flow — A → B → C с стрелками и карточками */}
+      <QoldauCard variant="default" padding="md">
+        <h3 className="text-sm font-black text-ink mb-4 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-purple" />
+          Цепочка наблюдений
+        </h3>
+
+        <div className="space-y-3">
+          <AbcColumn
+            letter="A"
+            label="До"
+            bgClass="bg-blue-soft"
+            borderClass="border-blue/30"
+            textClass="text-blue-dark"
+            items={abc.antecedent}
+          />
+
+          <div className="flex justify-center -my-1" aria-hidden="true">
+            <div className="w-9 h-9 rounded-full bg-white border-2 border-line flex items-center justify-center">
+              <ArrowRight className="w-4 h-4 text-ink-soft" />
+            </div>
+          </div>
+
+          <AbcColumn
+            letter="B"
+            label="Что"
+            bgClass="bg-purple-soft"
+            borderClass="border-purple/30"
+            textClass="text-purple"
+            items={abc.behavior}
+          />
+
+          <div className="flex justify-center -my-1" aria-hidden="true">
+            <div className="w-9 h-9 rounded-full bg-white border-2 border-line flex items-center justify-center">
+              <ArrowRight className="w-4 h-4 text-ink-soft" />
+            </div>
+          </div>
+
+          <AbcColumn
+            letter="C"
+            label="После"
+            bgClass="bg-teal-soft"
+            borderClass="border-teal/30"
+            textClass="text-teal-dark"
+            items={abc.consequence}
+          />
+        </div>
+      </QoldauCard>
+
+      {/* Замеченные паттерны (явные гипотезы) */}
+      <QoldauCard variant="default" padding="md">
+        <h3 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-yellow" />
+          Замеченные паттерны
+        </h3>
+        <div className="space-y-2.5">
+          <PatternRow
+            trigger="Шум"
+            triggerContext="громкая музыка, группа, пылесос"
+            behavior="Закрывает уши, отводит взгляд"
+            count={3}
+          />
+          <PatternRow
+            trigger="Смена активности"
+            triggerContext="переход между занятиями"
+            behavior="Нервозность, отказ от задания"
+            count={2}
+          />
+          <PatternRow
+            trigger="Помогло"
+            triggerContext="Пауза 2–3 минуты, тихое место"
+            behavior="Похоже, стало спокойнее"
+            count={5}
+            variant="positive"
+          />
+        </div>
       </QoldauCard>
 
       <AIInsightCard
         text="ABC-паттерны — гипотезы на основе наблюдений. Это не диагноз. Можно обсудить со специалистом и семьёй."
         variant="warning"
       />
+    </div>
+  );
+};
+
+interface AbcColumnProps {
+  letter: string;
+  label: string;
+  bgClass: string;
+  borderClass: string;
+  textClass: string;
+  items: AbcCard[];
+}
+
+const AbcColumn: React.FC<AbcColumnProps> = ({
+  letter,
+  label,
+  bgClass,
+  borderClass,
+  textClass,
+  items,
+}) => (
+  <div className={`rounded-2xl ${bgClass} border ${borderClass} p-3`}>
+    <div className="flex items-center gap-2 mb-2.5">
+      <div className={`w-7 h-7 rounded-lg bg-white flex items-center justify-center font-black text-sm ${textClass}`}>
+        {letter}
+      </div>
+      <span className={`text-xs font-black uppercase tracking-wide ${textClass}`}>
+        {label}
+      </span>
+      <span className="ml-auto text-[10px] font-bold text-muted">
+        {items.length} {items.length === 1 ? 'событие' : 'событий'}
+      </span>
+    </div>
+
+    <div className="space-y-2">
+      {items.length === 0 ? (
+        <div className="text-xs text-muted text-center py-2 italic">Нет данных</div>
+      ) : (
+        items.map((it) => (
+          <div
+            key={it.id}
+            className="bg-white rounded-xl p-2.5 border border-line-soft"
+          >
+            <p className="text-xs font-black text-ink leading-tight">{it.title}</p>
+            <p className="text-[11px] text-muted leading-snug mt-0.5">{it.description}</p>
+            <p className="text-[10px] text-muted mt-1">
+              {new Date(it.timestamp).toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+);
+
+interface PatternRowProps {
+  trigger: string;
+  triggerContext: string;
+  behavior: string;
+  count: number;
+  variant?: 'positive' | 'warning';
+}
+
+const PatternRow: React.FC<PatternRowProps> = ({
+  trigger,
+  triggerContext,
+  behavior,
+  count,
+  variant = 'warning',
+}) => {
+  const isPositive = variant === 'positive';
+  return (
+    <div
+      className={`rounded-xl p-3 ${
+        isPositive ? 'bg-green-soft/50' : 'bg-yellow-soft/50'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-black text-ink">{trigger}</p>
+          <p className="text-xs text-muted mt-0.5">{triggerContext}</p>
+          <p className="text-xs text-ink-2 mt-1.5">
+            <span className="text-muted">→</span> {behavior}
+          </p>
+        </div>
+        <span
+          className={`px-2 py-1 rounded-full text-[10px] font-black flex-shrink-0 ${
+            isPositive ? 'bg-green text-white' : 'bg-yellow text-ink'
+          }`}
+        >
+          ×{count}
+        </span>
+      </div>
     </div>
   );
 };

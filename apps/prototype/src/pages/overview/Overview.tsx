@@ -89,7 +89,6 @@ export const Overview: React.FC = () => {
             <Play className="w-5 h-5" />
             Запустить демо
           </button>
-          <DemoControls />
         </div>
       </section>
 
@@ -182,6 +181,11 @@ export const Overview: React.FC = () => {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Demo controls — сброс */}
+      <section className="max-w-[1100px] mx-auto px-6 pb-8">
+        <DemoControls variant="card" />
       </section>
 
       {/* MVP scope */}

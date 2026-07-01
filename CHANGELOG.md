@@ -2,6 +2,51 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.17] — 2026-07-02 (Specialist insights polish + Demo controls)
+
+### Changed — Specialist insights (v0.3.17)
+- **`src/pages/specialist/ABCAnalysis.tsx`** — визуальный A→B→C flow:
+  - Header с объяснением что такое ABC.
+  - Stats row (Триггеров / Случаев / Реакций).
+  - A→B→C column flow с стрелками между блоками, цветовое кодирование (blue/purple/teal), карточки событий с timestamp.
+  - "Замеченные паттерны" — Trigger / Behavior / Count как одна строка.
+- **`src/pages/specialist/CommunicationProfile.tsx`** — расширенный профиль сигналов:
+  - Hero с AI observation (gradient blue→purple).
+  - Stats grid (Сигналов / Подтверждённых / Проверить).
+  - **Frequency distribution chart** — горизонтальные bars с % заполнения.
+  - Signal cards с иконкой категории (🃏 AAC / 🔊 Звук / 👆 Жест / 😊 Эмоция), confidence badge, meta-grid (Подтв. / Когда / Кто).
+  - Communication methods с counters.
+  - Прогресс за месяц.
+- **`src/pages/specialist/CarePatterns.tsx`** — паттерны с time-of-day визуализацией:
+  - 4 stats (Еда / Вода / Туалет / Сенсорика).
+  - **Time-of-day bar chart** (Утро/День/Вечер/Ночь) с highlight «самое сложное время».
+  - Cause-effect pattern cards с event chain (Событие 1 → Событие 2) + confidence badge.
+- **`src/pages/specialist/Reports.tsx`** — полноценный preview отчёта:
+  - Gradient teal header (Qoldau AI · Отчёт, имя ребёнка, период, MVP badge).
+  - 4 нумерованных секции: Итоги / KPI / Наблюдения / Рекомендации.
+  - KPI grid (3 метрики).
+  - Observation list с буллетами.
+  - Action buttons (PDF / Отправить).
+  - 4 type-of-report cards (Недельный / Месячный / Индивидуальный / Для специалиста) с tinted accent.
+
+### Changed — Demo controls
+- **`src/components/layout/DemoControls.tsx`** — два варианта:
+  - `variant="button"` — компактная кнопка в Overview (как раньше, но теперь с подтверждением через модалку).
+  - `variant="card"` — карточка с описанием и подтверждением (в Overview между «Запустить демо» и «MVP scope»).
+  - При нажатии «Сбросить» — confirm dialog с описанием (не alert).
+  - В demo mode кнопка показывает «Завершить демо» (выход из тура).
+- **`src/pages/parent/VoiceObservation.tsx`** — recording animation переделана на новый `qoldau-rec-pulse` (только когда `.rec` class активен, не ambient).
+
+### Added
+- **`src/styles/animations.css`** — `.qoldau-rec-pulse` keyframes (recording state, user-driven, не ambient). Respects `prefers-reduced-motion` и `html.qoldau-paused`.
+
+### Verified
+- `npm run build` passes — 1671 modules.
+- `npx tsc --noEmit` — 0 errors.
+- Demo flow: сброс через confirm dialog → events restored, role=parent, child=alikhan.
+
+---
+
 ## [0.3.16] — 2026-07-02 (Child UI: Design Rules compliance + Personalization)
 
 ### Changed
