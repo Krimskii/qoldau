@@ -30,6 +30,9 @@ import { ChildChoice } from '@/pages/child/ChildChoice';
 import { ChildInterfaceGuide } from '@/pages/child/ChildInterfaceGuide';
 import { ChildCall } from '@/pages/child/CallMom';
 import { ChildProgress } from '@/pages/child/ChildProgress';
+import { ChildWater } from '@/pages/child/ChildWater';
+import { ChildFood } from '@/pages/child/ChildFood';
+import { ChildToilet } from '@/pages/child/ChildToilet';
 
 // Tutor Pages
 import { TutorHome } from '@/pages/tutor/TutorHome';
@@ -153,6 +156,18 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/child/progress"
           element={<AppShell><ChildProgress /></AppShell>}
+        />
+        <Route
+          path="/child/water"
+          element={<AppShell><ChildWater /></AppShell>}
+        />
+        <Route
+          path="/child/food"
+          element={<AppShell><ChildFood /></AppShell>}
+        />
+        <Route
+          path="/child/toilet"
+          element={<AppShell><ChildToilet /></AppShell>}
         />
 
         {/* Tutor Routes */}

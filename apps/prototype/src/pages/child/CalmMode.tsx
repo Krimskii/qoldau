@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
@@ -8,7 +8,7 @@ import {
   Music2DIcon,
   Breath2DIcon,
   Headphones2DIcon,
-  Pause2DIcon,
+  Play2DIcon,
   Dark2DIcon,
   Mom2DIcon,
   ChildCloudMascot,
@@ -17,6 +17,8 @@ import {
 } from '@/components/icons/child2d';
 
 const TIMER_SECONDS = 60;
+// Mock-длительность «аудио от мамы» — имитирует воспроизведение без реального файла.
+const MOCK_AUDIO_DURATION = 18;
 
 interface CalmCard {
   id: string;
@@ -24,17 +26,14 @@ interface CalmCard {
   Icon: React.FC<{ size?: number; animated?: boolean }>;
   family: ChildCardFamily;
   go?: string;
+  /** Если задано — клик обрабатывается специально (e.g. audio playback) */
+  onClick?: () => void;
 }
 
 const CALM_ROW_1: CalmCard[] = [
-  { id: 'music',     label: 'Тихая музыка', Icon: Music2DIcon,     family: 'fav'  },
-  { id: 'breath',    label: 'Дыхание',      Icon: Breath2DIcon,    family: 'need' },
-  { id: 'head',      label: 'Наушники',     Icon: Headphones2DIcon, family: 'do'   },
-];
-const CALM_ROW_2: CalmCard[] = [
-  { id: 'pause',     label: 'Пауза',        Icon: Pause2DIcon,     family: 'feel' },
-  { id: 'dark',      label: 'Темно',        Icon: Dark2DIcon,      family: 'need' },
-  { id: 'call-mom',  label: 'Позвать маму', Icon: Mom2DIcon,       family: 'help', go: '/child/home' },
+  { id: 'music',  label: 'Тихая музыка', Icon: Music2DIcon,      family: 'fav'  },
+  { id: 'breath', label: 'Дыхание',      Icon: Breath2DIcon,     family: 'need' },
+  { id: 'head',   label: 'Наушники',     Icon: Headphones2DIcon, family: 'do'   },
 ];
 
 const CalmTile: React.FC<{ c: CalmCard; delay: number; onClick: () => void }> = ({
@@ -51,7 +50,7 @@ const CalmTile: React.FC<{ c: CalmCard; delay: number; onClick: () => void }> = 
       aria-label={c.label}
     >
       <div className={`w-14 h-14 rounded-[18px] ${family.icoBg} flex items-center justify-center`}>
-        <c.Icon size={46} />
+        <c.Icon size={46} animated={false} />
       </div>
       <div className={`text-sm font-black text-center leading-tight ${family.lbl}`}>
         {c.label}
@@ -61,14 +60,15 @@ const CalmTile: React.FC<{ c: CalmCard; delay: number; onClick: () => void }> = 
 };
 
 /**
- * CalmMode — самый спокойный экран (v0.3.15).
+ * CalmMode — самый спокойный экран (v0.3.19).
  *
- * Структура (как в child_v2.html):
+ * Структура (как в child_v2.html, обновлено в v0.3.19):
  * - Back button.
- * - CloudMascot (124×124, cloudFloat анимация).
+ * - CloudMascot (124×124, без анимации).
  * - "Можно отдохнуть" + "Ты в безопасности · Я рядом".
  * - Timer card + "Начать" big-btn + "Вернуться на главную" link.
- * - 6 calm options в 2×3 сетке.
+ * - 6 calm options в 2×3 сетке (v0.3.19: tile «Пауза» заменён на «Запись» —
+ *   проигрывает pre-recorded аудио от мамы).
  * - "Я рядом 💚" footer note.
  */
 export const CalmMode: React.FC = () => {
@@ -76,6 +76,10 @@ export const CalmMode: React.FC = () => {
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [remaining, setRemaining] = useState(TIMER_SECONDS);
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
+  // Состояние «аудио от мамы»: idle | playing | paused
+  const [audioState, setAudioState] = useState<'idle' | 'playing' | 'paused'>('idle');
+  const [audioProgress, setAudioProgress] = useState(0); // 0..MOCK_AUDIO_DURATION
+  const audioIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { addEvent, updateEvent } = useEventStore();
   const { showToast } = useToastStore();
 
@@ -89,6 +93,26 @@ export const CalmMode: React.FC = () => {
     }, 500);
     return () => clearInterval(id);
   }, [startedAt]);
+
+  // Audio playback tick (mock)
+  useEffect(() => {
+    if (audioState !== 'playing') {
+      if (audioIntervalRef.current) clearInterval(audioIntervalRef.current);
+      return;
+    }
+    audioIntervalRef.current = setInterval(() => {
+      setAudioProgress((p) => {
+        if (p >= MOCK_AUDIO_DURATION) {
+          setAudioState('idle');
+          return 0;
+        }
+        return p + 1;
+      });
+    }, 1000);
+    return () => {
+      if (audioIntervalRef.current) clearInterval(audioIntervalRef.current);
+    };
+  }, [audioState]);
 
   const handleStart = () => {
     if (startedAt !== null) return;
@@ -137,11 +161,53 @@ export const CalmMode: React.FC = () => {
         },
       });
     }
+    // Прерываем аудио при выходе
+    if (audioIntervalRef.current) clearInterval(audioIntervalRef.current);
+    setAudioState('idle');
+    setAudioProgress(0);
     navigate('/child/home');
   };
 
+  /** Запуск / пауза / возобновление «аудио от мамы» (mock). */
+  const toggleAudio = () => {
+    if (audioState === 'playing') {
+      setAudioState('paused');
+    } else {
+      setAudioState('playing');
+      if (audioProgress >= MOCK_AUDIO_DURATION) {
+        setAudioProgress(0);
+      }
+    }
+  };
+
+  const stopAudio = () => {
+    setAudioState('idle');
+    setAudioProgress(0);
+  };
+
+  const handleTileClick = (c: CalmCard) => {
+    if (c.id === 'recording') {
+      toggleAudio();
+      return;
+    }
+    if (c.go) {
+      navigate(c.go);
+    }
+  };
+
+  // Row 2 теперь: Запись (аудио) | Темно | Позвать маму
+  // В v0.3.19 «Пауза» заменена на «Запись» (pre-recorded audio playback).
+  const CALM_ROW_2: CalmCard[] = [
+    { id: 'recording', label: 'Запись',      Icon: Play2DIcon, family: 'fav'  },
+    { id: 'dark',      label: 'Темно',       Icon: Dark2DIcon, family: 'need' },
+    { id: 'call-mom',  label: 'Позвать маму', Icon: Mom2DIcon, family: 'help', go: '/child/home' },
+  ];
+
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
+  const audioSec = audioProgress;
+  const audioMin = Math.floor(audioSec / 60);
+  const audioRemSec = audioSec % 60;
 
   return (
     <div
@@ -163,7 +229,7 @@ export const CalmMode: React.FC = () => {
 
       {/* Cloud mascot */}
       <div className="mx-auto w-[124px] h-[124px] mt-6 mb-1.5">
-        <ChildCloudMascot size={124} animated />
+        <ChildCloudMascot size={124} animated={false} />
       </div>
 
       <h2 className="text-[26px] mt-1.5 mb-0.5 font-black">Можно отдохнуть</h2>
@@ -224,16 +290,14 @@ export const CalmMode: React.FC = () => {
         )}
       </div>
 
-      {/* 6 calm options: 2×3 */}
+      {/* 6 calm options: 2×3 (v0.3.19: Пауза → Запись) */}
       <div className="grid grid-cols-3 gap-3.5 px-5 pt-4">
         {CALM_ROW_1.map((c, i) => (
           <CalmTile
             key={c.id}
             c={c}
             delay={i * 60}
-            onClick={() => {
-              if (c.go) navigate(c.go);
-            }}
+            onClick={() => handleTileClick(c)}
           />
         ))}
       </div>
@@ -243,12 +307,46 @@ export const CalmMode: React.FC = () => {
             key={c.id}
             c={c}
             delay={180 + i * 60}
-            onClick={() => {
-              if (c.go) navigate(c.go);
-            }}
+            onClick={() => handleTileClick(c)}
           />
         ))}
       </div>
+
+      {/* Audio playback panel — показывается при активном «Запись» */}
+      {audioState !== 'idle' && (
+        <div className="mx-5 mt-4 bg-white rounded-3xl p-4 shadow-card text-left flex items-center gap-3">
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ background: '#F1EEFB' }}
+          >
+            <Play2DIcon size={28} animated={false} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-black text-ink">Голос мамы</div>
+            <div className="text-xs text-muted">«Я рядом, всё хорошо»</div>
+            {/* progress bar */}
+            <div className="mt-1.5 h-1.5 bg-bg rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${(audioProgress / MOCK_AUDIO_DURATION) * 100}%`,
+                  background: '#8A6FC9',
+                }}
+              />
+            </div>
+            <div className="text-[11px] text-muted mt-1 tabular-nums">
+              {String(audioMin).padStart(2, '0')}:{String(audioRemSec).padStart(2, '0')} / 00:{String(MOCK_AUDIO_DURATION).padStart(2, '0')}
+            </div>
+          </div>
+          <button
+            onClick={stopAudio}
+            className="w-9 h-9 rounded-xl bg-bg flex items-center justify-center text-muted hover:bg-line transition-colors"
+            aria-label="Остановить"
+          >
+            ⏹
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="text-center font-bold mt-4 mb-2" style={{ color: '#12807a' }}>

@@ -2,6 +2,60 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.19] — 2026-07-02 (Child Home redesign: bigger cards + new sub-pages)
+
+### Changed — ChildHome grid (v0.3.19)
+- **`src/pages/child/ChildHome.tsx`** — главный экран ребёнка перестроен:
+  - **Row 1 (новый порядок):** `Хочу пить` (kept) | `Хочу кушать` (NEW) | `Туалет` (moved to right, was center).
+  - **Row 2 (без изменений):** `Отдохнуть` (renamed from «Пауза») | `Любимые` | `Сказать`.
+  - **Помощь** удалена.
+  - **Карточки больше для планшетного использования:**
+    - `min-h-[120px]` → `min-h-[150px]`
+    - иконка-контейнер `w-14 h-14` → `w-20 h-20`
+    - иконка `size=46` → `size=60`
+    - лейбл `text-sm` → `text-base`
+    - gap `gap-3.5` → `gap-4`
+  - Удалены `animated` пропсы на иконках (DESIGN_RULES compliance: no ambient loops).
+
+### Added — 3 новых sub-pages (v0.3.19)
+- **`src/pages/child/ChildActionSpeak.tsx`** — общий компонент для контекстно-зависимых страниц (микрофон + 3 слова + phrase-builder + опциональный таймер).
+- **`src/pages/child/ChildWater.tsx`** — `/child/water`: микрофон (mock) + 3 слова (Ва/Вода/Дай) + phrase-builder (Я хочу пить воду, пожалуйста).
+- **`src/pages/child/ChildFood.tsx`** — `/child/food`: микрофон + 3 слова (Ам/Есть/Дай) + phrase-builder (Я хочу есть кашу, пожалуйста).
+- **`src/pages/child/ChildToilet.tsx`** — `/child/toilet`: микрофон + 3 слова (Ту-ту/Туалет/Помощь) + phrase-builder + **ТАЙМЕР** (старт 5 мин → можно остановить в любой момент → событие «сходил» с duration в payload).
+- **`src/app/router.tsx`** — 3 новых routes:
+  - `/child/water` → `<ChildWater />`
+  - `/child/food` → `<ChildFood />`
+  - `/child/toilet` → `<ChildToilet />`
+
+### Changed — CalmMode: «Пауза» → «Запись» (v0.3.19)
+- **`src/pages/child/CalmMode.tsx`** — внутренняя 6-tile сетка обновлена:
+  - Tile «Пауза» заменён на «Запись» (использует `Play2DIcon`).
+  - При клике — имитация воспроизведения pre-recorded аудио от мамы (mock-плеер с progress-bar, play/pause, 18-секундная длительность).
+  - При выходе из CalmMode или остановке — аудио сбрасывается.
+  - Mock-аудио не требует реального файла — UI полностью функционален в demo.
+
+### Verified
+- `npm run build` ✅ — 1675 modules transformed, 0 TS errors, 7.84s.
+- Все 3 новых sub-pages рендерят `Hero + Mic + 3 слова + Phrase + Timer (toilet)`.
+- `ChildActionSpeak` типизирован через `ActionSpeakConfig` — добавление новых action-страниц тривиально.
+
+### Diff summary
+
+```
+4 файла добавлено, 4 файла изменено:
+
+apps/prototype/src/pages/child/ChildActionSpeak.tsx        NEW (231 строка)
+apps/prototype/src/pages/child/ChildWater.tsx             NEW (47 строк)
+apps/prototype/src/pages/child/ChildFood.tsx              NEW (47 строк)
+apps/prototype/src/pages/child/ChildToilet.tsx            NEW (51 строка)
+apps/prototype/src/pages/child/ChildHome.tsx              переписан (149 → 165 строк)
+apps/prototype/src/pages/child/CalmMode.tsx               обновлён (261 → 332 строк)
+apps/prototype/src/app/router.tsx                         +18 строк (3 новых routes)
+apps/prototype/package.json                               0.3.18 → 0.3.19
+```
+
+---
+
 ## [0.3.18] — 2026-07-02 (Full click-through QA pass + architecture docs)
 
 ### Fixed — Broken handlers (7 штук)
