@@ -4,7 +4,10 @@ import { Calendar, Bell, Sparkles, FileText, TrendingUp, MessageCircle, Brain, C
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
+import { useDemoControlsStore } from '@/store/useDemoControlsStore';
+import { DEMO_CHILDREN } from '@/data/demoDataset';
 
 const periods = ['7', '14', '30'];
 
@@ -12,30 +15,46 @@ export const SpecialistDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [period, setPeriod] = useState('7');
   const { events } = useEventStore();
+  const { selectedChildId } = useDemoControlsStore();
 
-  // Calculate KPIs based on events
+  const currentChild = DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
+
+  // Calculate KPIs based on events for the currently selected child
   const kpis = useMemo(() => {
     const now = Date.now();
     const days = parseInt(period);
     const periodStart = now - days * 24 * 60 * 60 * 1000;
-    
-    const periodEvents = events.filter(e => new Date(e.timestamp).getTime() >= periodStart);
-    
-    const sensoryEvents = periodEvents.filter(e => e.type === 'sensory');
-    const communicationEvents = periodEvents.filter(e => e.type === 'communication' || e.type === 'aac_card');
-    const confirmedEvents = periodEvents.filter(e => e.status === 'confirmed');
-    
-    // Calculate new signals (unique signals in this period) - using description as fallback
-    const uniqueSignals = new Set(periodEvents.filter(e => e.rawText).map(e => e.rawText));
-    
+
+    const periodEvents = events.filter(
+      (e) =>
+        e.childId === selectedChildId &&
+        new Date(e.timestamp).getTime() >= periodStart
+    );
+
+    const sensoryEvents = periodEvents.filter((e) => e.type === 'sensory');
+    const communicationEvents = periodEvents.filter(
+      (e) => e.type === 'communication' || e.type === 'aac_card'
+    );
+    const confirmedEvents = periodEvents.filter((e) => e.status === 'confirmed');
+
+    // New signals approximation — unique signal-ish tokens from rawText or descriptions
+    const uniqueSignals = new Set(
+      periodEvents
+        .map((e) => e.rawText?.slice(0, 10) ?? e.description?.slice(0, 10))
+        .filter(Boolean)
+    );
+
     return {
-      totalEvents: periodEvents.length || 24,
-      newSignals: uniqueSignals.size || 5,
-      communications: communicationEvents.length || 3,
-      dynamics: confirmedEvents.length > 0 ? Math.round((confirmedEvents.length / periodEvents.length) * 100) : 12,
+      totalEvents: periodEvents.length || 0,
+      newSignals: uniqueSignals.size || 0,
+      communications: communicationEvents.length || 0,
+      dynamics:
+        confirmedEvents.length > 0 && periodEvents.length > 0
+          ? Math.round((confirmedEvents.length / periodEvents.length) * 100)
+          : 0,
       sensoryCount: sensoryEvents.length,
     };
-  }, [events, period]);
+  }, [events, period, selectedChildId]);
 
   // Generate AI summary
   const aiSummary = useMemo(() => {
@@ -48,35 +67,49 @@ export const SpecialistDashboard: React.FC = () => {
     return 'Собрано достаточно данных для анализа. Чем больше наблюдений — тем точнее паттерны.';
   }, [kpis]);
 
-  // Get recent signals
+  // Get recent signals — derived from currentChild.mainSignals
   const recentSignals = useMemo(() => {
-    // Use mock data since QoldauEvent doesn't have signal property
+    if (currentChild.mainSignals.length > 0) {
+      return currentChild.mainSignals.slice(0, 3).map((s) => ({
+        signal: s.signal,
+        meaning: s.possibleMeaning,
+        date: new Date(s.lastSeenAt).toLocaleDateString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit',
+        }),
+      }));
+    }
     return [
       { signal: '"ва"', meaning: 'возможно вода', date: '01.07' },
       { signal: 'тянет за руку', meaning: 'хочет показать', date: '30.06' },
     ];
-  }, [events]);
+  }, [currentChild]);
 
-  // Get repeating situations
+  // Get repeating situations for selected child
   const repeatingSituations = useMemo(() => {
-    if (events.length === 0) {
+    const childEvents = events.filter((e) => e.childId === selectedChildId);
+
+    if (childEvents.length === 0) {
       return [
         { situation: 'Закрывает уши при шуме', count: 4, trend: 'stable' },
         { situation: 'Просит воду звуком "ва"', count: 6, trend: 'up' },
         { situation: 'Активная коммуникация', count: 3, trend: 'up' },
       ];
     }
-    
+
     const situations: Record<string, number> = {};
-    events.forEach(e => {
+    childEvents.forEach((e) => {
       if (e.type === 'sensory') {
         situations['Сенсорные реакции'] = (situations['Сенсорные реакции'] || 0) + 1;
       }
       if (e.type === 'communication' || e.type === 'aac_card') {
         situations['Коммуникация'] = (situations['Коммуникация'] || 0) + 1;
       }
+      if (e.type === 'calm_mode') {
+        situations['Спокойный режим использовался'] = (situations['Спокойный режим использовался'] || 0) + 1;
+      }
     });
-    
+
     return Object.entries(situations)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
@@ -85,15 +118,17 @@ export const SpecialistDashboard: React.FC = () => {
         count,
         trend: count >= 3 ? 'up' : 'stable',
       }));
-  }, [events]);
+  }, [events, selectedChildId]);
 
   return (
     <div className="flex flex-col gap-4 pb-8">
       <PageHeader
-        title="Панель специалиста"
-        subtitle="Обзор за период"
+        title={`Панель специалиста`}
+        subtitle={`${DEMO_CHILDREN.length} ребёнка · обзор за период`}
         rightAction={<Bell className="w-5 h-5 text-muted" />}
       />
+
+      <ChildSelector />
 
       {/* Period Selector */}
       <div className="flex gap-2">

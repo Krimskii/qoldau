@@ -5,13 +5,11 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { useEventStore } from '@/store/useEventStore';
-import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD, DEMO_PARENTS, getDemoTimelineSummary } from '@/data/demoDataset';
 
 export const ParentHome: React.FC = () => {
   const navigate = useNavigate();
   const { events } = useEventStore();
-  const { showToast } = useToastStore();
   const child = DEMO_PRIMARY_CHILD;
   const mother = DEMO_PARENTS[0];
 
@@ -43,7 +41,7 @@ export const ParentHome: React.FC = () => {
         rightAction={
           <div className="flex items-center gap-2">
             <button
-              onClick={() => showToast('Уведомления обновляются', 'info')}
+              onClick={() => navigate('/parent/notifications')}
               className="relative w-10 h-10 rounded-xl bg-white border border-line flex items-center justify-center hover:bg-bg transition-colors"
             >
               <Bell className="w-4 h-4 text-ink" />

@@ -2,16 +2,20 @@ import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { useDemoControlsStore } from '@/store/useDemoControlsStore';
+import { DEMO_CHILDREN } from '@/data/demoDataset';
 import { QoldauEvent } from '@/types/qoldau';
 
 export const CarePatterns: React.FC = () => {
   const { events } = useEventStore();
+  const { selectedChildId } = useDemoControlsStore();
+  const currentChild = DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
 
   const childEvents = useMemo(
-    () => events.filter((e) => e.childId === DEMO_PRIMARY_CHILD.id),
-    [events]
+    () => events.filter((e) => e.childId === selectedChildId),
+    [events, selectedChildId]
   );
 
   const summary = useMemo(() => {
@@ -49,9 +53,11 @@ export const CarePatterns: React.FC = () => {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Паттерны ухода"
-        subtitle="Связь событий"
+        subtitle={`${currentChild.name} · связь событий`}
         showBack
       />
+
+      <ChildSelector />
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-3">

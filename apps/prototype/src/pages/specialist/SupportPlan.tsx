@@ -2,7 +2,9 @@ import React from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { ChildSelector } from '@/components/layout/ChildSelector';
+import { useDemoControlsStore } from '@/store/useDemoControlsStore';
+import { DEMO_CHILDREN } from '@/data/demoDataset';
 
 const schedule = ['Утро', 'Занятия', 'Обед', 'Отдых', 'Прогулка'];
 const sensory = [
@@ -15,7 +17,8 @@ const toTry = ['Таймер перехода (2 мин до смены акти
 const toConfirm = ['Связь шума и нервозности', 'Частота использования AAC', 'Эффект визуального расписания'];
 
 export const SupportPlan: React.FC = () => {
-  const child = DEMO_PRIMARY_CHILD;
+  const { selectedChildId } = useDemoControlsStore();
+  const child = DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
 
   return (
     <div className="flex flex-col gap-4">
@@ -24,6 +27,8 @@ export const SupportPlan: React.FC = () => {
         subtitle={`${child.name}, ${child.age} лет`}
         showBack
       />
+
+      <ChildSelector />
 
       <Card variant="default" className="bg-yellow-soft border-yellow/30">
         <p className="text-sm text-ink-2">

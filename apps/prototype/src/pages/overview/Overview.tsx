@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Play, ChevronRight, Users, Brain, MessageSquare, FileText, Calendar } from 'lucide-react';
 import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
 import { DemoIndicator } from '@/components/layout/DemoIndicator';
+import { DemoControls } from '@/components/layout/DemoControls';
 import { useRoleStore } from '@/store/useRoleStore';
 import { useDemoStore } from '@/store/useDemoStore';
 import { UserRole } from '@/types/qoldau';
@@ -103,13 +104,16 @@ export const Overview: React.FC = () => {
         </p>
 
         {/* Demo Button */}
-        <button
-          onClick={handleStartDemo}
-          className="mt-8 flex items-center gap-3 bg-gradient-to-r from-teal to-teal-dark text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
-        >
-          <Play className="w-6 h-6" />
-          Запустить демо (10 мин)
-        </button>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleStartDemo}
+            className="flex items-center gap-3 bg-gradient-to-r from-teal to-teal-dark text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Play className="w-6 h-6" />
+            Запустить демо (10 мин)
+          </button>
+          <DemoControls />
+        </div>
       </header>
 
       {/* Main Flow */}

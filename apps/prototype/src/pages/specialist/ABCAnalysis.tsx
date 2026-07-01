@@ -2,39 +2,46 @@ import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { useDemoControlsStore } from '@/store/useDemoControlsStore';
+import { DEMO_CHILDREN } from '@/data/demoDataset';
 
 export const ABCAnalysis: React.FC = () => {
   const { events } = useEventStore();
+  const { selectedChildId } = useDemoControlsStore();
+  const currentChild = DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
 
-  // Build ABC from events — sensory events become "Antecedent",
-  // behavior events become "Behavior", calm_mode / state events become "Consequence"
+  // Build ABC from events for selected child
   const abc = useMemo(() => {
-    const childEvents = events.filter((e) => e.childId === DEMO_PRIMARY_CHILD.id);
+    const childEvents = events.filter((e) => e.childId === selectedChildId);
 
     const antecedent = childEvents
-      .filter((e) => e.type === 'sensory' || (e.tags && e.tags.includes('шум')) || (e.tags && e.tags.includes('переход')))
+      .filter(
+        (e) =>
+          e.type === 'sensory' ||
+          (e.tags && (e.tags.includes('шум') || e.tags.includes('переход')))
+      )
       .slice(-3);
 
-    const behavior = childEvents
-      .filter((e) => e.type === 'behavior')
-      .slice(-3);
+    const behavior = childEvents.filter((e) => e.type === 'behavior').slice(-3);
 
     const consequence = childEvents
       .filter((e) => e.type === 'calm_mode' || e.type === 'state')
       .slice(-3);
 
     return { antecedent, behavior, consequence };
-  }, [events]);
+  }, [events, selectedChildId]);
 
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title="ABC-анализ"
-        subtitle="Триггеры и последствия"
+        subtitle={`${currentChild.name} · триггеры и последствия`}
         showBack
       />
+
+      <ChildSelector />
 
       {/* ABC Columns */}
       <div className="grid grid-cols-3 gap-3">

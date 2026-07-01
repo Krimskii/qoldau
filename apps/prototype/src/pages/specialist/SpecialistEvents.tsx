@@ -2,7 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TimelineItem } from '@/components/ui/TimelineItem';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
+import { useDemoControlsStore } from '@/store/useDemoControlsStore';
 import { getEventSourceClassName, getEventSourceLabel } from '@/utils/eventLabels';
 
 type SourceFilter = 'all' | 'parent' | 'tutor' | 'specialist' | 'child' | 'device' | 'ai';
@@ -18,12 +20,14 @@ const FILTERS: { key: SourceFilter; label: string }[] = [
 export const SpecialistEvents: React.FC = () => {
   const navigate = useNavigate();
   const { events } = useEventStore();
+  const { selectedChildId } = useDemoControlsStore();
   const [filter, setFilter] = useState<SourceFilter>('all');
 
   const filtered = useMemo(() => {
-    if (filter === 'all') return events;
-    return events.filter((e) => e.sourceRole === filter);
-  }, [events, filter]);
+    const childScoped = events.filter((e) => e.childId === selectedChildId);
+    if (filter === 'all') return childScoped;
+    return childScoped.filter((e) => e.sourceRole === filter);
+  }, [events, filter, selectedChildId]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -32,6 +36,8 @@ export const SpecialistEvents: React.FC = () => {
         subtitle={`${filtered.length} событий`}
         showBack
       />
+
+      <ChildSelector />
 
       {/* Source filters */}
       <div className="flex gap-2 overflow-x-auto pb-1">

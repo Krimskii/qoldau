@@ -16,6 +16,7 @@ import { BehaviorSensory } from '@/pages/parent/BehaviorSensory';
 import { ParentAIChat } from '@/pages/parent/ParentAIChat';
 import { ParentAnalytics } from '@/pages/parent/ParentAnalytics';
 import { ParentProfile } from '@/pages/parent/ParentProfile';
+import { ParentNotifications } from '@/pages/parent/ParentNotifications';
 
 // Child Pages
 import { ChildHome } from '@/pages/child/ChildHome';
@@ -100,6 +101,10 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/parent/profile"
           element={<AppShell><ParentProfile /></AppShell>}
+        />
+        <Route
+          path="/parent/notifications"
+          element={<AppShell><ParentNotifications /></AppShell>}
         />
 
         {/* Child Routes */}
