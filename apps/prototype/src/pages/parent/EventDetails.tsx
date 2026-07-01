@@ -1,17 +1,30 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Link2, FileText, Lightbulb, Copy, Mic } from 'lucide-react';
+import {
+  ArrowLeft,
+  Edit,
+  Link2,
+  FileText,
+  Lightbulb,
+  Copy,
+} from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
-import { AIInsightCard } from '@/components/ui/AIInsightCard';
+import { QoldauCard } from '@/components/ui/QoldauCard';
+import { EventTypeBadge, EventStatusBadge } from '@/components/ui/Primitives';
+import { AppIcon } from '@/components/ui/AppIcon';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
-import {
-  getEventSourceLabel,
-  getEventSourceClassName,
-  getEventStatusLabel,
-  getEventStatusClassName,
-} from '@/utils/eventLabels';
+import { VoiceWaveIcon, EventTimelineIcon } from '@/components/icons';
+import { eventTypeColors, toneToColor, type EventTone } from '@/styles/tokens';
+
+const SOURCE_LABEL: Record<string, string> = {
+  parent: 'Записано родителем',
+  child: 'От ребёнка',
+  tutor: 'От тьютора',
+  specialist: 'От специалиста',
+  device: 'Устройство',
+  ai: 'AI-наблюдение',
+};
 
 export const EventDetails: React.FC = () => {
   const { eventId } = useParams();
@@ -25,11 +38,17 @@ export const EventDetails: React.FC = () => {
     return (
       <div className="flex flex-col gap-4">
         <PageHeader title="Событие не найдено" showBack />
-        <Card variant="default">
+        <QoldauCard variant="default">
           <p className="text-sm text-muted text-center py-4">
             Возможно, событие было удалено или вы перешли по устаревшей ссылке.
           </p>
-        </Card>
+          <button
+            onClick={() => navigate('/parent/events')}
+            className="mt-3 w-full px-4 py-3 rounded-2xl bg-teal-soft text-teal-dark font-bold text-sm hover:bg-teal hover:text-white transition-colors"
+          >
+            Вернуться к событиям
+          </button>
+        </QoldauCard>
       </div>
     );
   }
@@ -37,6 +56,10 @@ export const EventDetails: React.FC = () => {
   const linkedEvents = (event.linkedEventIds || [])
     .map((id) => events.find((e) => e.id === id))
     .filter((e): e is NonNullable<typeof e> => e !== undefined);
+
+  const cfg = (eventTypeColors as Record<string, { tone: EventTone; emoji: string }>)[event.type];
+  const tone: EventTone = cfg?.tone ?? 'blue';
+  const toneColor = toneToColor(tone);
 
   const aiHypothesis = (() => {
     const type = event.type;
@@ -70,9 +93,7 @@ export const EventDetails: React.FC = () => {
   })();
 
   const handleEdit = () => showToast('Редактирование будет в следующей версии', 'info');
-  const handleCopy = () => {
-    showToast('Событие скопировано', 'success');
-  };
+  const handleCopy = () => showToast('Событие скопировано', 'success');
   const handleAddToReport = () => showToast('Событие добавлено в отчёт', 'success');
 
   return (
@@ -86,58 +107,89 @@ export const EventDetails: React.FC = () => {
         showBack
       />
 
-      {/* Main Event */}
-      <Card variant="default">
-        <div className="flex gap-3 items-start mb-3">
-          <div className="w-14 h-14 rounded-2xl bg-teal-soft flex items-center justify-center text-teal flex-shrink-0">
-            <Mic className="w-6 h-6" />
+      {/* Hero — основное событие */}
+      <QoldauCard variant="elevated" padding="lg">
+        <div className="flex gap-4 items-start">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 border"
+            style={{
+              backgroundColor: `${toneColor}15`,
+              borderColor: `${toneColor}30`,
+              color: toneColor,
+            }}
+          >
+            {event.type === 'voice_observation' ? (
+              <VoiceWaveIcon size={36} className="" />
+            ) : (
+              <AppIcon
+                component={EventTimelineIcon}
+                size={36}
+                colorClass=""
+              />
+            )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-black text-ink leading-tight">{event.title}</h3>
-            <p className="text-sm text-muted mt-1 leading-relaxed">
+            <EventTypeBadge eventType={event.type} size="md" />
+            <h3 className="text-lg font-black text-ink leading-tight mt-2">
+              {event.title}
+            </h3>
+            <p className="text-sm text-ink-2 leading-relaxed mt-1.5">
               {event.description}
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-1.5 pt-3 border-t border-line-soft">
-          <span
-            className={`px-2.5 py-1 rounded-full text-xs font-bold ${getEventSourceClassName(
-              event.sourceRole
-            )}`}
-          >
-            {getEventSourceLabel(event.sourceRole)}
+        <div className="flex flex-wrap gap-1.5 pt-4 mt-4 border-t border-line-soft">
+          <EventStatusBadge status={event.status} />
+          <span className="inline-flex items-center h-7 px-2.5 rounded-full text-xs font-bold border border-line bg-white text-ink-2">
+            {SOURCE_LABEL[event.sourceRole] ?? event.sourceRole}
           </span>
-          <span
-            className={`px-2.5 py-1 rounded-full text-xs font-bold ${getEventStatusClassName(
-              event.status
-            )}`}
-          >
-            {getEventStatusLabel(event.status)}
-          </span>
+          {event.confidence !== undefined && (
+            <span className="inline-flex items-center h-7 px-2.5 rounded-full text-xs font-bold border border-line bg-white text-muted">
+              уверенность {Math.round(event.confidence * 100)}%
+            </span>
+          )}
         </div>
-      </Card>
+      </QoldauCard>
 
-      {/* Original phrase */}
+      {/* Исходная фраза / transcript */}
       {event.rawText && (
-        <Card variant="tinted-blue">
-          <p className="text-xs font-black text-blue uppercase tracking-wide mb-2">
-            Исходная фраза
+        <QoldauCard variant="tinted-blue" padding="md">
+          <div className="flex items-center gap-2 mb-2">
+            <AppIcon
+              component={VoiceWaveIcon}
+              size={16}
+              colorClass="text-blue"
+            />
+            <p className="text-xs font-black text-blue uppercase tracking-wide">
+              Исходная фраза
+            </p>
+          </div>
+          <p className="text-sm text-ink italic leading-relaxed">
+            «{event.rawText}»
           </p>
-          <p className="text-sm text-ink italic leading-relaxed">"{event.rawText}"</p>
-        </Card>
+          {typeof event.payload?.originalTranscript === 'string' &&
+            (event.payload.originalTranscript as string) !== event.rawText && (
+              <p className="text-xs text-muted mt-2 leading-relaxed">
+                <span className="font-bold">До правок:</span>{' '}
+                <span className="italic">
+                  «{event.payload.originalTranscript as string}»
+                </span>
+              </p>
+            )}
+        </QoldauCard>
       )}
 
-      {/* Linked Events */}
+      {/* Linked events */}
       {linkedEvents.length > 0 && (
-        <Card variant="default">
+        <QoldauCard variant="default" padding="md">
           <div className="flex items-center gap-2 mb-3">
-            <Link2 className="w-4 h-4 text-muted" />
+            <AppIcon component={Link2} size={16} colorClass="text-muted" />
             <p className="text-sm font-black text-ink">Связанные события</p>
             <span className="ml-auto text-xs font-bold text-muted">
               {linkedEvents.length}
             </span>
           </div>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             {linkedEvents.map((linked) => (
               <button
                 key={linked.id}
@@ -150,6 +202,7 @@ export const EventDetails: React.FC = () => {
                     minute: '2-digit',
                   })}
                 </span>
+                <EventTypeBadge eventType={linked.type} size="sm" showIcon={false} />
                 <span className="text-sm font-bold text-ink flex-1 truncate">
                   {linked.title}
                 </span>
@@ -157,36 +210,47 @@ export const EventDetails: React.FC = () => {
               </button>
             ))}
           </div>
-        </Card>
+        </QoldauCard>
       )}
 
-      {/* AI Hypothesis */}
-      <AIInsightCard text={aiHypothesis} variant="warning" />
+      {/* AI Hypothesis — осторожная подпись */}
+      <QoldauCard variant="tinted-yellow" padding="md">
+        <div className="flex items-center gap-2 mb-2">
+          <AppIcon component={Lightbulb} size={16} colorClass="text-yellow" />
+          <p className="text-xs font-black text-yellow uppercase tracking-wide">
+            AI-наблюдение
+          </p>
+          <span className="text-[10px] text-muted italic ml-auto">
+            не диагноз
+          </span>
+        </div>
+        <p className="text-sm text-ink-2 leading-relaxed">{aiHypothesis}</p>
+      </QoldauCard>
 
-      {/* Suggestions */}
-      <Card variant="tinted-yellow">
+      {/* Suggestions — осторожный disclaimer */}
+      <QoldauCard variant="tinted-warm" padding="md">
         <div className="flex items-center gap-2 mb-3">
-          <Lightbulb className="w-4 h-4 text-yellow" />
+          <Lightbulb size={14} className="text-muted" />
           <p className="text-sm font-black text-ink">Что можно попробовать</p>
         </div>
-        <ul className="space-y-2">
+        <ul className="flex flex-col gap-2">
           {suggestions.map((s, i) => (
             <li
               key={i}
               className="flex items-start gap-2 text-sm text-ink-2 leading-relaxed"
             >
-              <span className="text-teal mt-1">•</span>
+              <span className="text-teal mt-1.5 leading-none">•</span>
               {s}
             </li>
           ))}
         </ul>
-        <p className="text-[11px] text-muted mt-3 italic">
+        <p className="text-[11px] text-muted mt-3 italic leading-relaxed">
           Это возможные шаги. Не медицинский совет. Можно обсудить со специалистом.
         </p>
-      </Card>
+      </QoldauCard>
 
       {/* Actions */}
-      <div className="grid grid-cols-3 gap-2 mt-2">
+      <div className="grid grid-cols-3 gap-2">
         <button
           onClick={handleEdit}
           className="flex items-center justify-center gap-1.5 h-12 rounded-2xl bg-white border border-line text-ink hover:bg-bg transition-colors text-sm font-bold"

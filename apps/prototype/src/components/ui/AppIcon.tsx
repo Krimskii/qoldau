@@ -15,16 +15,8 @@ import { ChevronLeft } from 'lucide-react';
  * - aria-label + role=img если aria-label передан
  */
 export interface AppIconProps {
-  /** Компонент-иконка (SVG или lucide). */
-  component: React.ComponentType<{
-    size?: number;
-    className?: string;
-    strokeWidth?: number;
-    'aria-label'?: string;
-    'aria-hidden'?: boolean;
-    role?: string;
-    style?: React.CSSProperties;
-  }>;
+  /** Компонент-иконка (SVG или lucide). Принимаем широкий тип чтобы работать с lucide ForwardRef. */
+  component: React.ComponentType<Record<string, unknown>>;
   size?: number;
   /** Tailwind text-* для currentColor (например, text-teal, text-coral). */
   colorClass?: string;
