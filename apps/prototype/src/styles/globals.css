@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #F5F9F8;
+  --panel: #FFFFFF;
+  --panel-soft: #F8FCFB;
+  --ink: #102A43;
+  --ink-2: #334E68;
+  --muted: #6B7C93;
+  --line: #DCEAE7;
+  --teal: #07958B;
+  --teal-dark: #075E59;
+  --teal-soft: #DDF5F0;
+  --mint: #BFECE4;
+  --blue: #2385D6;
+  --blue-soft: #E8F3FF;
+  --purple: #7C5CCB;
+  --purple-soft: #F0EBFF;
+  --yellow: #E3A62F;
+  --yellow-soft: #FFF3D8;
+  --coral: #E56F5D;
+  --coral-soft: #FFEDEA;
+  --green: #2E9F6E;
+  --green-soft: #E9F8F0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 12% -8%, rgba(7, 149, 139, 0.13), transparent 30%),
+    radial-gradient(circle at 90% 6%, rgba(35, 133, 214, 0.10), transparent 28%),
+    linear-gradient(180deg, #FBFEFD 0%, var(--bg) 100%);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+@keyframes wave {
+  0%, 100% { height: 10px; opacity: 0.45; }
+  50% { height: 35px; opacity: 1; }
+}
+
+.wave-animation span {
+  width: 3px;
+  border-radius: 99px;
+  background: var(--teal);
+  opacity: 0.8;
+  animation: wave 1.2s ease-in-out infinite;
+}
+
+.wave-animation span:nth-child(2n) { animation-delay: 0.12s; }
+.wave-animation span:nth-child(3n) { animation-delay: 0.2s; }
+.wave-animation span:nth-child(4n) { animation-delay: 0.32s; }
