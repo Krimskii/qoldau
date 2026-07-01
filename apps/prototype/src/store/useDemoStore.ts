@@ -15,7 +15,7 @@ export const DEMO_STEPS: DemoStep[] = [
   { id: 4, path: '/parent/ai-review', title: 'AI-разбор', hint: 'AI предложил структуру', description: 'Проверяем и подтверждаем' },
   { id: 5, path: '/parent/clarify', title: 'Уточняем', hint: 'Отвечаем на вопросы', description: 'Добавляем детали' },
   { id: 6, path: '/parent/events', title: 'Event Timeline', hint: 'Все события в одном месте', description: 'Лента событий — ядро продукта' },
-  { id: 7, path: '/parent/events/evt-new-1', title: 'Детали события', hint: 'Смотрим связанные события', description: 'AI-гипотеза и источник' },
+  { id: 7, path: '/parent/events/evt-demo-voice-1', title: 'Детали события', hint: 'Смотрим связанные события', description: 'AI-гипотеза и источник' },
   { id: 8, path: '/child/home', title: 'Интерфейс ребёнка', hint: 'Крупные кнопки', description: 'AAC карточки и голосовой ввод' },
   { id: 9, path: '/child/cards', title: 'AAC карточки', hint: 'Нажмём "Хочу пить"', description: 'Создаёт событие' },
   { id: 10, path: '/child/favorites', title: 'Любимые', hint: 'Выбираем мультик', description: 'Запрос отправлен маме' },

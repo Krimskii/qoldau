@@ -1,39 +1,34 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Link2, FileText, Lightbulb, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Link2, FileText, Lightbulb } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { VoiceWave } from '@/components/ui/VoiceWave';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
-
-const SOURCE_LABELS: Record<string, string> = {
-  parent: 'Голосовое наблюдение родителя',
-  child: 'AAC карточка ребёнка',
-  tutor: 'Наблюдение тьютора',
-  ai: 'AI-структурирование',
-};
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  confirmed: { label: 'Подтверждено', color: 'bg-green-soft text-green', icon: <CheckCircle className="w-4 h-4" /> },
-  needs_verification: { label: 'Нужно проверить', color: 'bg-yellow-soft text-yellow', icon: <AlertCircle className="w-4 h-4" /> },
-  edited: { label: 'Исправлено', color: 'bg-blue-soft text-blue', icon: <Edit className="w-4 h-4" /> },
-};
+import {
+  getEventSourceLabel,
+  getEventSourceClassName,
+  getEventStatusLabel,
+  getEventStatusClassName,
+} from '@/utils/eventLabels';
 
 export const EventDetails: React.FC = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const { events } = useEventStore();
   const { showToast } = useToastStore();
-  
+
   const event = events.find((e) => e.id === eventId);
 
   if (!event) {
     return (
       <div className="flex flex-col gap-4">
         <PageHeader title="Событие не найдено" showBack />
+        <p className="text-sm text-muted px-4">
+          Возможно, событие было удалено или вы перешли по устаревшей ссылке.
+        </p>
       </div>
     );
   }
@@ -42,42 +37,39 @@ export const EventDetails: React.FC = () => {
     .map((id) => events.find((e) => e.id === id))
     .filter((e): e is NonNullable<typeof e> => e !== undefined);
 
-  const sourceLabel = SOURCE_LABELS[event.sourceRole] || 'Наблюдение';
-  const statusConfig = STATUS_CONFIG[event.status] || null;
-
-  // Generate contextual AI hypothesis
+  // Cautious AI hypothesis — no medical claims, ever.
   const aiHypothesis = React.useMemo(() => {
     const type = event.type;
     if (type === 'sensory' || type === 'behavior') {
       return 'Похоже, это событие может быть связано с сенсорной чувствительностью. Это наблюдение, не диагноз. Нужно подтвердить дополнительными наблюдениями.';
     }
-    if (type === 'communication') {
-      return 'Ребёнок использовал коммуникацию в этот момент. Это хороший знак! Можно отметить в коммуникационном профиле.';
+    if (type === 'communication' || type === 'aac_card') {
+      return 'Похоже, ребёнок использовал коммуникацию в этот момент. Это хороший знак! Можно отметить в коммуникационном профиле.';
     }
     if (type === 'food' || type === 'water') {
-      return 'Это событие связано с базовыми потребностями. Такие наблюдения помогают видеть паттерны.';
+      return 'Похоже, это событие связано с базовыми потребностями. Такие наблюдения помогают видеть паттерны.';
     }
     return 'Это событие добавлено в Event Timeline. Чем больше наблюдений — тем точнее паттерны.';
   }, [event.type]);
 
-  // Generate suggestions
+  // Cautious suggestions — only what to try, never prescriptions.
   const suggestions = React.useMemo(() => {
     if (event.type === 'sensory' || event.type === 'behavior') {
       return [
         'Можно попробовать тихое место',
-        'Снизить освещение',
-        'Предложить тактильный инструмент',
+        'Можно попробовать снизить освещение',
+        'Можно предложить тактильный инструмент',
       ];
     }
-    if (event.type === 'communication') {
+    if (event.type === 'communication' || event.type === 'aac_card') {
       return [
-        'Отметить в коммуникационном профиле',
-        'Поддержать попытку коммуникации',
+        'Можно отметить в коммуникационном профиле',
+        'Можно поддержать попытку коммуникации',
       ];
     }
     return [
       'Можно обсудить со специалистом',
-      'Отметить в отчёте',
+      'Можно отметить в отчёте',
     ];
   }, [event.type]);
 
@@ -101,9 +93,9 @@ export const EventDetails: React.FC = () => {
     <div className="flex flex-col gap-4 pb-8">
       <PageHeader
         title="Детали события"
-        subtitle={new Date(event.timestamp).toLocaleDateString('ru-RU', { 
-          day: 'numeric', 
-          month: 'long' 
+        subtitle={new Date(event.timestamp).toLocaleDateString('ru-RU', {
+          day: 'numeric',
+          month: 'long',
         })}
         showBack
       />
@@ -119,16 +111,15 @@ export const EventDetails: React.FC = () => {
             <p className="text-sm text-muted mt-1">{event.description}</p>
           </div>
         </div>
-        
+
         {/* Badges */}
         <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-line">
-          <Badge className="bg-teal-soft text-teal">{sourceLabel}</Badge>
-          {statusConfig && (
-            <Badge className={`${statusConfig.color} flex items-center gap-1`}>
-              {statusConfig.icon}
-              {statusConfig.label}
-            </Badge>
-          )}
+          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getEventSourceClassName(event.sourceRole)}`}>
+            {getEventSourceLabel(event.sourceRole)}
+          </span>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getEventStatusClassName(event.status)}`}>
+            {getEventStatusLabel(event.status)}
+          </span>
         </div>
       </Card>
 
@@ -152,16 +143,16 @@ export const EventDetails: React.FC = () => {
             Связанные события ({linkedEvents.length})
           </h4>
           <div className="space-y-2">
-            {linkedEvents.map((linked) => linked && (
+            {linkedEvents.map((linked) => (
               <button
                 key={linked.id}
                 onClick={() => navigate(`/parent/events/${linked.id}`)}
                 className="w-full flex items-center gap-3 p-3 bg-bg rounded-xl text-left hover:bg-teal-soft transition-colors"
               >
                 <span className="text-xs text-muted">
-                  {new Date(linked.timestamp).toLocaleTimeString('ru-RU', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
+                  {new Date(linked.timestamp).toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit',
                   })}
                 </span>
                 <span className="text-sm font-medium flex-1">{linked.title}</span>
@@ -173,10 +164,7 @@ export const EventDetails: React.FC = () => {
       )}
 
       {/* AI Hypothesis */}
-      <AIInsightCard
-        text={aiHypothesis}
-        variant="default"
-      />
+      <AIInsightCard text={aiHypothesis} variant="default" />
 
       {/* Suggestions */}
       <Card variant="default">
@@ -193,27 +181,27 @@ export const EventDetails: React.FC = () => {
           ))}
         </ul>
         <p className="text-xs text-muted mt-4 italic">
-          Это рекомендации на основе наблюдений. Не являются медицинским советом.
+          Это возможные шаги. Не являются медицинским советом. Можно обсудить со специалистом.
         </p>
       </Card>
 
       {/* Actions */}
       <div className="grid grid-cols-3 gap-2 mt-4">
-        <button 
+        <button
           onClick={handleEdit}
           className="flex items-center justify-center gap-2 border border-line rounded-xl bg-white py-3 text-sm font-bold text-ink hover:bg-bg transition-colors"
         >
           <Edit className="w-4 h-4" />
           Редактировать
         </button>
-        <button 
+        <button
           onClick={handleShowRelated}
           className="flex items-center justify-center gap-2 border border-line rounded-xl bg-white py-3 text-sm font-bold text-ink hover:bg-bg transition-colors"
         >
           <Link2 className="w-4 h-4" />
           Связанные
         </button>
-        <button 
+        <button
           onClick={handleAddToReport}
           className="flex items-center justify-center gap-2 border border-teal rounded-xl bg-teal-soft py-3 text-sm font-bold text-teal hover:bg-teal hover:text-white transition-colors"
         >

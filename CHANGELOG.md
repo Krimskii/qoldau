@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] — 2026-07-01 (Hotfix)
+
+### Fixed
+- **Demo step targets stable seeded event**: guided demo step 7 now navigates to `/parent/events/evt-demo-voice-1`, which is always present. Demo scenario seeds 7 stable events on store init via `seedDemoEvents()` in `src/data/demoScenario.ts`.
+- **EventStatus label mapping**: introduced `src/utils/eventLabels.ts` as the single source of truth for status / source / type labels. Mapped to the real `EventStatus` types (`draft | ai_parsed | confirmed | corrected | rejected`). Previous UI expected non-existent `needs_verification` and `edited` statuses.
+- **Parent voice confirmation flow**: `AIReview` no longer creates QoldauEvents. It only stores the parsed observation in `useVoiceObservationStore` and proceeds to `ClarifyingQuestions`. `ClarifyingQuestions` is now the single place that creates confirmed events with `status: 'confirmed'`, `rawText: transcript`, `linkedEventIds` between events, and `payload: { clarifyingAnswers, aiInsight, source: 'voice_observation' }`.
+- **Event Timeline filters**: added filters for every real `EventType` — Голос, Питание, Вода, Туалет, Сон, Поведение, Сенсорика, Коммуникация, AAC, Фразы, Тьютор, SOS. Colors use only tokens defined in `tailwind.config.js`.
+- **Tailwind class audit**: removed `bg-orange`, `bg-indigo`, `bg-gray-soft`, `text-gray` (none of which are defined). All replaced with existing tokens (`teal`, `blue`, `purple`, `yellow`, `coral`, `green`, `muted`, `bg`, `ink`).
+- **Safety wording**: removed "рекомендация" and "точно связано" phrasing from EventDetails. Suggestions now always start with "Можно попробовать" / "Можно отметить" / "Можно обсудить со специалистом".
+
+### Added
+- `src/data/demoScenario.ts` — 7 stable demo events with deterministic IDs (`evt-demo-voice-1`, `evt-demo-food-1`, `evt-demo-behavior-1`, `evt-demo-communication-1`, `evt-demo-toilet-1`, `evt-demo-aac-water-1`, `evt-demo-tutor-1`).
+- `src/utils/eventLabels.ts` — `getEventStatusLabel`, `getEventStatusClassName`, `getEventSourceLabel`, `getEventSourceClassName`, `getEventTypeLabel`, `getEventTypeClassName`, `getStatusIcon`.
+- `docs/VERSIONING.md` — version history and hotfix criteria.
+
+### Changed
+- `apps/prototype/package.json` — version bumped to `0.2.1`.
+- `EventDetails.tsx` and `EventTimeline.tsx` now consume helpers from `eventLabels.ts`; no inline label duplication.
+- `AIReview.tsx` button text changed to "Подтвердить и продолжить" — events are not created here.
+
+### Technical
+- `useEventStore` calls `seedDemoEvents(mockEvents)` at init so demo events are always present.
+- `useEventStore.ensureDemoEvents()` re-seeds if events get cleared (e.g. after `setEvents([])`).
+
+---
+
 ## [0.2.0] — 2026-07-01
 
 ### Added

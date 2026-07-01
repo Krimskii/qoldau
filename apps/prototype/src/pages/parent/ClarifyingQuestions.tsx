@@ -5,6 +5,8 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
+import { useEventStore } from '@/store/useEventStore';
+import { EventType } from '@/types/qoldau';
 
 const questions = [
   {
@@ -33,18 +35,101 @@ const questions = [
   },
 ];
 
+// Map AI-parsed event types to QoldauEvent types
+const EVENT_TYPE_MAP: Record<string, EventType> = {
+  food: 'food',
+  toilet: 'toilet',
+  behavior: 'behavior',
+  communication: 'communication',
+  water: 'water',
+  sensory: 'sensory',
+  state: 'state',
+};
+
+/**
+ * ClarifyingQuestions is the SINGLE place where confirmed QoldauEvents are
+ * created from a voice observation.
+ *
+ * It pulls:
+ *   - transcript from useVoiceObservationStore
+ *   - parsedObservation.events from useVoiceObservationStore
+ *   - clarifying answers from useClarifyingStore
+ *
+ * It writes:
+ *   - status: 'confirmed' on every created event
+ *   - rawText: <transcript> (the original phrase)
+ *   - linkedEventIds: all created events are linked to each other
+ *   - payload.clarifyingAnswers + payload.aiInsight + payload.source = 'voice_observation'
+ */
 export const ClarifyingQuestions: React.FC = () => {
   const navigate = useNavigate();
-  const { answers, setAnswer, confirmAll } = useClarifyingStore();
-  const { reset: resetVoiceObservation } = useVoiceObservationStore();
+  const { answers, setAnswer } = useClarifyingStore();
+  const {
+    transcript,
+    parsedObservation,
+    reset: resetVoiceObservation,
+  } = useVoiceObservationStore();
+  const { addEvents } = useEventStore();
 
   const handleAnswer = (questionId: string, option: string) => {
     setAnswer(questionId, option);
   };
 
   const handleSave = () => {
-    confirmAll();
+    const parsed = parsedObservation?.events ?? [];
+
+    // If no parsed events (e.g. user skipped AI), create a single voice observation
+    const eventData =
+      parsed.length > 0
+        ? parsed.map((event) => ({
+            childId: 'child-1',
+            type: EVENT_TYPE_MAP[event.type] || 'voice_observation',
+            title: event.title,
+            description: event.description,
+            timestamp: new Date().toISOString(),
+            sourceRole: 'parent' as const,
+            status: 'confirmed' as const,
+            confidence: event.confidence,
+            rawText: transcript,
+            linkedEventIds: [], // filled below
+            payload: {
+              clarifyingAnswers: { ...answers },
+              aiInsight: parsedObservation?.insight ?? '',
+              source: 'voice_observation',
+            },
+          }))
+        : [
+            {
+              childId: 'child-1',
+              type: 'voice_observation' as const,
+              title: 'Голосовое наблюдение',
+              description: transcript || 'Наблюдение без расшифровки',
+              timestamp: new Date().toISOString(),
+              sourceRole: 'parent' as const,
+              status: 'confirmed' as const,
+              rawText: transcript,
+              linkedEventIds: [],
+              payload: {
+                clarifyingAnswers: { ...answers },
+                aiInsight: parsedObservation?.insight ?? '',
+                source: 'voice_observation',
+              },
+            },
+          ];
+
+    const created = addEvents(eventData);
+
+    // Link the created events to each other
+    const linkedIds = created.map((e) => e.id);
+    created.forEach((event) => {
+      useEventStore.getState().updateEvent(event.id, {
+        linkedEventIds: linkedIds.filter((id) => id !== event.id),
+      });
+    });
+
+    // Only reset voice store AFTER events are created
     resetVoiceObservation();
+
     navigate('/parent/events');
   };
 
@@ -88,7 +173,7 @@ export const ClarifyingQuestions: React.FC = () => {
       <AIInsightCard text="Я не додумываю недостающие детали — лучше задать короткий вопрос и сохранить только подтверждённое." />
 
       <Button onClick={handleSave} className="mt-auto">
-        Сохранить ответы
+        Сохранить и подтвердить
       </Button>
     </div>
   );
@@ -98,8 +183,6 @@ export const ClarifyingQuestions: React.FC = () => {
 interface ClarifyingState {
   answers: Record<string, string>;
   setAnswer: (questionId: string, answer: string) => void;
-  confirmAll: () => void;
-  resetAnswers: () => void;
 }
 
 import { create } from 'zustand';
@@ -117,13 +200,4 @@ export const useClarifyingStore = create<ClarifyingState>((set) => ({
     set((state) => ({
       answers: { ...state.answers, [questionId]: answer },
     })),
-  
-  confirmAll: () => {
-    // Answers are already in state, just confirm
-    set((state) => ({
-      answers: { ...state.answers },
-    }));
-  },
-  
-  resetAnswers: () => set({ answers: { ...defaultAnswers } }),
 }));

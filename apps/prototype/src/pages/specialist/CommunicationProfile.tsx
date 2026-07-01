@@ -83,7 +83,7 @@ export const CommunicationProfile: React.FC = () => {
     switch (confidence) {
       case 'high': return 'bg-green-soft text-green';
       case 'medium': return 'bg-yellow-soft text-yellow';
-      case 'low': return 'bg-gray-soft text-gray';
+      case 'low': return 'bg-bg text-muted border border-line';
     }
   };
 

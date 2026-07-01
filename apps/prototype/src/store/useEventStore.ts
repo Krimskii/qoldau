@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { QoldauEvent, EventType } from '@/types/qoldau';
 import { mockEvents } from '@/data/mockChild';
+import { seedDemoEvents } from '@/data/demoScenario';
 
 interface ClarifyingAnswers {
   [question: string]: string;
@@ -21,10 +22,20 @@ interface EventState {
   setClarifyingAnswer: (question: string, answer: string) => void;
   getClarifyingAnswer: (question: string) => string;
   resetClarifyingAnswers: () => void;
+  
+  // Demo helpers
+  ensureDemoEvents: () => void;
 }
 
+const DEMO_BASE_DATE = '2026-07-01T10:30:00';
+
+// Seed demo events into the initial store so that:
+// 1. The guided demo always lands on real EventDetails
+// 2. Event Timeline and dashboards have demo data on first load
+const initialEvents = seedDemoEvents(mockEvents);
+
 export const useEventStore = create<EventState>((set, get) => ({
-  events: mockEvents,
+  events: initialEvents,
   clarifyingAnswers: {},
 
   setEvents: (events) => set({ events }),
@@ -74,4 +85,9 @@ export const useEventStore = create<EventState>((set, get) => ({
   getClarifyingAnswer: (question) => get().clarifyingAnswers[question] || '',
 
   resetClarifyingAnswers: () => set({ clarifyingAnswers: {} }),
+
+  ensureDemoEvents: () =>
+    set((state) => ({ events: seedDemoEvents(state.events) })),
 }));
+
+export { DEMO_BASE_DATE };

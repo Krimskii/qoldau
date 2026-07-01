@@ -12,6 +12,8 @@
 2. Убедитесь, что есть доступ к интернету (для загрузки шрифтов)
 3. Подготовьтесь объяснить: "Это frontend MVP — визуальный прототип без backend"
 
+> **Demo Mode автоматически seed-ит demo events.** При нажатии "Запустить демо" приложение гарантирует наличие 7 стабильных событий в `useEventStore`: `evt-demo-voice-1`, `evt-demo-food-1`, `evt-demo-behavior-1`, `evt-demo-communication-1`, `evt-demo-toilet-1`, `evt-demo-aac-water-1`, `evt-demo-tutor-1`. Step 7 открывает `/parent/events/evt-demo-voice-1` — событие всегда существует.
+
 ---
 
 ## Сценарий показа (10–15 минут)
