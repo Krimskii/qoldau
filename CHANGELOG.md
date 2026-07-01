@@ -2,6 +2,60 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.24] — 2026-07-02 (NeedCard: единый шаблон «Карточка потребности»)
+
+### Added — NeedCard template (v0.3.24)
+- **`src/pages/child/NeedCard.tsx`** — единый переиспользуемый шаблон «Карточка потребности»:
+  - Используется на 3 экранах: «Хочу пить», «Хочу есть», «Хочу в туалет».
+  - Отличаются только: иконка, заголовок, phraseHint, набор 4 слов.
+  - **Структура (сверху вниз):**
+    1. Шапка: back + иконка потребности (в teal-soft плитке) + заголовок.
+    2. **Строка фразы** — dashed border `#cfe0df` (пустая) / solid teal `#7fd1c9` (заполнена). Внутри chips: иконка 22px + текст 14px font-black.
+    3. **Карточка «Сказать голосом»** — большая teal-кнопка 64×64 с микрофоном. Tap → запись (mock STT), таймер считает вверх.
+    4. **Карточка «СОБРАТЬ ИЗ СЛОВ»** — 2×2 сетка с цветами по AAC-функции (pron голубой, verb зелёный, noun тёплый, soc фиолет).
+    5. Строка: «Озвучить фразу» (teal-50) + «очистить» (coral, 48×48).
+    6. **Опциональный `extra`** — например, таймер для туалета.
+    7. **Крупные ✓ Да / ✗ Нет** (88px каждая) — ВСЕГДА видны и активны, прижаты к низу (`mt-auto` + gradient fade-up).
+  - **«Да»** → addEvent потребности (с фразой или без) → success-тост → /child/home.
+  - **«Нет»** → отмена, navigate(-1) без события.
+  - Пустая фраза НЕ блокирует «Да».
+  - Tap по слову → speak-pulse (280мс one-shot).
+  - Tap повторно → fade-out (300мс) из phrase.
+  - `prefers-reduced-motion: reduce` отключает всю анимацию.
+
+### Changed — Refactor 3 wrapper pages to NeedCard
+- **`src/pages/child/ChildWater.tsx`** — тонкий wrapper: 4 слова (Я, хочу, пить, воду).
+- **`src/pages/child/ChildFood.tsx`** — тонкий wrapper: 4 слова (Я, хочу, есть, кашу).
+- **`src/pages/child/ChildToilet.tsx`** — тонкий wrapper: 4 слова (Я, хочу, в туалет, срочно) + **`TimerExtra`** (компактный таймер 5 мин).
+
+### Removed
+- **`src/pages/child/ChildActionSpeak.tsx`** — старый shared component (v0.3.20-v0.3.23) удалён, заменён на `NeedCard`.
+
+### Verified
+- `npm run build` ✅ — 1676 modules, 0 TS errors, 7.28s.
+- CSS 52.06 → 52.53 KB (+0.5 KB за новые анимации + layout).
+- Layout: **вертикальный стек** (mic card сверху, words card ниже) — не как в reference (горизонтальный с «или»). Per user request.
+
+### Use case
+- «Хочу пить» → ребёнок говорит «ва» в микрофон ИЛИ тапает «Я» → «пить» → «воду» → тапает «✓ Да» → событие создано.
+- «Хочу в туалет» → собирает фразу ИЛИ тапает микрофон → может ещё запустить таймер на 5 мин → «✓ Да».
+- «Хочу есть» → аналогично.
+- «✗ Нет» на любом экране → отмена, возврат назад без события.
+
+### Diff summary
+```
+4 файла изменено, 1 удалён, 1 добавлено:
+
+apps/prototype/src/pages/child/NeedCard.tsx           NEW (371 строка — общий шаблон)
+apps/prototype/src/pages/child/ChildWater.tsx         переписан (50 → 33 строк, тонкий wrapper)
+apps/prototype/src/pages/child/ChildFood.tsx          переписан (50 → 33 строк, тонкий wrapper)
+apps/prototype/src/pages/child/ChildToilet.tsx        переписан (51 → 121 строка, +TimerExtra)
+apps/prototype/src/pages/child/ChildActionSpeak.tsx   DELETED (заменён NeedCard)
+apps/prototype/package.json                            0.3.23 → 0.3.24
+```
+
+---
+
 ## [0.3.23] — 2026-07-02 (ChildSpeak: mic + recent recordings list + schedule)
 
 ### Added — Recordings store (v0.3.23)
