@@ -1,10 +1,18 @@
 import React from 'react';
 import { ChildActionSpeak, type ActionSpeakConfig } from './ChildActionSpeak';
-import { Food2DIcon } from '@/components/icons/child2d';
+import {
+  Food2DIcon,
+  Help2DIcon,
+  User2DIcon,
+  Heart2DIcon,
+  Hug2DIcon,
+  No2DIcon,
+} from '@/components/icons/child2d';
 
 /**
  * /child/food — sub-page для «Хочу кушать».
- * Внутри: микрофон (mock) + 3 слова (Ам/Есть/Дай) + phrase-builder.
+ * 3 главные кнопки (явные) с иконками: Ам | Есть | Дай.
+ * 6 нижних чипов: Я | хочу | есть | кашу | пожалуйста | не хочу.
  */
 const CONFIG: ActionSpeakConfig = {
   actionId: 'food',
@@ -18,17 +26,17 @@ const CONFIG: ActionSpeakConfig = {
   },
   HeroIcon: Food2DIcon,
   mainWords: [
-    { id: 'am',   label: 'Ам',   spoken: 'Есть',   hint: 'ам' },
-    { id: 'eat',  label: 'Есть', spoken: 'Есть',   hint: 'есть' },
-    { id: 'give', label: 'Дай',  spoken: 'Дай',    hint: 'дай' },
+    { id: 'am',   label: 'Ам',   spoken: 'Есть',  hint: 'ам',   icon: Food2DIcon },
+    { id: 'eat',  label: 'Есть', spoken: 'Есть',  hint: 'есть', icon: Food2DIcon },
+    { id: 'give', label: 'Дай',  spoken: 'Дай',   hint: 'дай',  icon: Help2DIcon },
   ],
   phraseWords: [
-    { text: 'Я',          bg: 'bg-[#EAF8F0]', color: 'text-[#158647]' },
-    { text: 'хочу',       bg: 'bg-[#FFF6DF]', color: 'text-[#9a7820]' },
-    { text: 'есть',       bg: 'bg-[#EAF6EF]', color: 'text-[#276b48]' },
-    { text: 'кашу',       bg: 'bg-[#EAF6EF]', color: 'text-[#276b48]' },
-    { text: 'пожалуйста', bg: 'bg-[#F1EDFF]', color: 'text-[#5a3eb4]', wide: true },
-    { text: 'не хочу',    bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
+    { text: 'Я',          icon: User2DIcon,  bg: 'bg-[#EAF8F0]', color: 'text-[#158647]' },
+    { text: 'хочу',       icon: Heart2DIcon, bg: 'bg-[#FFF6DF]', color: 'text-[#9a7820]' },
+    { text: 'есть',       icon: Food2DIcon,  bg: 'bg-[#EAF6EF]', color: 'text-[#276b48]' },
+    { text: 'кашу',       icon: Food2DIcon,  bg: 'bg-[#EAF6EF]', color: 'text-[#276b48]' },
+    { text: 'пожалуйста', icon: Hug2DIcon,   bg: 'bg-[#F1EDFF]', color: 'text-[#5a3eb4]', wide: true },
+    { text: 'не хочу',    icon: No2DIcon,    bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
   ],
   showTimer: false,
   eventType: 'food',

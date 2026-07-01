@@ -1,10 +1,18 @@
 import React from 'react';
 import { ChildActionSpeak, type ActionSpeakConfig } from './ChildActionSpeak';
-import { Water2DIcon } from '@/components/icons/child2d';
+import {
+  Water2DIcon,
+  Help2DIcon,
+  User2DIcon,
+  Heart2DIcon,
+  Hug2DIcon,
+  No2DIcon,
+} from '@/components/icons/child2d';
 
 /**
  * /child/water — sub-page для «Хочу пить».
- * Внутри: микрофон (mock) + 3 слова (Ва/Вода/Дай) + phrase-builder.
+ * 3 главные кнопки (явные) с иконками: Ва | Вода | Дай.
+ * 6 нижних чипов: Я | хочу | пить | воду | пожалуйста | не хочу.
  */
 const CONFIG: ActionSpeakConfig = {
   actionId: 'water',
@@ -18,17 +26,17 @@ const CONFIG: ActionSpeakConfig = {
   },
   HeroIcon: Water2DIcon,
   mainWords: [
-    { id: 'va',    label: 'Ва',    spoken: 'Вода',  hint: 'ва' },
-    { id: 'water', label: 'Вода',  spoken: 'Вода',  hint: 'вода' },
-    { id: 'give',  label: 'Дай',   spoken: 'Дай',   hint: 'дай' },
+    { id: 'va',    label: 'Ва',    spoken: 'Вода',  hint: 'ва',   icon: Water2DIcon },
+    { id: 'water', label: 'Вода',  spoken: 'Вода',  hint: 'вода', icon: Water2DIcon },
+    { id: 'give',  label: 'Дай',   spoken: 'Дай',   hint: 'дай',  icon: Help2DIcon },
   ],
   phraseWords: [
-    { text: 'Я',          bg: 'bg-[#EAF8F0]', color: 'text-[#158647]' },
-    { text: 'хочу',       bg: 'bg-[#FFF6DF]', color: 'text-[#9a7820]' },
-    { text: 'пить',       bg: 'bg-[#EAF5FF]', color: 'text-[#1c6cb8]' },
-    { text: 'воду',       bg: 'bg-[#EAF5FF]', color: 'text-[#1c6cb8]' },
-    { text: 'пожалуйста', bg: 'bg-[#F1EDFF]', color: 'text-[#5a3eb4]', wide: true },
-    { text: 'не хочу',    bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
+    { text: 'Я',          icon: User2DIcon,   bg: 'bg-[#EAF8F0]', color: 'text-[#158647]' },
+    { text: 'хочу',       icon: Heart2DIcon,  bg: 'bg-[#FFF6DF]', color: 'text-[#9a7820]' },
+    { text: 'пить',       icon: Water2DIcon,  bg: 'bg-[#EAF5FF]', color: 'text-[#1c6cb8]' },
+    { text: 'воду',       icon: Water2DIcon,  bg: 'bg-[#EAF5FF]', color: 'text-[#1c6cb8]' },
+    { text: 'пожалуйста', icon: Hug2DIcon,    bg: 'bg-[#F1EDFF]', color: 'text-[#5a3eb4]', wide: true },
+    { text: 'не хочу',    icon: No2DIcon,     bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
   ],
   showTimer: false,
   eventType: 'water',

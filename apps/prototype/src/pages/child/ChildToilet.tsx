@@ -1,11 +1,18 @@
 import React from 'react';
 import { ChildActionSpeak, type ActionSpeakConfig } from './ChildActionSpeak';
-import { Toilet2DIcon } from '@/components/icons/child2d';
+import {
+  Toilet2DIcon,
+  Help2DIcon,
+  User2DIcon,
+  Heart2DIcon,
+  No2DIcon,
+} from '@/components/icons/child2d';
 
 /**
  * /child/toilet — sub-page для «Туалет».
- * Внутри: микрофон (mock) + 3 слова (Ту-ту/Туалет/Дай) + phrase-builder + ТАЙМЕР.
- * Таймер: старт → отсчёт 5 минут → можно остановить в любой момент → событие «сходил».
+ * 3 главные кнопки (явные) с иконками: Ту-ту | Туалет | Помощь.
+ * 6 нижних чипов: Я | хочу | в туалет | ту-ту | помоги | не хочу.
+ * + Таймер (5 мин, старт/стоп, авто-стоп).
  */
 const CONFIG: ActionSpeakConfig = {
   actionId: 'toilet',
@@ -19,20 +26,20 @@ const CONFIG: ActionSpeakConfig = {
   },
   HeroIcon: Toilet2DIcon,
   mainWords: [
-    { id: 'tutu',   label: 'Ту-ту',   spoken: 'Туалет',  hint: 'ту-ту' },
-    { id: 'toilet', label: 'Туалет',  spoken: 'Туалет',  hint: 'туалет' },
-    { id: 'help',   label: 'Помощь',  spoken: 'Помощь',  hint: 'помощь' },
+    { id: 'tutu',   label: 'Ту-ту',  spoken: 'Туалет', hint: 'ту-ту',  icon: Toilet2DIcon },
+    { id: 'toilet', label: 'Туалет', spoken: 'Туалет', hint: 'туалет', icon: Toilet2DIcon },
+    { id: 'help',   label: 'Помощь', spoken: 'Помощь', hint: 'помощь', icon: Help2DIcon },
   ],
   phraseWords: [
-    { text: 'Я',          bg: 'bg-[#EAF8F0]', color: 'text-[#158647]' },
-    { text: 'хочу',       bg: 'bg-[#FFF6DF]', color: 'text-[#9a7820]' },
-    { text: 'в туалет',   bg: 'bg-[#EAF5FF]', color: 'text-[#1c6cb8]', wide: true },
-    { text: 'ту-ту',      bg: 'bg-[#EAF5FF]', color: 'text-[#1c6cb8]' },
-    { text: 'помоги',     bg: 'bg-[#FBEDED]', color: 'text-[#a24545]' },
-    { text: 'не хочу',    bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
+    { text: 'Я',         icon: User2DIcon,   bg: 'bg-[#EAF8F0]', color: 'text-[#158647]' },
+    { text: 'хочу',      icon: Heart2DIcon,  bg: 'bg-[#FFF6DF]', color: 'text-[#9a7820]' },
+    { text: 'в туалет',  icon: Toilet2DIcon, bg: 'bg-[#EAF5FF]', color: 'text-[#1c6cb8]', wide: true },
+    { text: 'ту-ту',     icon: Toilet2DIcon, bg: 'bg-[#EAF5FF]', color: 'text-[#1c6cb8]' },
+    { text: 'помоги',    icon: Help2DIcon,   bg: 'bg-[#FBEDED]', color: 'text-[#a24545]' },
+    { text: 'не хочу',   icon: No2DIcon,     bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
   ],
   showTimer: true,
-  timerSeconds: 300, // 5 минут
+  timerSeconds: 300,
   eventType: 'toilet',
   eventTitle: 'Сигнал о туалете',
   makeEventDescription: ({ phrase }) =>

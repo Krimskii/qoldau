@@ -2,6 +2,54 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.21] — 2026-07-02 (Restore mic + icon-based phrase builder)
+
+### Changed — ChildActionSpeak: mic restored + icon-first design (v0.3.21)
+- **`src/pages/child/ChildActionSpeak.tsx`** — переделан под icon-first design:
+  - **Большой микрофон (150×150) вернулся** — tap to record (mock STT), tap again to stop; в «heard» area появляется первое слово из mainWords.
+  - **Главные 3 кнопки теперь с ИКОНКАМИ**, не буквами:
+    - 64×64 иконка-контейнер (вместо 56×56 буквенного чипа).
+    - Иконки 56px из `child2d.tsx` (Water2DIcon / Food2DIcon / Toilet2DIcon / Help2DIcon).
+  - **Phrase strip — каждое слово с ИКОНКОЙ + текст** (24px иконка + label).
+    - Поиск иконки по тексту через `findIcon(text)` (mainWords → phraseWords).
+    - Fallback — `Sparkle2DIcon`.
+  - **Нижние чипы — каждое слово с ИКОНКОЙ + текст** (20px иконка + label).
+- **Убраны подсказки:**
+  - «Нажми на слово — оно добавится. Нажми ещё раз — уберётся.» (под главными кнопками) — убрано.
+  - «Собирай слова выше ↓ или ниже» (в пустой phrase strip) — заменено на невидимый плейсхолдер (`text-transparent select-none`).
+
+### Changed — wrapper pages: icons for every word (v0.3.21)
+- **`ChildWater.tsx`**: 3 main (Ва/Вода/Дай) + 6 helper (Я/хочу/пить/воду/пожалуйста/не хочу) — каждое слово с иконкой.
+  - Ва, Вода → `Water2DIcon`; Дай → `Help2DIcon`; Я → `User2DIcon`; хочу → `Heart2DIcon`; пить, воду → `Water2DIcon`; пожалуйста → `Hug2DIcon`; не хочу → `No2DIcon`.
+- **`ChildFood.tsx`**: Ам, Есть → `Food2DIcon`; Дай → `Help2DIcon`; есть, кашу → `Food2DIcon`; остальное как в Water.
+- **`ChildToilet.tsx`**: Ту-ту, Туалет → `Toilet2DIcon`; Помощь → `Help2DIcon`; в туалет, ту-ту → `Toilet2DIcon`; помоги → `Help2DIcon`; остальное как в Water.
+
+### Verified
+- `npm run build` ✅ — 1675 modules transformed, 0 TS errors, 7.11s.
+- Layout (по приоритету):
+  1. Header (back + title)
+  2. Hero icon (96×96) — по центру
+  3. **Большой микрофон (150×150)** — tap to record (mock STT)
+  4. Heard area (28px, teal)
+  5. **3 БОЛЬШИЕ кнопки с иконками** (явные, min-h 130px) — toggle в фразу + speak-pulse
+  6. **Phrase strip** с иконками + pop-in/fade-out анимациями
+  7. «Сказать фразу» (teal, появляется если фраза не пустая)
+  8. Timer card (toilet only) — 5 мин, start/stop
+  9. **Нижние чипы с иконками** (вспомогательные, min-h 48px) — toggle + speak-pulse
+
+### Diff summary
+```
+5 файлов изменено:
+
+apps/prototype/src/pages/child/ChildActionSpeak.tsx     переписан (372 → 442 строк, микрофон назад, иконки везде, без подсказок)
+apps/prototype/src/pages/child/ChildWater.tsx          обновлён (иконки для всех слов)
+apps/prototype/src/pages/child/ChildFood.tsx           обновлён
+apps/prototype/src/pages/child/ChildToilet.tsx         обновлён
+apps/prototype/package.json                             0.3.20 → 0.3.21
+```
+
+---
+
 ## [0.3.20] — 2026-07-02 (Phrase builder: connected main + helper words)
 
 ### Changed — ChildActionSpeak: connected phrase flow (v0.3.20)
