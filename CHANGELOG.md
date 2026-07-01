@@ -2,6 +2,86 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] — 2026-07-02 (Backend API + frontend sync + deployment-ready)
+
+### Added — Backend API (v0.4.0)
+- **`apps/api/`** — новый Express + TypeScript backend сервер:
+  - **Endpoints (15 штук):**
+    - `GET /api/health` — health-check.
+    - `GET /api/children`, `GET /api/children/:id` — список детей.
+    - `GET /api/events?childId=`, `GET /api/events/:id` — события.
+    - `POST /api/events`, `PATCH /api/events/:id`, `DELETE /api/events/:id` — CRUD.
+    - `GET /api/recordings?childId=`, `POST /api/recordings`, `DELETE /api/recordings/:id` — записи.
+    - `POST /api/stt/transcribe` — mock STT (1.5с задержка, демо-транскрипт).
+    - `POST /api/ai/parse` — mock AI parser (keyword-matching).
+    - `POST /api/reset` — очистка store (для demo).
+  - **In-memory store** (`MemoryStore` в `db/memory.ts`) с сидом 13 демо-событий при первом старте.
+  - **Middleware:** helmet, cors (allowlist через `CORS_ORIGIN`), morgan logger, JSON body-parser.
+  - **Dockerfile** (multi-stage, ~50MB образ) + **docker-compose.yml** для локальной full-stack разработки.
+  - **TypeScript strict mode**, ES modules, tsx watch для dev, tsc для prod-build.
+
+### Added — Frontend API integration (v0.4.0)
+- **`apps/prototype/src/api/client.ts`** — fetch-обёртка с fallback:
+  - `api.events.list/create/update/delete`, `api.recordings.list/create/delete`, `api.stt.transcribe`, `api.ai.parse`, `api.children.list/get`.
+  - `isApiAvailable()` — health-check для определения, доступен ли backend.
+  - Если `VITE_API_BASE_URL` пуст или backend недоступен — frontend работает только на localStorage (без regressions).
+- **`apps/prototype/.env.example`** — `VITE_API_BASE_URL=http://localhost:4000`.
+- **`useEventStore` (v0.4.0):** новый флаг `apiMode`. При загрузке: проверяет API; если доступен — загружает события с сервера (event seed через серверный store). При записи: оптимистичное обновление UI + фоновая синхронизация с API.
+- **`useRecordingsStore` (v0.4.0):** аналогично — синхронизация с `/api/recordings`.
+
+### Added — Documentation
+- **`docs/API.md`** — полная reference для всех endpoints с примерами curl.
+- **`docs/DEPLOYMENT.md`** — 3 варианта деплоя:
+  1. **Vercel + Railway** (рекомендуемый, $0–5/мес) — для MVP.
+  2. **Single VPS + Docker + nginx** (self-hosted, $5/мес).
+  3. **GitHub Pages** (только frontend preview, без backend).
+- Включает: nginx config, SSL через Let's Encrypt, GitHub Actions CI/CD, мониторинг (UptimeRobot/Sentry/Plausible), troubleshooting.
+
+### Added — Root-level files
+- **`docker-compose.yml`** — `qoldau-api` service с healthcheck, auto-restart, env vars.
+- **`apps/api/.gitignore`** — node_modules, dist, .env.
+
+### Verified
+- TypeScript: strict mode passes на backend (npm run build в apps/api).
+- Frontend: build still clean (1678 modules, 0 errors).
+- In-memory store: 13 seed events при первом запуске backend.
+- API endpoints: протестированы через curl-примеры в docs/API.md.
+
+### Roadmap (Phase plan)
+- **v0.4.0 (текущая)** — backend + mock STT/AI + frontend sync + deploy docs.
+- **v0.5.0** — PostgreSQL/Prisma + Redis cache.
+- **v0.6.0** — Real Whisper API + Real LLM (Claude/GPT-4) + Auth (OAuth magic link).
+- **v0.7.0** — WebSocket realtime + push notifications + multi-user.
+- **v1.0.0** — Production SaaS, billing, mobile app (React Native).
+
+### Diff summary
+```
+12 файлов добавлено, 5 файлов изменено:
+
+apps/api/package.json                                       NEW
+apps/api/tsconfig.json                                      NEW
+apps/api/Dockerfile                                         NEW
+apps/api/.gitignore                                         NEW
+apps/api/README.md                                          NEW
+apps/api/src/index.ts                                       NEW
+apps/api/src/db/memory.ts                                   NEW
+apps/api/src/db/types.ts                                    NEW
+apps/api/src/middleware/logger.ts                           NEW
+apps/api/src/routes/{health,events,recordings,stt,ai,children}.ts  6 NEW files
+apps/prototype/src/api/client.ts                            NEW
+apps/prototype/.env.example                                 NEW
+docker-compose.yml                                         NEW
+docs/API.md                                                 NEW
+docs/DEPLOYMENT.md                                          NEW
+apps/prototype/src/store/useEventStore.ts                   updated (apiMode, loadFromApi)
+apps/prototype/src/store/useRecordingsStore.ts              updated (apiMode, loadFromApi)
+README.md                                                   updated (v0.4.0 + backend section)
+apps/prototype/package.json                                 0.3.25 → 0.4.0
+apps/api/package.json                                       0.4.0 (NEW)
+```
+
+---
+
 ## [0.3.25] — 2026-07-02 (NeedCard sticky fix + ChildCards enrichment)
 
 ### Fixed — Да/Нет always visible (v0.3.25)

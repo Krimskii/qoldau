@@ -1,0 +1,22 @@
+# Qoldau AI — full stack (v0.4.0)
+# Поднимает backend API рядом с локальной разработкой фронта.
+# Frontend в этой compose не указан — он работает через `npm run dev` в apps/prototype.
+# Для production-сборки фронта используйте отдельный деплой (Vercel/Netlify/Caddy).
+
+services:
+  api:
+    build: ./api
+    container_name: qoldau-api
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - CORS_ORIGIN=http://localhost:5173,http://localhost:4173
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

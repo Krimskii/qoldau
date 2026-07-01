@@ -2,30 +2,61 @@
 
 Voice-first AI-платформа сопровождения детей с РАС, родителей, тьюторов и специалистов.
 
-**Текущая версия: v0.3.18** (Full Demo MVP + click-through QA pass)
+**Текущая версия: v0.4.0** — Full Demo MVP + Backend API + deployment-ready
 
-> **Что нового в v0.3.18:** [полный QA pass](docs/QA_CLICKTHROUGH_REPORT.md) — исправлено 7 broken handlers, добавлены 2 alias routes для cross-role nav, [архитектурный обзор](docs/CURRENT_ARCHITECTURE.md). Предыдущие релизы — [CHANGELOG.md](CHANGELOG.md).
+> **Что нового в v0.4.0:** добавлен backend API (`apps/api`) на Express + TypeScript, frontend синхронизируется с API при `VITE_API_BASE_URL`, mock STT/AI endpoints, Dockerfile + docker-compose. См. [docs/API.md](docs/API.md) и [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Предыдущие релизы — [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
 ## Быстрый старт
 
+### Только frontend (mock, без backend)
+
 ```bash
 cd apps/prototype
 npm install
 npm run dev
+# → http://localhost:5173 (работает на localStorage)
 ```
 
-Откроется на http://localhost:5173
+### Full stack (frontend + backend)
+
+```bash
+# Terminal 1: backend
+cd apps/api
+npm install
+npm run dev
+# → http://localhost:4000
+
+# Terminal 2: frontend (с env var)
+cd apps/prototype
+cp .env.example .env
+npm install
+npm run dev
+# → http://localhost:5173 (синхронизируется с API)
+```
+
+### Docker (full stack)
+
+```bash
+docker compose up -d --build
+# API:    http://localhost:4000
+# (frontend задеплойте отдельно через Vercel/Netlify/Caddy — см. docs/DEPLOYMENT.md)
+```
 
 ## Сборка
 
 ```bash
-npm run build      # tsc -b && vite build → dist/
-npm run preview    # preview production build
+# Frontend
+cd apps/prototype
+npm run build      # → dist/ (статический SPA)
+
+# Backend
+cd apps/api
+npm run build      # → dist/ (Node.js, запускается через `npm start`)
 ```
 
-`npm run build` ✅ clean: 1671 modules transformed, ~470 KB JS (gzip ~128 KB), ~51 KB CSS.
+`npm run build` ✅ чисто: TypeScript strict mode, 0 ошибок.
 
 ---
 
@@ -118,24 +149,36 @@ npm run preview    # preview production build
 
 ```
 qoldau/
-├── apps/prototype/                # Единственное приложение (SPA)
-│   ├── src/
-│   │   ├── app/                   # Entry: App.tsx, router.tsx (38 routes)
-│   │   ├── components/            # UI / layout / assets / child / icons
-│   │   ├── pages/                 # overview/ + parent/ + child/ + tutor/ + specialist/
-│   │   ├── store/                 # Zustand stores (10 stores)
-│   │   ├── data/                  # Demo dataset
-│   │   ├── lib/                   # ai/ + stt/ + events/ + game/
-│   │   ├── styles/                # tokens.ts, globals.css, animations.css
-│   │   └── types/                 # qoldau.ts, assets.ts
-│   ├── public/assets/icons/       # Soft 3D PNG (24 actions + 4 events + 2 mascots)
-│   └── package.json
-├── docs/                          # 26 markdown-файлов
+├── apps/
+│   ├── prototype/                # Frontend SPA (React + Vite)
+│   │   ├── src/
+│   │   │   ├── app/               # Entry: App.tsx, router.tsx (40+ routes)
+│   │   │   ├── api/               # API client (v0.4.0) — fetch wrapper с fallback
+│   │   │   ├── components/        # UI / layout / assets / child / icons
+│   │   │   ├── pages/             # overview/ + parent/ + child/ + tutor/ + specialist/
+│   │   │   ├── store/             # Zustand stores (10 stores, optional API sync)
+│   │   │   ├── data/              # Demo dataset, categories
+│   │   │   ├── lib/               # ai/ + stt/ + events/ + game/ (legacy mocks)
+│   │   │   ├── styles/            # tokens.ts, globals.css, animations.css
+│   │   │   └── types/             # qoldau.ts, assets.ts
+│   │   ├── public/assets/icons/   # Soft 3D PNG (24 actions + 4 events + 2 mascots)
+│   │   └── package.json
+│   └── api/                       # Backend API (Express + TS, v0.4.0)
+│       ├── src/
+│       │   ├── index.ts           # Express entry
+│       │   ├── routes/            # health, events, recordings, stt, ai, children
+│       │   ├── db/                # In-memory store (Phase 2: Prisma)
+│       │   └── middleware/        # logger
+│       ├── Dockerfile             # Multi-stage build
+│       ├── tsconfig.json
+│       └── package.json
+├── docs/                          # 28 markdown-файлов
+├── docker-compose.yml             # Full-stack dev environment
 ├── README.md
 └── CHANGELOG.md
 ```
 
-Подробнее: [docs/CURRENT_ARCHITECTURE.md](docs/CURRENT_ARCHITECTURE.md).
+Подробнее: [docs/CURRENT_ARCHITECTURE.md](docs/CURRENT_ARCHITECTURE.md), [docs/API.md](docs/API.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 
