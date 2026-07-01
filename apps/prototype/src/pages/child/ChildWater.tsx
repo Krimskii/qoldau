@@ -17,7 +17,7 @@ const CONFIG: ActionSpeakConfig = {
     chipText: '#1c6cb8',
   },
   HeroIcon: Water2DIcon,
-  speakWords: [
+  mainWords: [
     { id: 'va',    label: 'Ва',    spoken: 'Вода',  hint: 'ва' },
     { id: 'water', label: 'Вода',  spoken: 'Вода',  hint: 'вода' },
     { id: 'give',  label: 'Дай',   spoken: 'Дай',   hint: 'дай' },
@@ -31,16 +31,12 @@ const CONFIG: ActionSpeakConfig = {
     { text: 'не хочу',    bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
   ],
   showTimer: false,
-  micHint: 'Нажми и скажи «ва» или «вода»',
-  phraseHint: 'Собрать фразу про воду →',
   eventType: 'water',
   eventTitle: 'Просьба о воде',
-  makeEventDescription: ({ spoken, phrase, finishedTimer }) => {
-    if (phrase) return `Ребёнок собрал фразу: «${phrase}». Похоже, это просьба о воде. Это наблюдение, не диагноз.`;
-    if (spoken) return `Ребёнок сказал «${spoken}». Похоже, просит воды. Это наблюдение, не диагноз.`;
-    if (finishedTimer) return 'Ребёнок отметил таймер для воды.';
-    return 'Просьба о воде';
-  },
+  makeEventDescription: ({ phrase }) =>
+    phrase
+      ? `Ребёнок собрал фразу: «${phrase}». Похоже, это просьба о воде. Это наблюдение, не диагноз.`
+      : 'Просьба о воде',
 };
 
 export const ChildWater: React.FC = () => <ChildActionSpeak config={CONFIG} />;

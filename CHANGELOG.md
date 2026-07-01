@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.20] — 2026-07-02 (Phrase builder: connected main + helper words)
+
+### Changed — ChildActionSpeak: connected phrase flow (v0.3.20)
+- **`src/pages/child/ChildActionSpeak.tsx`** — переписан flow для /child/water | /child/food | /child/toilet:
+  - **Удалён большой микрофон** (150px) и «heard» area — эти страницы теперь про СОСТАВЛЕНИЕ фразы, а не voice recording. Для voice input остаётся отдельная /child/speak.
+  - **3 БОЛЬШИЕ кнопки (явные)** теперь часть фразы:
+    - При нажатии: слово добавляется в фразу с анимацией `qoldau-speak-pulse` (280 мс — кратковременная подсветка, имитирует «произносится»).
+    - В выбранном состоянии: кнопка подсвечивается (ring + filled background).
+    - При повторном нажатии: слово ТИХО исчезает из фразы (opacity 1→0 + scale 1→0.85 за 300 мс, затем удаляется из state).
+  - **Нижние чипы (вспомогательные, меньше)** — та же механика toggle + speak-pulse.
+  - Размеры: 3 главные кнопки `min-h-[120px]`, иконка-буква `w-16 h-16 text-2xl`, текст `text-base font-black`; нижние чипы `min-h-[48px] text-sm font-bold`.
+  - Phrase strip — анимация `qoldau-fade-in-up` 240 мс при появлении слова, плавный fade-out при удалении.
+  - «Сказать фразу» (teal big button) — только когда фраза не пустая; иконка Volume2 слева.
+  - `addEvent` теперь создаётся ОДИН РАЗ на финальное нажатие «Сказать фразу» (вместо на каждый тап слова) — чище для аналитики.
+
+### Added — speak-pulse animation (v0.3.20)
+- **`src/styles/animations.css`** — новый keyframe `qoldau-speak-pulse` (≤ 300 мс, one-shot):
+  - `transform: scale(1) → 1.07 → 1`
+  - `box-shadow: 0 → 8px teal halo → 0`
+  - Уважает `prefers-reduced-motion` и `html.qoldau-paused`.
+  - Применяется через class `qoldau-speak-pulse` (Tailwind-friendly).
+
+### Verified
+- `npm run build` ✅ — 1675 modules transformed, 0 TS errors, 8.80s.
+- CSS bundle 51.12 → 51.51 KB (+0.4 KB за новую анимацию).
+- Главные кнопки (явные) + нижние чипы (вспомогательные) используют одну и ту же `toggleWord()` логику — connected flow.
+
+### Diff summary
+```
+5 файлов изменено:
+
+apps/prototype/src/styles/animations.css               +16 строк (speak-pulse keyframe + class)
+apps/prototype/src/pages/child/ChildActionSpeak.tsx     переписан (377 → 372 строк, переименованы speakWords→mainWords, удалён mic)
+apps/prototype/src/pages/child/ChildWater.tsx          обновлён (speakWords→mainWords, новый сигнатур makeEventDescription)
+apps/prototype/src/pages/child/ChildFood.tsx           обновлён
+apps/prototype/src/pages/child/ChildToilet.tsx         обновлён
+apps/prototype/package.json                             0.3.19 → 0.3.20
+```
+
+---
+
 ## [0.3.19] — 2026-07-02 (Child Home redesign: bigger cards + new sub-pages)
 
 ### Changed — ChildHome grid (v0.3.19)

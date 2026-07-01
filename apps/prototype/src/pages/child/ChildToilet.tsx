@@ -18,10 +18,10 @@ const CONFIG: ActionSpeakConfig = {
     chipText: '#1c6cb8',
   },
   HeroIcon: Toilet2DIcon,
-  speakWords: [
-    { id: 'tutu',  label: 'Ту-ту',  spoken: 'Туалет',  hint: 'ту-ту' },
-    { id: 'toilet', label: 'Туалет', spoken: 'Туалет',  hint: 'туалет' },
-    { id: 'help',  label: 'Помощь',  spoken: 'Помощь',  hint: 'помощь' },
+  mainWords: [
+    { id: 'tutu',   label: 'Ту-ту',   spoken: 'Туалет',  hint: 'ту-ту' },
+    { id: 'toilet', label: 'Туалет',  spoken: 'Туалет',  hint: 'туалет' },
+    { id: 'help',   label: 'Помощь',  spoken: 'Помощь',  hint: 'помощь' },
   ],
   phraseWords: [
     { text: 'Я',          bg: 'bg-[#EAF8F0]', color: 'text-[#158647]' },
@@ -33,16 +33,12 @@ const CONFIG: ActionSpeakConfig = {
   ],
   showTimer: true,
   timerSeconds: 300, // 5 минут
-  micHint: 'Нажми и скажи «ту-ту» или «туалет»',
-  phraseHint: 'Собрать фразу про туалет →',
   eventType: 'toilet',
   eventTitle: 'Сигнал о туалете',
-  makeEventDescription: ({ spoken, phrase, finishedTimer }) => {
-    if (finishedTimer) return 'Ребёнок отметил «сходил» по таймеру. Это наблюдение, не диагноз.';
-    if (phrase) return `Ребёнок собрал фразу: «${phrase}». Похоже, это сигнал о туалете. Это наблюдение, не диагноз.`;
-    if (spoken) return `Ребёнок сказал «${spoken}». Похоже, идёт в туалет. Это наблюдение, не диагноз.`;
-    return 'Сигнал о туалете';
-  },
+  makeEventDescription: ({ phrase }) =>
+    phrase
+      ? `Ребёнок собрал фразу: «${phrase}». Похоже, это сигнал о туалете. Это наблюдение, не диагноз.`
+      : 'Сигнал о туалете',
 };
 
 export const ChildToilet: React.FC = () => <ChildActionSpeak config={CONFIG} />;

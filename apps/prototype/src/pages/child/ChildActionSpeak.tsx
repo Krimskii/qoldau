@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { BackArrowIcon, Pause2DIcon } from '@/components/icons/child2d';
-import { Mic, X } from 'lucide-react';
+import { X, Volume2 } from 'lucide-react';
 
 /**
  * Конфиг для ChildActionSpeak — контекстно-зависимый sub-page.
@@ -21,36 +21,37 @@ export interface ActionSpeakConfig {
     text: string;  // hex для текста
     chipBg: string;
     chipText: string;
+    /**
+     * Акцентный фон для ВЫБРАННОГО (in-phrase) состояния главной кнопки.
+     * Если не задан — используется chipBg.
+     */
+    selectedBg?: string;
+    selectedText?: string;
   };
   /** Большая иконка (из child2d.tsx) */
   HeroIcon: React.FC<{ size?: number; animated?: boolean }>;
-  /** 3 кнопки-слова (как в ChildSpeak) */
-  speakWords: Array<{
+  /**
+   * 3 главные кнопки — БОЛЬШИЕ (явные). Каждая добавляет/убирает своё слово из фразы.
+   * 1-й символ label используется как буква на иконке.
+   */
+  mainWords: Array<{
     id: string;
     label: string;
     spoken: string;
     hint: string;
   }>;
-  /** Слова для phrase-builder (опционально, дефолт — общий набор) */
+  /** Слова для нижней сетки (вспомогательные, меньше). Опционально. */
   phraseWords?: Array<{ text: string; bg: string; color: string; wide?: boolean }>;
   /** Включить ли timer card (только для toilet) */
   showTimer?: boolean;
   /** Длительность таймера по умолчанию (сек), дефолт 300 (5 мин) */
   timerSeconds?: number;
-  /** Лейбл подсказки для микрофона */
-  micHint: string;
-  /** Дополнительное сообщение в phrase strip (опционально) */
-  phraseHint?: string;
   /** Event type для addEvent */
   eventType: 'water' | 'food' | 'toilet';
   /** Title события (рус.) */
   eventTitle: string;
-  /** Описание для события по типу (с поддержкой {spoken}/{phrase}) */
-  makeEventDescription: (params: {
-    spoken?: string;
-    phrase?: string;
-    finishedTimer?: boolean;
-  }) => string;
+  /** Описание для события по типу */
+  makeEventDescription: (params: { phrase: string }) => string;
 }
 
 interface ChildActionSpeakProps {
@@ -58,33 +59,39 @@ interface ChildActionSpeakProps {
 }
 
 const DEFAULT_PHRASE_WORDS = [
-  { text: 'Я',       bg: 'bg-[#EAF8F0]', color: 'text-[#158647]' },
-  { text: 'хочу',    bg: 'bg-[#FFF6DF]', color: 'text-[#9a7820]' },
-  { text: 'ещё',     bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]' },
-  { text: 'не хочу', bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
+  { text: 'Я',          bg: 'bg-[#EAF8F0]', color: 'text-[#158647]' },
+  { text: 'хочу',       bg: 'bg-[#FFF6DF]', color: 'text-[#9a7820]' },
+  { text: 'ещё',       bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]' },
+  { text: 'не хочу',    bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
   { text: 'пожалуйста', bg: 'bg-[#F1EDFF]', color: 'text-[#5a3eb4]', wide: true },
 ];
 
 /**
  * ChildActionSpeak — общий sub-page для /child/water | /child/food | /child/toilet.
  *
- * Структура (как в ChildSpeak, расширенная):
- * - Back + title.
- * - Hero: большая цветная иконка (96×96) с лёгкой пульсацией.
- * - Большой микрофон (150×150) — старт/стоп записи (mock).
- * - Heard area (32px текст).
- * - 3 кнопки-слова (контекстные).
- * - Phrase builder (опционально) — собирает фразу.
- * - Timer card (опционально, для туалета) — старт/стоп, лог события.
- * - «Сказать фразу» big teal button (когда фраза не пустая).
+ * UX (v0.3.20):
+ * - Hero (96×96) + title.
+ * - **3 БОЛЬШИЕ кнопки** (явные): нажатие → слово добавляется в фразу
+ *   с анимацией «произносится» (qoldau-speak-pulse, 280 мс). Повторное нажатие
+ *   → слово тихо исчезает из фразы (opacity 0 за 300 мс, потом удаляется из state).
+ * - Phrase strip — показывает выбранные слова, анимация pop-in / fade-out.
+ * - «Сказать фразу» (teal big button) — появляется только если фраза не пустая.
+ * - **Нижние чипы** (вспомогательные, меньше) — та же механика toggle.
+ * - Timer (toilet only) — start/stop, 5 мин.
+ *
+ * Большой микрофон удалён: эти страницы про СОСТАВЛЕНИЕ фразы, а не про voice recording.
+ * Voice input — на отдельной /child/speak.
  */
 export const ChildActionSpeak: React.FC<ChildActionSpeakProps> = ({ config }) => {
   const navigate = useNavigate();
   const { addEvent } = useEventStore();
-  const [isRecording, setIsRecording] = useState(false);
-  const [heard, setHeard] = useState<string | null>(null);
   const [phrase, setPhrase] = useState<string[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Анимации состояний
+  const [speaking, setSpeaking] = useState<string | null>(null);     // последнее «произнесённое» слово
+  const [removing, setRemoving] = useState<string | null>(null);     // слово, которое сейчас «уходит»
+  const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Timer state
   const [timerStartedAt, setTimerStartedAt] = useState<number | null>(null);
@@ -103,8 +110,7 @@ export const ChildActionSpeak: React.FC<ChildActionSpeakProps> = ({ config }) =>
       const elapsed = Math.floor((Date.now() - timerStartedAt) / 1000);
       setTimerElapsed(elapsed);
       if (elapsed >= totalSec) {
-        // Авто-стоп по достижению
-        clearInterval(intervalRef.current!);
+        if (intervalRef.current) clearInterval(intervalRef.current);
         setTimerFinished(true);
       }
     }, 500);
@@ -113,34 +119,48 @@ export const ChildActionSpeak: React.FC<ChildActionSpeakProps> = ({ config }) =>
     };
   }, [timerStartedAt, totalSec]);
 
-  const toggleRec = () => {
-    if (isRecording) {
-      setIsRecording(false);
-      // Пример «распознанного» слова — берём первый speakWord как имитацию
-      const first = config.speakWords[0];
-      setHeard(first.hint);
-      return;
+  // Cleanup any pending remove timer on unmount
+  useEffect(() => {
+    return () => {
+      if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
+    };
+  }, []);
+
+  /**
+   * Toggle: нажатие на слово.
+   * - Если слова нет в фразе → добавляем с speak-pulse.
+   * - Если есть → запускаем fade-out, через 300мс удаляем.
+   */
+  const toggleWord = (text: string) => {
+    // Reset предыдущего "removing" если оно есть — нельзя два remove параллельно
+    if (removeTimerRef.current) {
+      clearTimeout(removeTimerRef.current);
+      removeTimerRef.current = null;
+      // Если был в процессе remove, но юзер передумал — сначала отменим, потом снова нажмёт
     }
-    setIsRecording(true);
-    setHeard(null);
+    setRemoving(null);
+
+    if (phrase.includes(text)) {
+      // Удаляем с анимацией
+      setRemoving(text);
+      removeTimerRef.current = setTimeout(() => {
+        setPhrase((prev) => prev.filter((w) => w !== text));
+        setRemoving(null);
+        removeTimerRef.current = null;
+      }, 300);
+    } else {
+      // Добавляем с «произносится» эффектом
+      setPhrase((prev) => [...prev, text]);
+      setSpeaking(text);
+      setTimeout(() => setSpeaking((cur) => (cur === text ? null : cur)), 320);
+    }
   };
 
-  const sayWord = (w: typeof config.speakWords[number]) => {
-    setHeard(`${w.spoken} («${w.hint}»)`);
-    addEvent({
-      childId: DEMO_PRIMARY_CHILD.id,
-      type: config.eventType,
-      title: config.eventTitle,
-      description: config.makeEventDescription({ spoken: w.spoken }),
-      timestamp: new Date().toISOString(),
-      sourceRole: 'child',
-      status: 'confirmed',
-      payload: { action: config.actionId, source: 'voice', heard: w.hint },
-    });
+  const clearPhrase = () => {
+    if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
+    setPhrase([]);
+    setRemoving(null);
   };
-
-  const addWord = (word: string) => setPhrase([...phrase, word]);
-  const clearPhrase = () => setPhrase([]);
 
   const sendPhrase = () => {
     if (phrase.length === 0) return;
@@ -163,6 +183,7 @@ export const ChildActionSpeak: React.FC<ChildActionSpeakProps> = ({ config }) =>
     }, 1500);
   };
 
+  // Timer handlers
   const startTimer = () => {
     setTimerStartedAt(Date.now());
     setTimerFinished(false);
@@ -176,7 +197,7 @@ export const ChildActionSpeak: React.FC<ChildActionSpeakProps> = ({ config }) =>
         childId: DEMO_PRIMARY_CHILD.id,
         type: config.eventType,
         title: config.eventTitle,
-        description: config.makeEventDescription({ finishedTimer: true }),
+        description: config.makeEventDescription({ phrase: '[таймер · сходил]' }),
         timestamp: new Date().toISOString(),
         sourceRole: 'child',
         status: 'confirmed',
@@ -198,6 +219,10 @@ export const ChildActionSpeak: React.FC<ChildActionSpeakProps> = ({ config }) =>
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
+  // Цвета для состояний главной кнопки
+  const selectedBg = config.accent.selectedBg ?? config.accent.chipBg;
+  const selectedText = config.accent.selectedText ?? config.accent.chipText;
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)]">
       {/* Header */}
@@ -212,7 +237,7 @@ export const ChildActionSpeak: React.FC<ChildActionSpeakProps> = ({ config }) =>
         <div className="text-xl font-black text-ink">{config.title}</div>
       </div>
 
-      {/* Hero icon — большой 96×96 (планшет-friendly) */}
+      {/* Hero icon — 96×96 */}
       <div className="flex flex-col items-center mt-3 mb-1">
         <div
           className="w-24 h-24 rounded-[28px] flex items-center justify-center shadow-card"
@@ -224,59 +249,104 @@ export const ChildActionSpeak: React.FC<ChildActionSpeakProps> = ({ config }) =>
         </div>
       </div>
 
-      {/* Big mic */}
-      <button
-        onClick={toggleRec}
-        className={`mx-auto my-4 w-[150px] h-[150px] rounded-full border-0 cursor-pointer flex items-center justify-center relative ${
-          isRecording ? 'qoldau-icon-rec' : ''
-        }`}
-        style={{
-          background: `linear-gradient(135deg, ${config.accent.from} 0%, ${config.accent.to} 100%)`,
-          boxShadow: isRecording
-            ? undefined
-            : `0 14px 34px ${config.accent.from}55`,
-        }}
-        aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
-      >
-        <Mic className="w-16 h-16 text-white" strokeWidth={2.5} />
-      </button>
-
-      {/* Hint */}
-      <div className="text-ink-soft font-bold text-[17px] mt-1.5 text-center">
-        {isRecording ? 'Слушаю… говори' : config.micHint}
-      </div>
-
-      {/* Heard area */}
-      <div
-        className="mx-5 my-4 bg-white rounded-[20px] p-5 shadow-card text-[32px] font-black min-h-[40px] flex items-center justify-center"
-        style={{ color: config.accent.text }}
-        aria-live="polite"
-      >
-        {heard ?? '…'}
-      </div>
-
-      {/* 3 word buttons */}
-      <div className="grid grid-cols-3 gap-3.5 px-5">
-        {config.speakWords.map((w, i) => (
-          <button
-            key={w.id}
-            onClick={() => sayWord(w)}
-            className="qoldau-icon-pop flex flex-col items-center gap-2 px-2 py-3 bg-white rounded-2xl shadow-card cursor-pointer min-h-[88px] transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.94]"
-            style={{ animationDelay: `${i * 60}ms` }}
-            aria-label={w.label}
-          >
-            <div
-              className="w-12 h-12 rounded-[16px] flex items-center justify-center text-xl font-black"
-              style={{ background: config.accent.chipBg, color: config.accent.chipText }}
+      {/* 3 БОЛЬШИЕ кнопки (явные) — toggle в фразу */}
+      <div className="grid grid-cols-3 gap-3.5 px-5 mt-2">
+        {config.mainWords.map((w) => {
+          const inPhrase = phrase.includes(w.label);
+          const isSpeaking = speaking === w.label;
+          return (
+            <button
+              key={w.id}
+              onClick={() => toggleWord(w.label)}
+              className={`flex flex-col items-center gap-2 px-2 py-3 rounded-2xl shadow-card cursor-pointer min-h-[120px] transition-all duration-200 active:scale-[0.94] ${
+                inPhrase
+                  ? 'ring-2 ring-teal border-teal'
+                  : 'bg-white hover:-translate-y-0.5 hover:shadow-card-lg'
+              } ${isSpeaking ? 'qoldau-speak-pulse' : ''}`}
+              style={inPhrase ? { background: selectedBg } : undefined}
+              aria-label={`${w.label} — ${inPhrase ? 'убрать из фразы' : 'добавить в фразу'}`}
+              aria-pressed={inPhrase}
             >
-              {w.label.slice(0, 1)}
-            </div>
-            <div className="text-sm font-black text-ink leading-tight">
-              {w.label}
-            </div>
-          </button>
-        ))}
+              <div
+                className={`w-16 h-16 rounded-[18px] flex items-center justify-center text-2xl font-black ${
+                  inPhrase ? '' : ''
+                }`}
+                style={{
+                  background: inPhrase ? '#ffffff' : config.accent.chipBg,
+                  color: inPhrase ? selectedText : config.accent.chipText,
+                }}
+              >
+                {w.label.slice(0, 1).toUpperCase()}
+              </div>
+              <div
+                className={`text-base font-black leading-tight ${
+                  inPhrase ? 'text-ink' : 'text-ink'
+                }`}
+              >
+                {w.label}
+              </div>
+            </button>
+          );
+        })}
       </div>
+
+      {/* Hint — подсказка как произносить */}
+      <div className="text-ink-soft font-bold text-sm mt-3 text-center px-5">
+        Нажми на слово — оно добавится. Нажми ещё раз — уберётся.
+      </div>
+
+      {/* Phrase strip */}
+      <div className="mx-5 mt-3 min-h-[60px] bg-white rounded-[20px] shadow-card flex items-center gap-2 p-3 flex-wrap">
+        {phrase.length === 0 ? (
+          <span className="text-muted font-bold px-2">
+            Собирай слова выше ↓ или ниже
+          </span>
+        ) : (
+          <>
+            {phrase.map((w, i) => {
+              const isRemoving = removing === w;
+              return (
+                <span
+                  key={`${w}-${i}-${phrase.length}`}
+                  className="font-black px-3 py-2 rounded-[12px] text-sm transition-all duration-300 ease-out"
+                  style={{
+                    background: config.accent.chipBg,
+                    color: config.accent.chipText,
+                    opacity: isRemoving ? 0 : 1,
+                    transform: isRemoving ? 'scale(0.85)' : 'scale(1)',
+                    animation: isRemoving ? undefined : 'qoldau-fade-in-up 240ms ease-out both',
+                  }}
+                >
+                  {w}
+                </span>
+              );
+            })}
+            <button
+              onClick={clearPhrase}
+              className="ml-auto w-8 h-8 rounded-xl border-0 font-black flex items-center justify-center"
+              style={{ background: '#f4eaea', color: '#c95f5f' }}
+              aria-label="Очистить фразу"
+            >
+              <X size={16} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Send phrase button */}
+      {phrase.length > 0 && (
+        <button
+          onClick={sendPhrase}
+          className="mx-5 mt-3 border-0 rounded-[18px] p-4 text-white font-black text-[17px] cursor-pointer flex items-center justify-center gap-2.5 active:scale-[0.97] transition-transform"
+          style={{
+            background: `linear-gradient(135deg, ${config.accent.from} 0%, ${config.accent.to} 100%)`,
+            boxShadow: `0 8px 20px ${config.accent.from}55`,
+          }}
+        >
+          <Volume2 className="w-5 h-5" />
+          Сказать фразу
+        </button>
+      )}
 
       {/* Timer card (опционально, для toilet) */}
       {config.showTimer && (
@@ -288,7 +358,7 @@ export const ChildActionSpeak: React.FC<ChildActionSpeakProps> = ({ config }) =>
           {timerStartedAt === null ? (
             <>
               <p className="text-sm text-muted leading-relaxed">
-                {config.phraseHint ?? 'Запусти таймер, когда пойдёшь. Можно остановить в любой момент.'}
+                Запусти таймер, когда пойдёшь. Можно остановить в любой момент.
               </p>
               <button
                 onClick={startTimer}
@@ -333,68 +403,30 @@ export const ChildActionSpeak: React.FC<ChildActionSpeakProps> = ({ config }) =>
         </div>
       )}
 
-      {/* Phrase builder strip */}
-      <div className="mx-5 mt-5 min-h-[64px] bg-white rounded-[20px] shadow-card flex items-center gap-2 p-3 flex-wrap">
-        {phrase.length === 0 ? (
-          <span className="text-muted font-bold px-2">
-            {config.phraseHint ?? 'Собрать фразу →'}
-          </span>
-        ) : (
-          <>
-            {phrase.map((w, i) => (
-              <span
+      {/* Lower word grid — smaller chips (вспомогательные) */}
+      <div className="px-5 pt-4 pb-2">
+        <p className="text-xs font-bold text-muted mb-2 px-1">Дополнительные слова</p>
+        <div className="grid grid-cols-3 gap-2">
+          {words.map((word, i) => {
+            const used = phrase.includes(word.text);
+            const isSpeaking = speaking === word.text;
+            return (
+              <button
                 key={i}
-                className="qoldau-icon-pop font-black px-3 py-2 rounded-[12px] text-sm"
-                style={{ background: config.accent.chipBg, color: config.accent.chipText }}
+                onClick={() => toggleWord(word.text)}
+                className={`min-h-[48px] rounded-xl ${word.bg} flex items-center justify-center font-bold text-sm ${word.color} ${
+                  word.wide ? 'col-span-3' : ''
+                } transition-all duration-200 ease-out active:scale-[0.94] shadow-card ${
+                  used ? 'ring-2 ring-teal/50 opacity-60' : ''
+                } ${isSpeaking ? 'qoldau-speak-pulse' : ''}`}
+                aria-label={`Добавить слово ${word.text}`}
+                aria-pressed={used}
               >
-                {w}
-              </span>
-            ))}
-            <button
-              onClick={clearPhrase}
-              className="ml-auto w-8 h-8 rounded-xl border-0 font-black flex items-center justify-center"
-              style={{ background: '#f4eaea', color: '#c95f5f' }}
-              aria-label="Очистить фразу"
-            >
-              <X size={16} />
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Send phrase button */}
-      {phrase.length > 0 && (
-        <button
-          onClick={sendPhrase}
-          className="mx-5 mt-3 mb-3 border-0 rounded-[18px] p-4 text-white font-black text-[17px] cursor-pointer flex items-center justify-center gap-2.5 active:scale-[0.97] transition-transform"
-          style={{
-            background: `linear-gradient(135deg, ${config.accent.from} 0%, ${config.accent.to} 100%)`,
-            boxShadow: `0 8px 20px ${config.accent.from}55`,
-          }}
-        >
-          Сказать фразу
-        </button>
-      )}
-
-      {/* Word grid для phrase-builder */}
-      <div className="grid grid-cols-3 gap-2.5 px-5 pb-4">
-        {words.map((word, i) => {
-          const used = phrase.includes(word.text);
-          return (
-            <button
-              key={i}
-              onClick={() => addWord(word.text)}
-              className={`min-h-[52px] rounded-2xl ${word.bg} flex items-center justify-center font-black text-base ${word.color} ${
-                word.wide ? 'col-span-3' : ''
-              } transition-all duration-200 ease-out active:scale-[0.92] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 shadow-card ${
-                used ? 'ring-2 ring-teal/50' : ''
-              }`}
-              aria-label={`Добавить слово ${word.text}`}
-            >
-              {word.text}
-            </button>
-          );
-        })}
+                {word.text}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Success overlay */}

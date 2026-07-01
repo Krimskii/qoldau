@@ -17,7 +17,7 @@ const CONFIG: ActionSpeakConfig = {
     chipText: '#276b48',
   },
   HeroIcon: Food2DIcon,
-  speakWords: [
+  mainWords: [
     { id: 'am',   label: 'Ам',   spoken: 'Есть',   hint: 'ам' },
     { id: 'eat',  label: 'Есть', spoken: 'Есть',   hint: 'есть' },
     { id: 'give', label: 'Дай',  spoken: 'Дай',    hint: 'дай' },
@@ -31,15 +31,12 @@ const CONFIG: ActionSpeakConfig = {
     { text: 'не хочу',    bg: 'bg-[#F3F6FA]', color: 'text-[#53677e]', wide: true },
   ],
   showTimer: false,
-  micHint: 'Нажми и скажи «ам» или «есть»',
-  phraseHint: 'Собрать фразу про еду →',
   eventType: 'food',
   eventTitle: 'Просьба о еде',
-  makeEventDescription: ({ spoken, phrase }) => {
-    if (phrase) return `Ребёнок собрал фразу: «${phrase}». Похоже, это просьба о еде. Это наблюдение, не диагноз.`;
-    if (spoken) return `Ребёнок сказал «${spoken}». Похоже, хочет есть. Это наблюдение, не диагноз.`;
-    return 'Просьба о еде';
-  },
+  makeEventDescription: ({ phrase }) =>
+    phrase
+      ? `Ребёнок собрал фразу: «${phrase}». Похоже, это просьба о еде. Это наблюдение, не диагноз.`
+      : 'Просьба о еде',
 };
 
 export const ChildFood: React.FC = () => <ChildActionSpeak config={CONFIG} />;
