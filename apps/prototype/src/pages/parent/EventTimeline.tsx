@@ -150,9 +150,9 @@ export const EventTimeline: React.FC = () => {
           <div className="w-16 h-16 rounded-full bg-teal-soft flex items-center justify-center mb-4">
             <Filter className="w-8 h-8 text-teal" />
           </div>
-          <h3 className="font-bold text-ink mb-2">Нет событий</h3>
-          <p className="text-sm text-muted">
-            Попробуйте другой фильтр или добавьте наблюдение
+          <h3 className="font-bold text-ink mb-2">Нет событий этого типа</h3>
+          <p className="text-sm text-muted px-6">
+            Попробуйте другой фильтр или добавьте наблюдение голосом
           </p>
         </div>
       ) : (

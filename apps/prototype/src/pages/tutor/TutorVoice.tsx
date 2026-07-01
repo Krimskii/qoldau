@@ -33,30 +33,22 @@ export const TutorVoice: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
-  const handleRecord = () => {
-    if (isRecording) {
-      handleStop();
-    } else {
-      handleStart();
-    }
-  };
+  const handleRecord = () => (isRecording ? handleStop() : handleStart());
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const formatDuration = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
   const examples = [
-    'Отказался от задания, начал нервничать',
-    'Сходил в туалет, стул нормальный',
-    'Попросил паузу, посидели тихо',
+    'Использовал визуальное расписание, переходы прошли спокойнее',
+    'Закрывал уши при громкой музыке, наушники помогли',
+    'Попросил паузу — помогло',
   ];
 
   return (
@@ -79,13 +71,22 @@ export const TutorVoice: React.FC = () => {
             </div>
           </>
         )}
+
+        {!isRecording && (
+          <p className="text-center text-muted text-sm">
+            Опишите, что произошло на занятии. AI предложит структуру.
+          </p>
+        )}
       </div>
 
       <div>
-        <p className="text-xs font-bold text-ink-2 mb-2">Примеры</p>
+        <p className="text-xs font-bold text-ink-2 mb-2">Примеры наблюдений</p>
         <div className="flex flex-col gap-2">
           {examples.map((ex, i) => (
-            <div key={i} className="text-xs border border-line bg-white rounded-xl p-2.5 text-ink-2">
+            <div
+              key={i}
+              className="text-xs border border-line bg-white rounded-xl p-2.5 text-ink-2"
+            >
               {ex}
             </div>
           ))}

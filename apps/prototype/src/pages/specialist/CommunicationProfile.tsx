@@ -2,7 +2,10 @@ import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
+import { useDemoControlsStore } from '@/store/useDemoControlsStore';
+import { DEMO_CHILDREN } from '@/data/demoDataset';
 import { CheckCircle, AlertCircle, MessageCircle, TrendingUp, Link2, Brain } from 'lucide-react';
 
 interface Signal {
@@ -17,14 +20,18 @@ interface Signal {
 
 export const CommunicationProfile: React.FC = () => {
   const { events } = useEventStore();
+  const { selectedChildId } = useDemoControlsStore();
+  const currentChild = DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
 
   // Generate signals from events - using rawText as fallback signal identifier
   const signals = useMemo<Signal[]>(() => {
     const signalMap = new Map<string, Signal>();
-    
-    events.forEach(event => {
+
+    const childEvents = events.filter((e) => e.childId === selectedChildId);
+
+    childEvents.forEach((event) => {
       if (event.rawText) {
-        const signalKey = event.rawText.slice(0, 20); // Use first 20 chars as key
+        const signalKey = event.rawText.slice(0, 20);
         const existing = signalMap.get(signalKey);
         if (existing) {
           existing.confirmed++;
@@ -46,19 +53,26 @@ export const CommunicationProfile: React.FC = () => {
       }
     });
 
-    // If no signals from events, show mock data
-    if (signalMap.size === 0) {
-      return [
-        { signal: 'ту-ту', meaning: 'Запрос туалета', confirmed: 8, lastSeen: '29 июня', sources: ['parent', 'tutor'], confidence: 'high', relatedEvents: 8 },
-        { signal: 'ва-ва', meaning: 'Хочу пить / еду', confirmed: 12, lastSeen: '1 июля', sources: ['parent', 'child'], confidence: 'high', relatedEvents: 15 },
-        { signal: 'ааа', meaning: 'Дискомфорт / усталость', confirmed: 5, lastSeen: '30 июня', sources: ['parent'], confidence: 'medium', relatedEvents: 6 },
-        { signal: 'мульт', meaning: 'Хочу посмотреть мультик', confirmed: 4, lastSeen: '1 июля', sources: ['child'], confidence: 'medium', relatedEvents: 4 },
-        { signal: 'ням-ням', meaning: 'Голодный / хочу поесть', confirmed: 6, lastSeen: '29 июня', sources: ['parent', 'tutor'], confidence: 'high', relatedEvents: 7 },
-      ];
+    // Fallback: use child profile signals
+    if (signalMap.size === 0 && currentChild.mainSignals.length > 0) {
+      return currentChild.mainSignals.map((s) => ({
+        signal: s.signal,
+        meaning: s.possibleMeaning,
+        confirmed: s.confirmedCount,
+        lastSeen: new Date(s.lastSeenAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+        sources:
+          s.kind === 'aac'
+            ? ['parent', 'child']
+            : s.kind === 'sound'
+              ? ['parent', 'tutor']
+              : ['parent'],
+        confidence: s.confidence >= 0.85 ? 'high' : s.confidence >= 0.7 ? 'medium' : 'low',
+        relatedEvents: s.confirmedCount,
+      }));
     }
 
     return Array.from(signalMap.values()).sort((a, b) => b.confirmed - a.confirmed);
-  }, [events]);
+  }, [events, selectedChildId, currentChild]);
 
   const highConfidenceSignals = signals.filter(s => s.confidence === 'high');
   const mediumConfidenceSignals = signals.filter(s => s.confidence === 'medium');
@@ -100,8 +114,10 @@ export const CommunicationProfile: React.FC = () => {
     <div className="flex flex-col gap-4 pb-8">
       <PageHeader
         title="Коммуникационный профиль"
-        subtitle="Сигналы и их значения"
+        subtitle={`${currentChild.name} · сигналы и их значения`}
       />
+
+      <ChildSelector />
 
       {/* AI Observation */}
       {aiObservation && (

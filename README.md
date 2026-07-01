@@ -2,6 +2,8 @@
 
 Voice-first AI-платформа сопровождения детей с РАС, родителей, тьюторов и специалистов.
 
+**Текущая версия: v0.3.0 — Full Demo MVP**
+
 ## Быстрый старт
 
 ```bash
@@ -20,86 +22,49 @@ npm run build
 
 ## Запуск демо
 
-На Overview нажмите **"Запустить демо (10 мин)"** — откроется guided tour по всем ролям.
+На Overview нажмите **«Запустить демо»** — откроется 18-шаговый guided tour.
 
-Или пройдите вручную:
+Или пройдите вручную через Role Switcher (вверху справа): **Родитель / Ребёнок / Тьютор / Специалист**.
 
-### Demo-flow (полный цикл)
-
-1. **Overview** — `/overview` — обзор продукта, выбор роли
-2. **Родитель** → `/parent/home`
-3. Нажать "Сказать наблюдение" → `/parent/voice`
-4. Нажать "Остановить" → `/parent/ai-review`
-5. Нажать "Сохранить всё" → `/parent/clarify`
-6. "Сохранить ответы" → `/parent/events`
-7. Открыть событие → `/parent/events/:id`
-8. Переключиться на "Ребёнок" → `/child/home`
-9. Нажать "Хочу пить" → карточки с feedback
-10. Переключиться на "Тьютор" → `/tutor/home`
-11. "Наговорить событие" → `/tutor/voice`
-12. "Остановить" → `/tutor/ai-review`
-13. "Сохранить в дневник" → `/tutor/report`
-14. Переключиться на "Специалист" → `/specialist/dashboard`
-15. "Коммуникационный профиль" → `/specialist/communication-profile`
-
-См. также: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)
+См. [docs/MVP_WALKTHROUGH.md](docs/MVP_WALKTHROUGH.md) — полный сценарий показа.
 
 ---
 
-## Что реализовано в v0.2.0
+## Что реализовано в v0.3.0
 
-### Guided Demo Mode
-- Кнопка "Запустить демо" на Overview
-- Визуальный индикатор шага внизу экрана
-- 18 шагов демо: Parent → Child → Tutor → Specialist
-- Навигация "Назад" / "Далее"
+### Данные
+- **3 ребёнка**: Алихан (7), Мира (5), Тимур (9) — в `src/data/demoDataset.ts`
+- **60+ событий за 7 дней** для Алихана: voice_observation, food, water, toilet, sleep, behavior, sensory, communication, aac_card, phrase, media_request, sos, calm_mode, tutor_note, specialist_note, state
+- Все события связаны через `linkedEventIds`
+- 2 родителя, 2 тьютора, 2 специалиста
 
-### Event Timeline (улучшенный)
-- Фильтры по типам событий
-- Группировка по времени дня (утро/день/вечер/ночь)
-- Бейджи источника: родитель / ребёнок / тьютор / AI
-- Бейджи статуса: подтверждено / проверить / исправлено
-- AI-наблюдение сверху
+### Наполненные экраны
+- **Parent**: ParentHome, VoiceObservation, AIReview, ClarifyingQuestions, EventTimeline, EventDetails, CareDiary, BehaviorSensory, ParentAIChat, ParentAnalytics, ParentProfile
+- **Child**: ChildHome, ChildCards, ChildFavorites, ChildSpeak, PhraseBuilder, CalmMode, CallMom, ChildProgress, **NowNext (новый)**
+- **Tutor**: TutorHome, TutorVoice, TutorAIReview, TutorReport, TutorChildProfile
+- **Specialist**: SpecialistDashboard, SpecialistEvents, ABCAnalysis, CommunicationProfile, CarePatterns, SupportPlan, Reports
 
-### EventDetails (улучшенный)
-- Источник события
-- Исходная фраза / карточка
-- Связанные события
-- Осторожная AI-гипотеза
-- Что можно попробовать
-
-### CommunicationProfile (улучшенный)
-- Список сигналов ребёнка
-- Confidence как осторожный индикатор
-- Источники подтверждений
-- Связь с Event Timeline
-
-### TutorReport (улучшенный)
-- Сводка за 7 дней
-- Кнопка "Скопировать отчёт"
-- Кнопка "Отправить родителю"
-- Нейтральные формулировки
-
-### SpecialistDashboard (улучшенный)
-- KPI за период (7/14/30 дней)
-- Часто повторяющиеся ситуации
-- Что помогало
-- Ссылка на все разделы
-
-### Toast notifications
-- in-app feedback без browser alert
-- Типы: success, error, info, warning
+### UX
+- **Guided Demo Mode** — 18 шагов
+- **Toast notifications** — in-app feedback (нет `alert()`)
+- **Все действия создают Event** в Event Timeline
+- **Cautious AI wording** — везде «Похоже…», «Нужно подтвердить», «Можно обсудить со специалистом»
 
 ---
 
 ## Что mock
 
-- Реальная запись голоса
-- Реальный STT
-- Реальный AI/LLM
+- Реальная запись голоса → STT → текст (mock)
+- Реальный AI/LLM парсер (mock)
 - Реальный backend
 - Реальная авторизация
-- Реальные push-уведомления
+- Real push-уведомления
+- Real cloud storage
+- Real payment
+
+**Не реализовано и не планируется в MVP:**
+- ❌ medical records, wearable, GPS/geozones
+- ❌ production backend
 
 ---
 
@@ -107,10 +72,10 @@ npm run build
 
 Проект готов для перехода к React Native / Expo:
 
-1. **Shared types** — `/src/types/qoldau.ts` можно вынести в `/packages/types`
-2. **STT adapter** — `/src/lib/sttClient.mock.ts` → заменить на реальный STT API
-3. **AI parser** — `/src/lib/aiParser.mock.ts` → заменить на реальный LLM
-4. **Design tokens** — `/tailwind.config.js` → отдельный пакет
+1. **Shared types** — `src/types/qoldau.ts` можно вынести в `packages/types`
+2. **STT adapter** — `src/lib/sttClient.mock.ts` → заменить на реальный STT API
+3. **AI parser** — `src/lib/aiParser.mock.ts` → заменить на реальный LLM
+4. **Design tokens** — `tailwind.config.js` → отдельный пакет
 
 ---
 
@@ -120,74 +85,65 @@ npm run build
 - `/overview` — Обзор продукта, запуск демо
 
 ### Родитель (11 страниц)
-- `/parent/home` — Главная
-- `/parent/voice` — Голосовое наблюдение
-- `/parent/ai-review` — AI-разбор
-- `/parent/clarify` — Уточняющие вопросы
-- `/parent/events` — Event Timeline
-- `/parent/events/:id` — Детали события
-- `/parent/care` — Питание и туалет
-- `/parent/behavior` — Поведение и сенсорика
-- `/parent/assistant` — AI-помощник
-- `/parent/analytics` — Аналитика
-- `/parent/profile` — Профиль
+- `/parent/home`, `/parent/voice`, `/parent/ai-review`, `/parent/clarify`
+- `/parent/events`, `/parent/events/:id`
+- `/parent/care`, `/parent/behavior`
+- `/parent/assistant`, `/parent/analytics`, `/parent/profile`
 
-### Ребёнок (8 страниц)
-- `/child/home` — Главная
-- `/child/cards` — AAC карточки
-- `/child/favorites` — Любимые
-- `/child/speak` — Сказать
-- `/child/phrase-builder` — Сборщик фразы
-- `/child/calm` — Спокойный режим
-- `/child/call` — Позвать маму
-- `/child/progress` — Прогресс
+### Ребёнок (9 страниц, включая новую `/child/now-next`)
+- `/child/home`, `/child/cards`, `/child/favorites`
+- `/child/speak`, `/child/phrase-builder`
+- `/child/calm`, `/child/call`, `/child/progress`, `/child/now-next`
 
 ### Тьютор (5 страниц)
-- `/tutor/home` — Главная
-- `/tutor/voice` — Запись наблюдения
-- `/tutor/ai-review` — AI-разбор
-- `/tutor/report` — Отчёт родителю
-- `/tutor/child-profile` — Профиль ребёнка
+- `/tutor/home`, `/tutor/voice`, `/tutor/ai-review`
+- `/tutor/report`, `/tutor/child-profile`
 
 ### Специалист (7 страниц)
-- `/specialist/dashboard` — Панель
-- `/specialist/events` — События
-- `/specialist/abc` — ABC-анализ
-- `/specialist/communication-profile` — Коммуникации
-- `/specialist/care-patterns` — Паттерны ухода
-- `/specialist/support-plan` — План поддержки
-- `/specialist/reports` — Отчёты
+- `/specialist/dashboard`, `/specialist/events`
+- `/specialist/abc`, `/specialist/communication-profile`
+- `/specialist/care-patterns`, `/specialist/support-plan`, `/specialist/reports`
 
 ---
 
 ## Стек
 
-- React 18
-- Vite
-- TypeScript
-- Tailwind CSS
-- React Router
-- Zustand
-- Lucide React
+- React 18, Vite, TypeScript, Tailwind CSS
+- React Router v6, Zustand, Lucide React
 
 ---
 
 ## Документация
 
-- [DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) — Сценарий показа на 10-15 минут
-- [ACCEPTANCE_CRITERIA.md](docs/ACCEPTANCE_CRITERIA.md) — Критерии приёмки
-- [PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md) — Описание продукта
-- [DATA_MODEL.md](docs/DATA_MODEL.md) — Модель данных
-- [TECH_DECISIONS.md](docs/TECH_DECISIONS.md) — Технические решения
+### Стартовые документы (v0.3.0)
+- [MVP_SCOPE.md](docs/MVP_SCOPE.md) — что входит / не входит в Demo MVP
+- [FEATURE_MAP.md](docs/FEATURE_MAP.md) — карта экранов и функций
+- [USER_JOURNEYS.md](docs/USER_JOURNEYS.md) — сценарии пользователей
+- [MOCK_DATA_SPEC.md](docs/MOCK_DATA_SPEC.md) — спецификация mock-данных
+- [EVENT_MODEL.md](docs/EVENT_MODEL.md) — модель QoldauEvent
+- [UX_WRITING_GUIDE.md](docs/UX_WRITING_GUIDE.md) — гайд по формулировкам
+- [SAFETY_WORDING.md](docs/SAFETY_WORDING.md) — запрещённые формулировки
+
+### Сценарии показа
+- [MVP_WALKTHROUGH.md](docs/MVP_WALKTHROUGH.md) — полный сценарий показа v0.3.0
+- [DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) — сценарий guided demo
+
+### Прочее
+- [VERSIONING.md](docs/VERSIONING.md) — история версий
+- [ACCEPTANCE_CRITERIA.md](docs/ACCEPTANCE_CRITERIA.md) — критерии приёмки
+- [PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md), [DATA_MODEL.md](docs/DATA_MODEL.md), [TECH_DECISIONS.md](docs/TECH_DECISIONS.md), [ROUTES.md](docs/ROUTES.md)
 
 ---
 
 ## Безопасность и формулировки
 
-Qoldau AI не является медицинским устройством. Все AI-выводы формулируются осторожно:
+Qoldau AI **не является медицинским устройством**. Не диагностирует, не лечит, не заменяет специалиста.
 
-- "Похоже..."
-- "Возможно..."
-- "Это наблюдение, не диагноз."
-- "Нужно подтвердить."
-- "Можно обсудить со специалистом."
+Все AI-выводы формулируются осторожно:
+- «Похоже…»
+- «Возможно…»
+- «Это наблюдение, не диагноз.»
+- «Нужно подтвердить.»
+- «Можно обсудить со специалистом.»
+
+Запрещены: «лечит», «диагностирует», «поведенческое нарушение», «патология», «коррекция поведения».

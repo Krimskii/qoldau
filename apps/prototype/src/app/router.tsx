@@ -16,6 +16,7 @@ import { BehaviorSensory } from '@/pages/parent/BehaviorSensory';
 import { ParentAIChat } from '@/pages/parent/ParentAIChat';
 import { ParentAnalytics } from '@/pages/parent/ParentAnalytics';
 import { ParentProfile } from '@/pages/parent/ParentProfile';
+import { ParentNotifications } from '@/pages/parent/ParentNotifications';
 
 // Child Pages
 import { ChildHome } from '@/pages/child/ChildHome';
@@ -24,6 +25,7 @@ import { ChildFavorites } from '@/pages/child/ChildFavorites';
 import { ChildSpeak } from '@/pages/child/ChildSpeak';
 import { PhraseBuilderPage } from '@/pages/child/PhraseBuilderPage';
 import { CalmMode } from '@/pages/child/CalmMode';
+import { NowNext } from '@/pages/child/NowNext';
 import { ChildCall } from '@/pages/child/CallMom';
 import { ChildProgress } from '@/pages/child/ChildProgress';
 
@@ -100,6 +102,10 @@ export const AppRoutes: React.FC = () => {
           path="/parent/profile"
           element={<AppShell><ParentProfile /></AppShell>}
         />
+        <Route
+          path="/parent/notifications"
+          element={<AppShell><ParentNotifications /></AppShell>}
+        />
 
         {/* Child Routes */}
         <Route
@@ -125,6 +131,10 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/child/calm"
           element={<AppShell><CalmMode /></AppShell>}
+        />
+        <Route
+          path="/child/now-next"
+          element={<AppShell><NowNext /></AppShell>}
         />
         <Route
           path="/child/call"

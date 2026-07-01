@@ -1,76 +1,125 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
-import { mockSpecialistData } from '@/data/mockSpecialist';
+import { AIInsightCard } from '@/components/ui/AIInsightCard';
+import { ChildSelector } from '@/components/layout/ChildSelector';
+import { useEventStore } from '@/store/useEventStore';
+import { useDemoControlsStore } from '@/store/useDemoControlsStore';
+import { DEMO_CHILDREN } from '@/data/demoDataset';
 
 export const ABCAnalysis: React.FC = () => {
+  const { events } = useEventStore();
+  const { selectedChildId } = useDemoControlsStore();
+  const currentChild = DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
+
+  // Build ABC from events for selected child
+  const abc = useMemo(() => {
+    const childEvents = events.filter((e) => e.childId === selectedChildId);
+
+    const antecedent = childEvents
+      .filter(
+        (e) =>
+          e.type === 'sensory' ||
+          (e.tags && (e.tags.includes('шум') || e.tags.includes('переход')))
+      )
+      .slice(-3);
+
+    const behavior = childEvents.filter((e) => e.type === 'behavior').slice(-3);
+
+    const consequence = childEvents
+      .filter((e) => e.type === 'calm_mode' || e.type === 'state')
+      .slice(-3);
+
+    return { antecedent, behavior, consequence };
+  }, [events, selectedChildId]);
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title="ABC-анализ"
-        subtitle="Триггеры и последствия"
+        subtitle={`${currentChild.name} · триггеры и последствия`}
         showBack
       />
 
+      <ChildSelector />
+
       {/* ABC Columns */}
       <div className="grid grid-cols-3 gap-3">
-        {/* Antecedent */}
-        <div className="bg-[#EAF6FF] border border-[#CAE7FF] rounded-2xl p-3">
+        <div className="bg-blue-soft border border-blue/20 rounded-2xl p-3">
           <h4 className="text-center font-bold text-sm mb-3 text-blue">A — До</h4>
           <div className="space-y-2">
-            <div className="bg-white rounded-xl p-2 text-xs">
-              <p className="font-bold">Шум</p>
-              <p className="text-muted">Группа, переход</p>
-            </div>
-            <div className="bg-white rounded-xl p-2 text-xs">
-              <p className="font-bold">Смена задания</p>
-              <p className="text-muted">Переход к новому</p>
-            </div>
+            {abc.antecedent.length === 0 ? (
+              <p className="text-xs text-muted text-center">Нет данных</p>
+            ) : (
+              abc.antecedent.map((e) => (
+                <div key={e.id} className="bg-white rounded-xl p-2 text-xs">
+                  <p className="font-bold">{e.title}</p>
+                  <p className="text-muted">{e.description}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-        {/* Behavior */}
-        <div className="bg-[#F5F0FF] border border-[#DDD1FF] rounded-2xl p-3">
+        <div className="bg-purple-soft border border-purple/20 rounded-2xl p-3">
           <h4 className="text-center font-bold text-sm mb-3 text-purple">B — Что</h4>
           <div className="space-y-2">
-            <div className="bg-white rounded-xl p-2 text-xs">
-              <p className="font-bold">Нервозность</p>
-              <p className="text-muted">Закрывает уши</p>
-            </div>
-            <div className="bg-white rounded-xl p-2 text-xs">
-              <p className="font-bold">Отказ</p>
-              <p className="text-muted">Не хочет задание</p>
-            </div>
+            {abc.behavior.length === 0 ? (
+              <p className="text-xs text-muted text-center">Нет данных</p>
+            ) : (
+              abc.behavior.map((e) => (
+                <div key={e.id} className="bg-white rounded-xl p-2 text-xs">
+                  <p className="font-bold">{e.title}</p>
+                  <p className="text-muted">{e.description}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-        {/* Consequence */}
-        <div className="bg-[#EAF9F6] border border-[#C7ECE5] rounded-2xl p-3">
-          <h4 className="text-center font-bold text-sm mb-3 text-teal">C — После</h4>
+        <div className="bg-teal-soft border border-teal/20 rounded-2xl p-3">
+          <h4 className="text-center font-bold text-sm mb-3 text-teal-dark">C — После</h4>
           <div className="space-y-2">
-            <div className="bg-white rounded-xl p-2 text-xs">
-              <p className="font-bold">Пауза</p>
-              <p className="text-muted">Тихая комната</p>
-            </div>
-            <div className="bg-white rounded-xl p-2 text-xs">
-              <p className="font-bold">Успокоение</p>
-              <p className="text-muted">Продолжает занятие</p>
-            </div>
+            {abc.consequence.length === 0 ? (
+              <p className="text-xs text-muted text-center">Нет данных</p>
+            ) : (
+              abc.consequence.map((e) => (
+                <div key={e.id} className="bg-white rounded-xl p-2 text-xs">
+                  <p className="font-bold">{e.title}</p>
+                  <p className="text-muted">{e.description}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
 
-      {/* Patterns */}
-      <Card>
+      {/* Patterns from data */}
+      <Card variant="default">
         <h4 className="text-sm font-bold mb-3">Замеченные паттерны</h4>
-        {mockSpecialistData.patterns.map((p, i) => (
-          <div key={i} className="py-2 border-b border-line last:border-0">
-            <p className="text-xs"><span className="font-bold">Триггер:</span> {p.trigger}</p>
-            <p className="text-xs"><span className="font-bold">Поведение:</span> {p.behavior}</p>
-            <p className="text-xs"><span className="font-bold">Результат:</span> {p.consequence}</p>
-          </div>
-        ))}
+        <ul className="space-y-3">
+          <li className="text-sm">
+            <span className="font-bold">Триггер:</span> Шум (громкая музыка, группа)
+            <br />
+            <span className="text-muted text-xs">→ Закрывает уши, отводит взгляд</span>
+          </li>
+          <li className="text-sm">
+            <span className="font-bold">Триггер:</span> Смена активности
+            <br />
+            <span className="text-muted text-xs">→ Нервозность, отказ от задания</span>
+          </li>
+          <li className="text-sm">
+            <span className="font-bold">Что помогло:</span> Пауза 2–3 минуты
+            <br />
+            <span className="text-muted text-xs">→ Похоже, стало спокойнее</span>
+          </li>
+        </ul>
       </Card>
+
+      <AIInsightCard
+        text="ABC-паттерны — гипотезы на основе наблюдений. Это не диагноз. Можно обсудить со специалистом и семьёй."
+        variant="warning"
+      />
     </div>
   );
 };
