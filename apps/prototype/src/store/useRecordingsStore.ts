@@ -1,0 +1,57 @@
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
+/**
+ * Запись голоса ребёнка (v0.3.23).
+ *
+ * Создаётся через большой микрофон на /child/speak. Хранится в localStorage
+ * через Zustand-persist, доступна для playback (визуальный mock) на той же странице.
+ *
+ * На каждую запись также создаётся `voice_observation` event для parent timeline.
+ */
+export interface Recording {
+  id: string;
+  childId: string;
+  /** Лейбл записи (мок-распознанное слово, e.g. "Я хочу пить") */
+  label: string;
+  /** Длительность в секундах */
+  durationSec: number;
+  /** ISO 8601 */
+  timestamp: string;
+}
+
+interface RecordingsState {
+  recordings: Recording[];
+  /** Добавить запись, возвращает созданный объект (с id + timestamp) */
+  addRecording: (r: Omit<Recording, 'id' | 'timestamp'>) => Recording;
+  /** Удалить запись по id */
+  removeRecording: (id: string) => void;
+  /** Очистить все */
+  clearAll: () => void;
+}
+
+export const useRecordingsStore = create<RecordingsState>()(
+  persist(
+    (set) => ({
+      recordings: [],
+      addRecording: (r) => {
+        const recording: Recording = {
+          ...r,
+          id: `rec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          timestamp: new Date().toISOString(),
+        };
+        set((state) => ({ recordings: [recording, ...state.recordings] }));
+        return recording;
+      },
+      removeRecording: (id) =>
+        set((state) => ({ recordings: state.recordings.filter((r) => r.id !== id) })),
+      clearAll: () => set({ recordings: [] }),
+    }),
+    {
+      name: 'qoldau-recordings-v1',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ recordings: state.recordings }),
+      version: 1,
+    }
+  )
+);

@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.23] — 2026-07-02 (ChildSpeak: mic + recent recordings list + schedule)
+
+### Added — Recordings store (v0.3.23)
+- **`src/store/useRecordingsStore.ts`** — новый Zustand store с persist (`qoldau-recordings-v1`):
+  - `Recording { id, childId, label, durationSec, timestamp }`.
+  - Actions: `addRecording()`, `removeRecording()`, `clearAll()`.
+  - Persisted в localStorage, переживает reload.
+
+### Changed — ChildSpeak redesigned (v0.3.23)
+- **`src/pages/child/ChildSpeak.tsx`** — полный редизайн:
+  - **Большой микрофон 150×150** — tap to record (mock STT, max 30 сек, авто-стоп).
+  - **Status text** — timer (00:00 → 00:30) во время записи, hint «Нажми и говори» в idle.
+  - **«Недавние записи»** — список карточек (до 10):
+    - Play/Pause button (teal ↔ coral, 48×48)
+    - Music2DIcon (40×40, teal-soft)
+    - Лейбл + тайм-код (progress / total)
+    - Progress bar (когда играет) / relative time (когда нет)
+    - **«Поставить» (clock icon) — schedule popover**:
+      - 5 мин / 15 мин / 30 мин / 1 час — выбор через выпадашку
+      - При активном schedule: запись красная, показывает «Запланировано на HH:MM»
+      - Клик по красному clock → отмена schedule
+      - По истечении времени запись автоматически переходит в playback
+    - **Trash button** (coral on hover) — удаление записи
+  - На каждую запись также создаётся `voice_observation` event в Event Timeline (parent видит в ленте).
+  - При удалении запланированной записи — schedule отменяется.
+  - При unmount — все setInterval и setTimeout очищаются.
+
+### Verified
+- `npm run build` ✅ — 1676 modules (на 1 больше — `useRecordingsStore`), 0 TS errors, 7.27s.
+- CSS bundle 51.83 → 52.06 KB (+0.2 KB за schedule popover).
+- JS bundle 485.73 → 491.50 KB (+5.8 KB за логику записи/playback/schedule).
+
+### Use case
+- Ребёнок нажимает микрофон → говорит «Мама, я хочу пить» (mock STT) → tap mic → запись сохранена в список.
+- Клик на запись → playback (visual: progress bar + timer).
+- Клик на clock → выбор «Через 15 мин» → запись красная с «Запланировано на HH:MM».
+- Через 15 мин запись автоматически начинает играть (визуально: play state + progress bar).
+- Удаление записи через trash icon отменяет и schedule.
+
+### Diff summary
+```
+3 файла добавлено/изменено:
+
+apps/prototype/src/store/useRecordingsStore.ts        NEW (50 строк)
+apps/prototype/src/pages/child/ChildSpeak.tsx         переписан (157 → 423 строк)
+apps/prototype/package.json                           0.3.22 → 0.3.23
+```
+
+---
+
 ## [0.3.22] — 2026-07-02 (PhraseBuilder: redesign + 23-word vocabulary)
 
 ### Changed — PhraseBuilderPage (v0.3.22)
