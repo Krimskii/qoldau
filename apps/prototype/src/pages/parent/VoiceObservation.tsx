@@ -1,136 +1,304 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, MicOff } from 'lucide-react';
+import { Mic, MicOff, Edit3, Sparkles, Keyboard } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { QoldauCard } from '@/components/ui/QoldauCard';
+import { AppIcon } from '@/components/ui/AppIcon';
+import { useVoiceObservationStore } from '@/store/useVoiceObservationStore';
+import { VoiceWaveIcon } from '@/components/icons';
 import { VoiceWave } from '@/components/ui/VoiceWave';
+import { PrimaryAction } from '@/components/ui/Primitives';
+import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 
+const DEMO_TRANSCRIPT =
+  'Алихан поел кашу с сыром, потом начал нервничать и закрывал уши. Сказал «ту-ту» и сходил в туалет.';
+
+const formatDuration = (s: number) => {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+};
+
+/**
+ * Parent VoiceObservation — state machine UI.
+ *
+ * States (через useVoiceObservationStore):
+ * - idle: показываем кнопку микрофона + опции demo/вручную
+ * - recording: микрофон активен, таймер, волна
+ * - stopped: после записи → транскрипт появляется
+ * - transcript_ready: текст готов, можно редактировать или продолжить
+ * - editing_transcript: редактирование transcript
+ * - processing_ai: AI парсит
+ * - ready_for_review: → /parent/ai-review
+ */
 export const VoiceObservation: React.FC = () => {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const startRecording = useCallback(() => {
-    setIsRecording(true);
-    setDuration(0);
-    intervalRef.current = setInterval(() => {
-      setDuration((d) => d + 1);
-    }, 1000);
-  }, []);
+  const {
+    recordingState,
+    originalTranscript,
+    currentTranscript,
+    sttSource,
+    isProcessing,
+    startRecording,
+    transcribeMock,
+    transcribeManual,
+    enterEditingTranscript,
+    editTranscript,
+    revertTranscript,
+    processWithAI,
+    reset,
+  } = useVoiceObservationStore();
 
-  const stopRecording = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setIsRecording(false);
-    navigate('/parent/ai-review');
-  }, [navigate]);
-
+  // Локальное состояние UI для таймера записи
   useEffect(() => {
+    if (isRecording) {
+      intervalRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [isRecording]);
 
-  const handleRecord = () => {
-    if (isRecording) stopRecording();
-    else startRecording();
-  };
+  const handleStart = useCallback(() => {
+    startRecording({ speakerRole: 'parent', childId: DEMO_PRIMARY_CHILD.id });
+    setIsRecording(true);
+    setDuration(0);
+  }, [startRecording]);
 
-  const formatDuration = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-  };
+  const handleStop = useCallback(async () => {
+    setIsRecording(false);
+    await transcribeMock();
+  }, [transcribeMock]);
 
-  const examples = [
-    'Он поел кашу с сыром',
-    'Сходили в туалет, стул нормальный',
-    'Начал нервничать, закрывал уши',
-    'Сказал «ва» и потянулся к воде',
-  ];
+  const handleUseDemo = useCallback(async () => {
+    await transcribeManual(DEMO_TRANSCRIPT);
+  }, [transcribeManual]);
+
+  const handleEdit = useCallback(() => {
+    enterEditingTranscript();
+  }, [enterEditingTranscript]);
+
+  const handleRevert = useCallback(() => {
+    revertTranscript();
+  }, [revertTranscript]);
+
+  const handleContinue = useCallback(async () => {
+    await processWithAI();
+    navigate('/parent/ai-review');
+  }, [processWithAI, navigate]);
+
+  const handleNew = useCallback(() => {
+    reset();
+    setDuration(0);
+  }, [reset]);
+
+  const hasTranscript = recordingState === 'transcript_ready'
+    || recordingState === 'editing_transcript'
+    || recordingState === 'processing_ai';
 
   return (
-    <div className="flex flex-col gap-6 min-h-[70vh]">
+    <div className="flex flex-col gap-4 min-h-[70vh]">
       <PageHeader
-        title="Говорите обычным языком"
-        subtitle="AI поймёт и предложит структуру"
+        title="Голосовое наблюдение"
+        subtitle="Запишите, что произошло — AI структурирует"
         showBack
       />
 
-      {/* Recording zone — центральный фокус */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
-        {/* Большая круглая кнопка-микрофон */}
-        <button
-          onClick={handleRecord}
-          aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
-          className={`w-48 h-48 rounded-full flex items-center justify-center transition-all active:scale-95 ${
-            isRecording
-              ? 'bg-gradient-to-br from-coral to-[#cc251d]'
-              : 'bg-gradient-to-br from-teal to-teal-dark'
-          }`}
-          style={{
-            boxShadow: isRecording
-              ? '0 0 0 20px rgba(229,111,93,0.10), 0 0 0 40px rgba(229,111,93,0.05), 0 24px 40px rgba(229,111,93,0.30)'
-              : '0 0 0 20px rgba(0,150,136,0.08), 0 0 0 40px rgba(0,150,136,0.045), 0 24px 40px rgba(0,150,136,0.25)',
-          }}
-        >
-          {isRecording ? (
-            <MicOff className="w-24 h-24 text-white" strokeWidth={2.5} />
-          ) : (
-            <Mic className="w-24 h-24 text-white" strokeWidth={2.5} />
-          )}
-        </button>
-
-        {/* Волна */}
-        {isRecording && (
-          <div className="w-full max-w-xs">
-            <VoiceWave />
-          </div>
-        )}
-
-        {/* Таймер */}
-        {isRecording && (
-          <div className="text-3xl font-black text-ink tabular-nums">
-            {formatDuration(duration)}
-          </div>
-        )}
-
-        {/* Hint text */}
-        {!isRecording && (
-          <p className="text-sm text-muted text-center max-w-xs">
-            Нажмите на кнопку и расскажите, что произошло.
-            AI предложит структуру наблюдения.
-          </p>
-        )}
-      </div>
-
-      {/* Примеры фраз */}
-      <div>
-        <p className="text-xs font-bold text-muted mb-2 px-1">
-          Примеры наблюдений
+      {/* Disclaimer — demo-режим */}
+      <QoldauCard variant="tinted-warm" padding="sm">
+        <p className="text-xs text-ink-2 leading-relaxed">
+          <span className="font-bold">Demo-режим:</span> распознавание речи имитируется. Вы можете отредактировать текст перед сохранением.
+          Это наблюдение, не диагноз.
         </p>
-        <div className="flex flex-col gap-2">
-          {examples.map((ex, i) => (
-            <div
-              key={i}
-              className="text-sm border border-line-soft bg-white rounded-2xl px-4 py-2.5 text-ink-2"
-            >
-              {ex}
+      </QoldauCard>
+
+      {/* Hero — recording zone */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
+        {/* Большая кнопка-микрофон */}
+        {!hasTranscript && (
+          <button
+            onClick={isRecording ? handleStop : handleStart}
+            aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
+            className={`w-48 h-48 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+              isRecording
+                ? 'bg-gradient-to-br from-coral to-[#cc251d] qoldau-soft-pulse'
+                : 'bg-gradient-to-br from-teal to-teal-dark'
+            }`}
+            style={{
+              boxShadow: isRecording
+                ? '0 0 0 20px rgba(229,111,93,0.10), 0 0 0 40px rgba(229,111,93,0.05), 0 24px 40px rgba(229,111,93,0.30)'
+                : '0 0 0 20px rgba(0,150,136,0.08), 0 0 0 40px rgba(0,150,136,0.045), 0 24px 40px rgba(0,150,136,0.25)',
+            }}
+          >
+            <AppIcon
+              component={isRecording ? MicOff : Mic}
+              size={84}
+              strokeWidth={2.5}
+              colorClass="text-white"
+            />
+          </button>
+        )}
+
+        {/* Волна + таймер */}
+        {isRecording && (
+          <div className="flex flex-col items-center gap-3 w-full">
+            <VoiceWave />
+            <div className="text-4xl font-black text-ink tabular-nums">
+              {formatDuration(duration)}
             </div>
-          ))}
-        </div>
+            <p className="text-sm text-muted">
+              Идёт запись… нажмите кнопку ещё раз, чтобы остановить
+            </p>
+          </div>
+        )}
+
+        {/* Idle — что будет записано */}
+        {!isRecording && !hasTranscript && (
+          <div className="text-center">
+            <p className="text-sm text-ink-2 leading-relaxed max-w-xs">
+              Нажмите на кнопку и расскажите, что произошло.
+              AI предложит структуру наблюдения.
+            </p>
+          </div>
+        )}
+
+        {/* Transcript card — после транскрипта */}
+        {hasTranscript && (
+          <QoldauCard variant="elevated" padding="lg" className="w-full">
+            <div className="flex items-center gap-2 mb-3">
+              <AppIcon component={VoiceWaveIcon} size={20} colorClass="text-teal" />
+              <p className="text-xs font-black text-teal uppercase tracking-wide">
+                Транскрипт
+              </p>
+              <span className="ml-auto text-[10px] text-muted italic">
+                {sttSource === 'mock' ? 'mock STT' : sttSource === 'manual' ? 'вручную' : 'real STT'}
+              </span>
+            </div>
+
+            {recordingState === 'editing_transcript' ? (
+              <textarea
+                value={currentTranscript}
+                onChange={(e) => editTranscript(e.target.value)}
+                className="w-full min-h-[120px] p-3 rounded-2xl border-2 border-line focus:border-teal/60 focus:outline-none text-sm text-ink leading-relaxed resize-none"
+                aria-label="Редактировать транскрипт"
+              />
+            ) : (
+              <p className="text-base text-ink leading-relaxed italic">
+                «{currentTranscript || originalTranscript}»
+              </p>
+            )}
+          </QoldauCard>
+        )}
+
+        {/* Processing AI */}
+        {isProcessing && (
+          <QoldauCard variant="tinted-teal" padding="md" className="w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-teal flex items-center justify-center text-white">
+                <Sparkles size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-black text-ink">AI обрабатывает…</p>
+                <p className="text-xs text-ink-2 mt-0.5">
+                  Структурируем наблюдение. Это может занять секунду.
+                </p>
+              </div>
+              <div className="w-5 h-5 rounded-full border-2 border-teal border-t-transparent animate-spin" />
+            </div>
+          </QoldauCard>
+        )}
       </div>
 
-      {/* Stop button */}
-      {isRecording && (
-        <button
-          onClick={handleRecord}
-          className="w-full h-13 rounded-2xl bg-coral text-white font-bold text-base shadow-card active:scale-[0.98] transition-all"
-        >
-          Остановить запись
-        </button>
+      {/* Idle actions — выбор режима */}
+      {!isRecording && !hasTranscript && (
+        <div className="flex flex-col gap-2">
+          <PrimaryAction
+            label="Использовать demo-текст"
+            onClick={handleUseDemo}
+            variant="soft"
+            icon={<Sparkles size={18} />}
+          />
+          <button
+            onClick={() => navigate('/parent/voice/manual')}
+            className="min-h-12 px-5 rounded-2xl border border-line text-ink-2 hover:bg-bg transition-colors text-sm font-bold flex items-center justify-center gap-2"
+          >
+            <Keyboard size={16} />
+            Ввести вручную
+          </button>
+        </div>
+      )}
+
+      {/* Transcript actions */}
+      {hasTranscript && !isProcessing && (
+        <div className="flex flex-col gap-2">
+          {recordingState === 'editing_transcript' ? (
+            <>
+              <PrimaryAction
+                label="Готово"
+                onClick={() => editTranscript(currentTranscript)}
+                variant="primary"
+                size="lg"
+                icon={<Sparkles size={18} />}
+              />
+              <button
+                onClick={handleRevert}
+                className="min-h-12 px-5 rounded-2xl border border-line text-muted hover:bg-bg transition-colors text-sm font-bold"
+              >
+                Отменить правки
+              </button>
+            </>
+          ) : (
+            <>
+              <PrimaryAction
+                label="Продолжить к AI-разбору"
+                onClick={handleContinue}
+                variant="primary"
+                size="lg"
+                icon={<Sparkles size={18} />}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={handleEdit}
+                  className="min-h-12 px-4 rounded-2xl bg-white border border-line text-ink hover:bg-bg transition-colors text-sm font-bold flex items-center justify-center gap-1.5"
+                >
+                  <Edit3 size={16} />
+                  Изменить текст
+                </button>
+                <button
+                  onClick={handleNew}
+                  className="min-h-12 px-4 rounded-2xl bg-white border border-line text-muted hover:bg-bg transition-colors text-sm font-bold"
+                >
+                  Записать заново
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Примеры */}
+      {!isRecording && !hasTranscript && (
+        <QoldauCard variant="tinted-warm" padding="md">
+          <p className="text-xs font-bold text-muted mb-2">Примеры наблюдений</p>
+          <div className="flex flex-col gap-1.5">
+            {[
+              'Он поел кашу с сыром',
+              'Сходили в туалет, стул нормальный',
+              'Начал нервничать, закрывал уши',
+              'Сказал «ва» и потянулся к воде',
+            ].map((ex, i) => (
+              <p key={i} className="text-sm text-ink-2 leading-relaxed">
+                · {ex}
+              </p>
+            ))}
+          </div>
+        </QoldauCard>
       )}
     </div>
   );
