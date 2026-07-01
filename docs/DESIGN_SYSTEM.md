@@ -1,6 +1,6 @@
 # Design System — Qoldau AI
 
-> Single source of truth for visual decisions. See also `src/styles/designTokens.ts` and `tailwind.config.js`.
+> Single source of truth for visual decisions. See also `src/styles/tokens.ts` (primary) + `src/styles/designTokens.ts` (legacy alias) and `tailwind.config.js`.
 >
 > **Для детского UI обязательно прочитай:**
 > - [`SENSORY_SAFE_DESIGN_GUIDE.md`](./SENSORY_SAFE_DESIGN_GUIDE.md) — палитра, анимация, touch-targets, reduced-motion.
@@ -18,7 +18,7 @@
 
 ## 2. Цвета
 
-Все цвета определены в `tailwind.config.js` и `src/styles/designTokens.ts`. **Запрещено** использовать hex вне этих токенов.
+Все цвета определены в `tailwind.config.js` и `src/styles/tokens.ts` (consolidated). Старый `src/styles/designTokens.ts` сохранён как legacy alias (re-exports `palette` + `qoldauColors`). **Запрещено** использовать hex вне этих токенов.
 
 ### Surface
 
@@ -137,17 +137,51 @@ Desktop центрирует phone-panel, как мокап приложения
 | `success` | Подтверждения (green) |
 | `icon` | Круглые иконочные (44×44) |
 
-### Card
+### Card (`src/components/ui/QoldauCard.tsx`)
+
+Единая карточка для ВСЕХ страниц. Заменяет inline `<div className="bg-white rounded-2xl ...">`.
 
 | Variant | Назначение |
 |---------|-----------|
-| `default` | Белая с тенью (основной) |
+| `default` | Белая с тонкой границей (основной) |
 | `soft` | Серый фон |
-| `tinted-*` | Pastel-фон (teal, blue, purple, yellow, coral, green) |
+| `elevated` | Белая с тенью (hero/CTA) |
+| `tinted-teal` / `tinted-blue` / `tinted-purple` / `tinted-yellow` / `tinted-coral` / `tinted-green` | Pastel-фон с тонкой границей |
+| `tinted-warm` | Нейтральный тёплый фон |
+| `outline` | Пунктирная граница (placeholder, demo state) |
+
+**Padding:** `none` / `sm` (p-3) / `md` (p-4) / `lg` (p-6).
+
+**Props:** `variant`, `padding`, `hoverable` (cursor + hover shadow), `liftOnHover` (translate + усиленная тень), `onClick` (превращает в button с Enter/Space), `ariaLabel`, `className`.
+
+### AppIcon (`src/components/ui/AppIcon.tsx`)
+
+Wrapper для SVG/lucide компонентов. Нормализует size/color/stroke/aria-label/filled.
+
+```tsx
+<AppIcon icon={VoiceWaveIcon} size={24} colorClass="text-teal" />
+<AppIcon icon={Settings} size={20} strokeWidth={2.5} ariaLabel="Настройки" />
+```
+
+Props: `icon: ComponentType<Record<string, unknown>>`, `size`, `colorClass`, `color`, `strokeWidth`, `ariaLabel`, `filled`. Lucide ForwardRef подходит благодаря permissive типизации.
+
+### Primitives (`src/components/ui/Primitives.tsx`)
+
+Переиспользуемые примитивы:
+
+| Component | Назначение |
+|-----------|-----------|
+| `PrimaryAction` | Главная CTA-кнопка (teal градиент, full-width, size lg/md, onClick + variant + className) |
+| `RoleBadge` | Бейдж роли (parent / child / tutor / specialist) с role-color |
+| `EventTypeBadge` | Бейдж типа события (тон + эмодзи + label через `eventTypeColors`) |
+| `EventStatusBadge` | Бейдж статуса события (draft / needs_review / ai_parsed / confirmed / corrected / rejected) |
+| `MobileFrame` | Рамка мокапа приложения для десктопа (max-width 430, border-radius) |
 
 ### Badge
 
 Маленький chip для статусов, тегов, источников. Цветные варианты.
+
+Для событий: используй `EventTypeBadge` + `EventStatusBadge` из Primitives (тип/status-driven цвет и label через tokens). Для ролей: `RoleBadge`. Для остальных случаев: кастомный badge с pastel-палитрой из токенов.
 
 ### PageHeader
 

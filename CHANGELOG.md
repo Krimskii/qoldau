@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.12] — 2026-07-02 (Visual refresh — design system consolidation)
+
+### Added — Foundation (Phase A)
+- **`src/styles/tokens.ts`** — single source of truth: `palette`, `roleColors`, `eventTypeColors` (tone/emoji/label + helpers `eventTypeTone`/`eventTypeLabel`/`toneToColor`), `eventStatusColors`, `radii`, `spacing`, `shadow`, `motion`, `typography`, `layout`. `palette` re-exported as `qoldauColors` alias.
+- **`src/components/icons/brand.tsx`** — brand SVG: `QoldauLogoMark`, `QoldauLogoLockup`, `VoiceWaveIcon`, `EventTimelineIcon`, `AACCardIcon`, `CalmModeIcon`.
+- **`src/components/icons/index.ts`** — unified entry: brand + flat + lucide-react (re-export). `_flat.tsx` → `flat.tsx` rename (underscore prefix мешал re-export).
+- **`src/components/ui/AppIcon.tsx`** — wrapper для SVG/lucide компонентов. Props: `icon`, `size`, `colorClass`, `color`, `strokeWidth`, `ariaLabel`, `filled`. Типизация через `ComponentType<Record<string, unknown>>` чтобы подходили lucide ForwardRef.
+- **`src/components/ui/QoldauCard.tsx`** — единая карточка. Variants: `default` / `soft` / `elevated` / `tinted-{teal,blue,purple,yellow,coral,green,warm}` / `outline`. Padding: `none` / `sm` / `md` / `lg`. `hoverable` + `liftOnHover`. Идёт вместо inline `<div className="bg-white rounded-2xl ...">`.
+- **`src/components/ui/Primitives.tsx`** — переиспользуемые примитивы: `PrimaryAction`, `RoleBadge`, `EventTypeBadge`, `EventStatusBadge`, `MobileFrame`.
+
+### Changed — Parent Event Timeline (Phase B1)
+- **`src/pages/parent/EventTimeline.tsx`** — фильтры теперь horizontal-scroll chips с counts через `EventTypeBadge`. Day-grouped `<section>`. Hero с `EventTimelineIcon` + AI observation в `tinted-teal` QoldauCard.
+- **`src/pages/parent/EventDetails.tsx`** — hero с tone-tinted icon container (VoiceWaveIcon для `voice_observation`, EventTimelineIcon иначе). AI hypothesis в `tinted-yellow` QoldauCard + «не диагноз». Suggestions в `tinted-warm` QoldauCard + явный disclaimer.
+
+### Changed — Parent voice flow (Phase B2)
+- **`src/pages/parent/VoiceObservation.tsx`** — state machine UI через `useVoiceObservationStore`. States: idle / recording / stopped / transcript_ready / editing_transcript / processing_ai / ready_for_review. Idle: большая mic-кнопка 192×192 + «Использовать demo-текст» + «Ввести вручную». Recording: VoiceWave анимация + таймер + auto-stop hint. Transcript card через QoldauCard elevated с VoiceWaveIcon header. Editing mode: textarea + «Revert». Processing: tinted-teal card со спиннером. Demo disclaimer всегда сверху (tinted-warm).
+- **`src/pages/parent/AIReview.tsx`** — transcript наверху с «Изменить» → `/parent/voice`. Parsed events: EventTypeBadge + confidence % + tone-tinted icon + «нужно подтвердить». AI insight в tinted-yellow + «не диагноз». Disclaimer «наблюдение, не диагноз. Можно отредактировать или отклонить». PrimaryAction + ghost fallback.
+- **`src/pages/parent/ClarifyingQuestions.tsx`** — динамические вопросы из `parsedObservation.clarificationQuestions`, fallback на 3 default вопроса (вода / туалет / шум). Per-question QoldauCard tinted-blue с icon + chip-ответы с selected state + checkmark. AI disclaimer сверху. Save через `createEventsFromAIRiew` с answers payload.
+
+### Changed — Child UI (Phase B3)
+- **`src/pages/child/CalmMode.tsx`** — 6 calm options (Тихая музыка / Дыхание / Наушники / Пауза / Темно / Позвать маму) через `QoldauIconCard` (purple/blue/green/yellow/teal/coral). Timer/start через QoldauCard elevated. PrimaryAction для start. Lucide `ChevronLeft` вместо unicode. Новый «Вернуться на главную» (interrupt с payload).
+- **`src/pages/child/PhraseBuilderPage.tsx`** — phrase display через QoldauCard tinted-blue + DinoMascot. Send button через PrimaryAction. Success overlay через QoldauCard elevated + SuccessSparkle. Lucide `ChevronLeft` + `Eraser` вместо unicode.
+- **`src/pages/child/ChildProgress.tsx`** — celebratory hero через QoldauCard tinted-yellow + SuccessSparkle. Top cards list через QoldauCard default. Footer «У тебя получается» через QoldauCard tinted-green.
+- **`src/pages/child/ChildFavorites.tsx`** — edit mode banner через QoldauCard tinted-yellow. Success toast (fixed bottom) через QoldauCard tinted-teal + shadow.
+- **`src/pages/child/ChildSpeak.tsx`** — heard card через QoldauCard tinted-teal + qoldau-success-pop + role/aria-live wrapper. Examples card через QoldauCard tinted-blue.
+
+### Verified
+- `npm run build` passes — 1665 modules transformed, 0 errors, 10.12s.
+- 12 коммитов на `feature/v0.3.0-full-demo-mvp` ahead of origin.
+
+### Not changed
+- Event Timeline data model, store-логика (`useEventStore`, `useVoiceObservationStore`, `useAssetStore`).
+- Routes, demo flow, demo dataset.
+- STT / AI abstraction (mock / future / types).
+- Asset system (v0.3.10) — без изменений, только consumption через IconRenderer.
+
+---
+
 ## [0.3.11] — 2026-07-01 (QA hotfix after asset/navigation review)
 
 ### Fixed

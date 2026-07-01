@@ -54,7 +54,35 @@ main          — стабильные релизы
 
 ## Current Version
 
-Текущая версия: **v0.3.11** (QA hotfix after asset/navigation review)
+Текущая версия: **v0.3.12** (Visual refresh — design system consolidation)
+
+### v0.3.12 — Visual refresh: design system consolidation
+
+Phase A — foundation:
+- `src/styles/tokens.ts` — palette, roleColors, eventTypeColors (tone/emoji/label + helpers), eventStatusColors, radii, spacing, shadow, motion, typography, layout.
+- `src/components/icons/brand.tsx` — QoldauLogoMark, QoldauLogoLockup, VoiceWaveIcon, EventTimelineIcon, AACCardIcon, CalmModeIcon.
+- `src/components/icons/index.ts` — unified entry: brand + flat + lucide-react (re-export). `flat.tsx` renamed from `index.tsx`.
+- `src/components/ui/AppIcon.tsx` — wrapper для SVG/lucide (colorClass/color/strokeWidth/ariaLabel/filled).
+- `src/components/ui/QoldauCard.tsx` — unified card: default / soft / elevated / tinted-{teal,blue,purple,yellow,coral,green,warm} / outline. Padding none/sm/md/lg. hoverable + liftOnHover.
+- `src/components/ui/Primitives.tsx` — PrimaryAction, RoleBadge, EventTypeBadge, EventStatusBadge, MobileFrame.
+
+Phase B1 — Parent Event Timeline + Event Details:
+- EventTimeline: фильтры-чипсы с counts, day-grouped `<section>`, hero с EventTimelineIcon + AI observation в tinted-teal.
+- EventDetails: hero с tone-tinted icon container, AI hypothesis в tinted-yellow + «не диагноз», suggestions в tinted-warm + disclaimer.
+
+Phase B2 — Parent voice flow:
+- VoiceObservation — state machine UI через useVoiceObservationStore (idle → recording → stopped → transcript_ready → editing → processing → review). Большая кнопка-микрофон с qoldau-soft-pulse, demo-текст + manual input, transcript card с inline edit.
+- AIReview — transcript наверху, parsed events с EventTypeBadge + confidence + tone-tinted icon, AI insight в tinted-yellow + disclaimer «не диагноз», PrimaryAction + ghost fallback.
+- ClarifyingQuestions — динамические вопросы из parsedObservation, fallback на 3 default вопроса, chip-ответы, createEventsFromAIReview с answers payload.
+
+Phase B3 — Child UI polish:
+- CalmMode — 6 calm options через QoldauIconCard (purple/blue/green/yellow/teal/coral), timer card через QoldauCard elevated, PrimaryAction для start, "Вернуться на главную" с interrupted payload.
+- PhraseBuilderPage — phrase card через QoldauCard tinted-blue, send button через PrimaryAction, success overlay через QoldauCard elevated, lucide icons вместо unicode glyphs.
+- ChildProgress — celebratory hero через QoldauCard tinted-yellow, top cards через QoldauCard default, footer через QoldauCard tinted-green.
+- ChildFavorites — edit banner через QoldauCard tinted-yellow, success toast через QoldauCard tinted-teal.
+- ChildSpeak — heard card через QoldauCard tinted-teal, examples через QoldauCard tinted-blue, role/aria-live wrapper.
+
+Build: `npm run build` passes (1665 modules, 0 errors).
 
 ### v0.3.11 — QA hotfix
 - **Asset rehydrate bug fixed** — custom assets теперь сохраняются после reload.
