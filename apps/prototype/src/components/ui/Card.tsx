@@ -5,11 +5,13 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   variant?: 'default' | 'food' | 'behavior' | 'toilet' | 'sensory';
+  onClick?: () => void;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className, variant }) => {
+export const Card: React.FC<CardProps> = ({ children, className, variant, onClick }) => {
   return (
     <div
+      onClick={onClick}
       className={clsx(
         'bg-white border border-line rounded-2xl shadow-card-soft p-4',
         {
@@ -18,6 +20,7 @@ export const Card: React.FC<CardProps> = ({ children, className, variant }) => {
           'bg-[#EAF6FF] border-[#CAE7FF]': variant === 'toilet',
           'bg-[#FFF7EC] border-[#F3D9AE]': variant === 'sensory',
         },
+        onClick && 'cursor-pointer',
         className
       )}
     >

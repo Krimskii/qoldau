@@ -6,51 +6,86 @@ import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { Button } from '@/components/ui/Button';
 import { useEventStore } from '@/store/useEventStore';
 import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
+import { useToastStore } from '@/store/useToastStore';
+import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { QoldauEvent } from '@/types/qoldau';
+
+interface ParsedEvent {
+  type: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  confidence: number;
+}
 
 export const TutorAIReview: React.FC = () => {
   const navigate = useNavigate();
-  const { addEvent } = useEventStore();
-  const { parsedObservation, isProcessing, processTranscript } = useVoiceObservationStore();
-  const [events, setEvents] = useState<Array<{ type: string; title: string; description: string }>>([]);
+  const { addEvent, addEvents } = useEventStore();
+  const { parsedObservation, transcript, isProcessing, processTranscript, reset } = useVoiceObservationStore();
+  const { showToast } = useToastStore();
+  const [events, setEvents] = useState<ParsedEvent[]>([]);
 
   useEffect(() => {
     if (!parsedObservation) {
       processTranscript().then((result) => {
-        setEvents(result.events.map((e) => ({
-          type: e.type,
-          title: e.title,
-          description: e.description,
-        })));
+        setEvents(result.events);
       });
     } else {
-      setEvents(parsedObservation.events.map((e) => ({
-        type: e.type,
-        title: e.title,
-        description: e.description,
-      })));
+      setEvents(parsedObservation.events);
     }
   }, [parsedObservation, processTranscript]);
 
   const handleSave = () => {
-    // Create events from AI review
-    const newEvents = events.map((event) => ({
-      childId: 'child-1',
-      type: event.type as 'behavior' | 'communication' | 'toilet' | 'food' | 'state',
+    const baseTime = new Date().toISOString();
+    const newEvents: Omit<QoldauEvent, 'id'>[] = events.map((event) => ({
+      childId: DEMO_PRIMARY_CHILD.id,
+      type: (event.type as QoldauEvent['type']) || 'tutor_note',
       title: event.title,
       description: event.description,
-      timestamp: new Date().toISOString(),
-      sourceRole: 'tutor' as const,
-      status: 'ai_parsed' as const,
+      timestamp: baseTime,
+      sourceRole: 'tutor',
+      status: 'confirmed',
+      confidence: event.confidence,
+      rawText: transcript,
+      payload: {
+        source: 'tutor_voice_observation',
+        aiInsight: parsedObservation?.insight ?? '',
+      },
     }));
 
-    addEvent(newEvents[0]); // Add first event
+    if (newEvents.length === 0) {
+      // Fallback: at least create a tutor_note so the report has data
+      addEvent({
+        childId: DEMO_PRIMARY_CHILD.id,
+        type: 'tutor_note',
+        title: 'Наблюдение тьютора',
+        description: transcript || 'Без расшифровки',
+        timestamp: baseTime,
+        sourceRole: 'tutor',
+        status: 'confirmed',
+        rawText: transcript,
+        payload: { source: 'tutor_voice_observation' },
+      });
+    } else {
+      addEvents(newEvents);
+    }
+
+    showToast('Сохранено в Event Timeline', 'success');
+    reset();
     navigate('/tutor/report');
+  };
+
+  const handleSkip = () => {
+    showToast('Без сохранения', 'info');
+    reset();
+    navigate('/tutor/home');
   };
 
   if (isProcessing) {
     return (
       <div className="flex flex-col gap-4 items-center justify-center py-20">
-        <p className="text-muted">AI обрабатывает...</p>
+        <div className="w-12 h-12 rounded-full border-4 border-teal border-t-transparent animate-spin" />
+        <p className="text-muted">AI обрабатывает…</p>
       </div>
     );
   }
@@ -59,47 +94,63 @@ export const TutorAIReview: React.FC = () => {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="AI-разбор"
-        subtitle="Проверьте информацию"
+        subtitle="Проверьте и сохраните"
         showBack
       />
 
-      {/* Activity Summary */}
-      <Card>
-        <h4 className="text-sm font-bold mb-2">Активность</h4>
-        <p className="text-xs text-ink-2">
-          {events.length > 0 ? events[0].description : 'Отказ от задания, пауза 10 минут, еда'}
-        </p>
-      </Card>
-
-      {/* Behavior */}
-      {events.find((e) => e.type === 'behavior') && (
-        <Card variant="behavior">
-          <h4 className="text-sm font-bold mb-2">Поведение</h4>
-          <p className="text-xs text-ink-2">
-            {events.find((e) => e.type === 'behavior')?.description}
-          </p>
+      {/* Transcript */}
+      {transcript && (
+        <Card variant="default">
+          <p className="text-xs font-bold text-muted mb-2">Расшифровка</p>
+          <p className="text-sm text-ink-2 italic">"{transcript}"</p>
         </Card>
       )}
 
-      {/* AI Insight */}
-      <AIInsightCard
-        text="Похоже, нервозность могла быть связана с переходом к новому заданию. Пауза и тихое место помогли снизить нагрузку. Это наблюдение, не диагноз."
-        variant="warning"
-      />
+      {/* Activity */}
+      <Card variant="default">
+        <h4 className="text-sm font-bold mb-3">Что произошло</h4>
+        {events.length === 0 ? (
+          <p className="text-sm text-muted">AI не выделил событий. Можно сохранить общую заметку.</p>
+        ) : (
+          events.map((event, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-3 py-2 border-b border-line last:border-0"
+            >
+              <span className="text-xs text-muted font-bold min-w-[40px]">
+                {event.timestamp}
+              </span>
+              <div>
+                <div className="text-sm font-bold">{event.title}</div>
+                <div className="text-xs text-muted">{event.description}</div>
+              </div>
+            </div>
+          ))
+        )}
+      </Card>
 
-      {/* What Helped */}
-      <Card>
+      {/* What helped */}
+      <Card variant="default">
         <h4 className="text-sm font-bold mb-2">Что помогло</h4>
-        <div className="flex gap-2">
-          <span className="text-xs bg-green-soft text-green px-2 py-1 rounded-full">Пауза</span>
-          <span className="text-xs bg-green-soft text-green px-2 py-1 rounded-full">Тихое место</span>
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs bg-green-soft text-green px-3 py-1 rounded-full font-bold">Пауза</span>
+          <span className="text-xs bg-green-soft text-green px-3 py-1 rounded-full font-bold">Тихое место</span>
+          <span className="text-xs bg-green-soft text-green px-3 py-1 rounded-full font-bold">Визуальное расписание</span>
         </div>
       </Card>
 
+      <AIInsightCard
+        text="Похоже, сегодня ребёнок хорошо использовал визуальные подсказки и паузы. Это наблюдение, не диагноз. Можно обсудить со специалистом."
+        variant="warning"
+      />
+
       <div className="flex flex-col gap-2 mt-2">
-        <Button onClick={handleSave}>Сохранить в дневник</Button>
+        <Button onClick={handleSave}>Сохранить в Event Timeline</Button>
         <Button variant="secondary" onClick={() => navigate('/tutor/report')}>
-          Отправить родителю
+          К отчёту
+        </Button>
+        <Button variant="ghost" onClick={handleSkip}>
+          Не сохранять
         </Button>
       </div>
     </div>

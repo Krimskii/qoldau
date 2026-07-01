@@ -24,6 +24,7 @@ import { ChildFavorites } from '@/pages/child/ChildFavorites';
 import { ChildSpeak } from '@/pages/child/ChildSpeak';
 import { PhraseBuilderPage } from '@/pages/child/PhraseBuilderPage';
 import { CalmMode } from '@/pages/child/CalmMode';
+import { NowNext } from '@/pages/child/NowNext';
 import { ChildCall } from '@/pages/child/CallMom';
 import { ChildProgress } from '@/pages/child/ChildProgress';
 
@@ -125,6 +126,10 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/child/calm"
           element={<AppShell><CalmMode /></AppShell>}
+        />
+        <Route
+          path="/child/now-next"
+          element={<AppShell><NowNext /></AppShell>}
         />
         <Route
           path="/child/call"
