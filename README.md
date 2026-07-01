@@ -115,10 +115,22 @@ npm run build
 
 ## Документация
 
+### Стартовые документы (v0.3.0)
+- [MVP_SCOPE.md](docs/MVP_SCOPE.md) — что входит / не входит в Demo MVP
+- [FEATURE_MAP.md](docs/FEATURE_MAP.md) — карта экранов и функций
+- [USER_JOURNEYS.md](docs/USER_JOURNEYS.md) — сценарии пользователей
+- [MOCK_DATA_SPEC.md](docs/MOCK_DATA_SPEC.md) — спецификация mock-данных
+- [EVENT_MODEL.md](docs/EVENT_MODEL.md) — модель QoldauEvent
+- [UX_WRITING_GUIDE.md](docs/UX_WRITING_GUIDE.md) — гайд по формулировкам
+- [SAFETY_WORDING.md](docs/SAFETY_WORDING.md) — запрещённые формулировки
+
+### Сценарии показа
 - [MVP_WALKTHROUGH.md](docs/MVP_WALKTHROUGH.md) — полный сценарий показа v0.3.0
 - [DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) — сценарий guided demo
-- [ACCEPTANCE_CRITERIA.md](docs/ACCEPTANCE_CRITERIA.md) — критерии приёмки
+
+### Прочее
 - [VERSIONING.md](docs/VERSIONING.md) — история версий
+- [ACCEPTANCE_CRITERIA.md](docs/ACCEPTANCE_CRITERIA.md) — критерии приёмки
 - [PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md), [DATA_MODEL.md](docs/DATA_MODEL.md), [TECH_DECISIONS.md](docs/TECH_DECISIONS.md), [ROUTES.md](docs/ROUTES.md)
 
 ---
