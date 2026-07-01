@@ -5,7 +5,6 @@ import { SuccessSparkle } from '@/components/illustrations/SuccessSparkle';
 import { AchievementCard } from '@/components/game/AchievementCard';
 import { DailyProgressStrip } from '@/components/game/DailyProgressStrip';
 import { QoldauCard } from '@/components/ui/QoldauCard';
-import { ChildTopBar } from '@/components/layout/ChildTopBar';
 import {
   Water2DIcon,
   Toilet2DIcon,
@@ -57,8 +56,6 @@ export const ChildProgress: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4 min-h-[calc(100vh-80px)]">
-      <ChildTopBar />
-
       {/* Hero — celebratory tinted card */}
       <QoldauCard variant="tinted-yellow" padding="lg" className="text-center mx-5">
         <div className="flex justify-center mb-2">

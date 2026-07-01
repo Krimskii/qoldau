@@ -175,15 +175,15 @@ export const SpecialistDashboard: React.FC = () => {
       </div>
 
       {/* Summary Cards — 4 KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
         {kpiCards.map(({ label, value, Icon, color }) => (
-          <QoldauCard key={label} variant="default" padding="md" hoverable>
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <p className={`text-3xl font-black ${KPI_COLORS[color]}`}>{value}</p>
-                <p className="text-xs text-muted mt-1">{label}</p>
+          <QoldauCard key={label} variant="default" padding="md" hoverable className="min-w-0">
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <div className="min-w-0 flex-1">
+                <p className={`text-2xl font-black ${KPI_COLORS[color]} truncate`}>{value}</p>
+                <p className="text-xs text-muted mt-0.5 truncate">{label}</p>
               </div>
-              <div className={`w-10 h-10 rounded-2xl ${KPI_BG[color]} flex items-center justify-center`}>
+              <div className={`w-9 h-9 rounded-2xl ${KPI_BG[color]} flex items-center justify-center flex-shrink-0`}>
                 <Icon className={`w-5 h-5 ${KPI_COLORS[color]}`} />
               </div>
             </div>
@@ -194,41 +194,39 @@ export const SpecialistDashboard: React.FC = () => {
       {/* AI Summary */}
       <AIInsightCard text={aiSummary} />
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Quick Actions — 2 cols для предсказуемости на любом экране */}
+      <div className="grid grid-cols-2 gap-2.5">
         <button
           onClick={() => navigate('/specialist/abc')}
-          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-teal hover:shadow-card-soft transition-all active:scale-[0.98]"
+          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-teal hover:shadow-card-soft transition-all active:scale-[0.98] min-w-0"
         >
           <Brain className="w-5 h-5 text-teal mb-2" />
-          <p className="text-sm font-bold text-ink">ABC-анализ</p>
-          <p className="text-xs text-muted">До / наблюдалось / после</p>
+          <p className="text-sm font-black text-ink truncate">ABC-анализ</p>
+          <p className="text-xs text-muted truncate">Сигналы · что · после</p>
         </button>
         <button
           onClick={() => navigate('/specialist/communication-profile')}
-          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-purple hover:shadow-card-soft transition-all active:scale-[0.98]"
+          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-purple hover:shadow-card-soft transition-all active:scale-[0.98] min-w-0"
         >
           <MessageCircle className="w-5 h-5 text-purple mb-2" />
-          <p className="text-sm font-bold text-ink">Коммуникации</p>
-          <p className="text-xs text-muted">Сигналы ребёнка</p>
+          <p className="text-sm font-black text-ink truncate">Коммуникации</p>
+          <p className="text-xs text-muted truncate">Сигналы ребёнка</p>
         </button>
         <button
           onClick={() => navigate('/specialist/care-patterns')}
-          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-blue hover:shadow-card-soft transition-all active:scale-[0.98]"
+          className="bg-white border border-line rounded-2xl p-4 text-left hover:border-blue hover:shadow-card-soft transition-all active:scale-[0.98] min-w-0"
         >
           <Activity className="w-5 h-5 text-blue mb-2" />
-          <p className="text-sm font-bold text-ink">Паттерны</p>
-          <p className="text-xs text-muted">Связи в данных</p>
+          <p className="text-sm font-black text-ink truncate">Паттерны</p>
+          <p className="text-xs text-muted truncate">Связи в данных</p>
         </button>
         <button
           onClick={() => navigate('/specialist/reports')}
-          className="bg-gradient-to-br from-teal to-teal-dark text-white rounded-2xl p-4 flex items-center gap-3 shadow-card hover:shadow-card-hover transition-shadow active:scale-[0.98]"
+          className="bg-gradient-to-br from-teal to-teal-dark text-white rounded-2xl p-4 text-left hover:shadow-card-hover transition-shadow active:scale-[0.98] min-w-0"
         >
-          <FileText className="w-6 h-6 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-black">Отчёт</p>
-            <p className="text-xs opacity-80">Сформировать</p>
-          </div>
+          <FileText className="w-5 h-5 mb-2" />
+          <p className="text-sm font-black truncate">Отчёт</p>
+          <p className="text-xs opacity-80 truncate">Сформировать</p>
         </button>
       </div>
 

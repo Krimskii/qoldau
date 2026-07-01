@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { ChildTopBar } from '@/components/layout/ChildTopBar';
 import { BackArrowIcon } from '@/components/icons/child2d';
 import { X } from 'lucide-react';
 import {
@@ -65,8 +64,6 @@ export const ChildChoice: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)]">
-      <ChildTopBar />
-
       <div className="flex items-center gap-2.5 px-5 pt-1 pb-0.5">
         <button
           onClick={() => navigate('/child/home')}

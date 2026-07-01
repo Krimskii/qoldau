@@ -5,7 +5,6 @@ import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { SuccessSparkle } from '@/components/illustrations/SuccessSparkle';
 import { QoldauCard } from '@/components/ui/QoldauCard';
-import { ChildTopBar } from '@/components/layout/ChildTopBar';
 import { BackArrowIcon, DinoMascot2D } from '@/components/icons/child2d';
 import { X } from 'lucide-react';
 
@@ -75,8 +74,6 @@ export const PhraseBuilderPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)]">
-      <ChildTopBar />
-
       {/* Header: back + clear */}
       <div className="flex items-center gap-2.5 px-5 pt-1 pb-0.5">
         <button
