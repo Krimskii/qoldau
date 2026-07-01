@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
+import { DemoIndicator } from '@/components/layout/DemoIndicator';
+import { ToastContainer } from '@/components/ui/ToastContainer';
 
 // Parent Pages
 import { ParentHome } from '@/pages/parent/ParentHome';
@@ -47,6 +49,8 @@ import { Overview } from '@/pages/overview/Overview';
 export const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
+      <DemoIndicator />
+      <ToastContainer />
       <Routes>
         {/* Overview */}
         <Route path="/overview" element={<Overview />} />
