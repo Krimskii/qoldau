@@ -54,7 +54,25 @@ main          — стабильные релизы
 
 ## Current Version
 
-Текущая версия: **v0.3.9** (Navigation QA and responsive layout fix)
+Текущая версия: **v0.3.10** (Asset system + local image upload)
+
+### v0.3.10 — Asset system
+- `src/types/assets.ts` — QoldauAsset + AACCardConfig.
+- `src/data/assetRegistry.ts` — ~40 built-in ассетов по 8 категориям.
+- `src/components/assets/IconRenderer.tsx` — единый рендер ассета.
+- `src/components/assets/ImageUpload.tsx` — локальная загрузка (2 MB, privacy disclaimer).
+- `src/components/assets/AssetPicker.tsx` — выбор с табами + поиском + upload.
+- `src/store/useAssetStore.ts` — persist custom + cardConfigs.
+- `src/pages/child/ChildCards.tsx` — через asset system.
+- `docs/ASSET_SYSTEM.md` — полная документация.
+
+### v0.3.9 — Navigation QA
+- `src/config/navigation.ts` — единый реестр routes + helpers.
+- `src/components/navigation/BackButton.tsx` — безопасная кнопка «Назад» с fallback.
+- `src/components/layout/PageScaffold.tsx` — переиспользуемая обёртка экрана.
+- `PageHeader` использует `BackButton`.
+- `BottomNav`: убран дубль `tutor/ai-review`.
+- Документы: `NAVIGATION_MAP.md`, `NAVIGATION_QA_CHECKLIST.md`.
 
 ### v0.3.9 — Navigation QA
 - `src/config/navigation.ts` — единый реестр routes + helpers.

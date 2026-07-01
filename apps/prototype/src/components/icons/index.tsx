@@ -269,3 +269,142 @@ export const PlusIcon: React.FC<IconProps> = (p) => (
     <path d="M16 5v22M5 16h22" />
   </IconBase>
 );
+
+// =============================================================================
+// Asset registry — дополнительные иконки по builtinKey
+// =============================================================================
+
+export const MomIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <circle cx="16" cy="11" r="5" />
+    <path d="M6 27c0-6 4-10 10-10s10 4 10 10" />
+    <path d="M11 8c1-2 3-3 5-3s4 1 5 3" />
+  </IconBase>
+);
+
+export const DadIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <circle cx="16" cy="11" r="5" />
+    <path d="M6 27c0-6 4-10 10-10s10 4 10 10" />
+    <path d="M11 9c1-3 3-4 5-4s4 1 5 4" />
+  </IconBase>
+);
+
+export const TutorIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <circle cx="16" cy="11" r="5" />
+    <path d="M6 27c0-6 4-10 10-10s10 4 10 10" />
+    <rect x="9" y="14" width="14" height="3" rx="1" />
+  </IconBase>
+);
+
+export const SleepIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <path d="M5 22h22" />
+    <path d="M19 11l-2 2 3 2-2 2" />
+    <circle cx="13" cy="14" r="0.8" fill="currentColor" />
+    <circle cx="11" cy="17" r="0.6" fill="currentColor" />
+  </IconBase>
+);
+
+export const WalkIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <circle cx="18" cy="6" r="3" />
+    <path d="M14 11l4 4-3 4 3 8M19 15l5 3-1 6" />
+    <path d="M11 14l3 1" />
+  </IconBase>
+);
+
+export const StudyIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <path d="M5 9l11-4 11 4-11 4L5 9Z" />
+    <path d="M9 11v9c2 1.5 5 2 7 2s5-.5 7-2v-9" />
+    <path d="M27 9v9" />
+  </IconBase>
+);
+
+export const SOSIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p} strokeWidth={2.5}>
+    <circle cx="16" cy="16" r="13" />
+    <path d="M16 9v8M16 21v0.5" />
+  </IconBase>
+);
+
+export const MessageIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <path d="M5 7h22v15H14l-6 5v-5H5z" />
+    <path d="M11 13h10M11 17h6" />
+  </IconBase>
+);
+
+export const StarIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <path d="M16 4l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" />
+  </IconBase>
+);
+
+export const TrophyIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <path d="M9 6h14v8a7 7 0 0 1-14 0V6Z" />
+    <path d="M5 6h4v3a3 3 0 0 1-3 3M27 6h-4v3a3 3 0 0 0 3 3" />
+    <path d="M12 21h8M14 26h4" />
+  </IconBase>
+);
+
+export const PhraseIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <rect x="5" y="9" width="8" height="5" rx="1.5" />
+    <rect x="14" y="9" width="8" height="5" rx="1.5" />
+    <rect x="9" y="18" width="8" height="5" rx="1.5" />
+    <rect x="18" y="18" width="6" height="5" rx="1.5" />
+  </IconBase>
+);
+
+export const AnimalsIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <circle cx="16" cy="17" r="6" />
+    <path d="M11 12c-2 1-3 3-3 5M21 12c2 1 3 3 3 5" />
+    <circle cx="13" cy="16" r="0.8" fill="currentColor" />
+    <circle cx="19" cy="16" r="0.8" fill="currentColor" />
+    <path d="M14 20c1 1 3 1 4 0" />
+  </IconBase>
+);
+
+export const CarsIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <path d="M5 19l2-7c1-2 3-3 5-3h8c2 0 4 1 5 3l2 7" />
+    <rect x="4" y="19" width="24" height="6" rx="2" />
+    <circle cx="10" cy="25" r="2.5" />
+    <circle cx="22" cy="25" r="2.5" />
+  </IconBase>
+);
+
+export const CartoonIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <rect x="5" y="9" width="22" height="14" rx="2" />
+    <path d="M14 13l5 3-5 3v-6Z" fill="currentColor" stroke="none" />
+  </IconBase>
+);
+
+export const TabletIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <rect x="5" y="4" width="22" height="22" rx="3" />
+    <circle cx="16" cy="23" r="0.8" fill="currentColor" />
+    <path d="M10 8h12v12H10z" />
+  </IconBase>
+);
+
+export const UserIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <circle cx="16" cy="12" r="5" />
+    <path d="M6 27c0-6 4-10 10-10s10 4 10 10" />
+  </IconBase>
+);
+
+export const ArrowLeftIcon: React.FC<IconProps> = (p) => (
+  <IconBase {...p}>
+    <path d="M26 16H6M13 8l-8 8 8 8" />
+  </IconBase>
+);
+
+export const CartIcon: React.FC<IconProps> = CalendarIcon;

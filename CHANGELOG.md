@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.10] — 2026-07-01 (Asset system + local image upload)
+
+### Added — Asset system
+- **`src/types/assets.ts`** — `QoldauAsset`, `AACCardConfig`, `AssetType` (builtin_svg / emoji / uploaded_image / uploaded_photo / app_icon / media_cover), `AssetCategory` (need / feeling / activity / person / calm / media / navigation / achievement).
+- **`src/data/assetRegistry.ts`** — built-in registry с ~40 ассетами по 8 категориям. Стабильные id `builtin-NNN`. Helper `toQoldauAsset` + `getBuiltinId`.
+- **`src/components/assets/IconRenderer.tsx`** — единый рендер: builtin SVG / emoji / uploaded image / fallback.
+- **`src/components/assets/ImageUpload.tsx`** — локальная загрузка файлов (PNG/JPEG/WebP/SVG) → dataUrl. Лимит 2 MB. Privacy disclaimer. НЕ отправляет на сервер.
+- **`src/components/assets/AssetPicker.tsx`** — выбор ассета для AAC-карточки/favorite/контакта. Табы по категориям, поиск по label, вкладка «Загруженные», встроенный ImageUpload.
+- **`src/store/useAssetStore.ts`** — Zustand store с persist. Built-in ассеты + custom ассеты + 18 default cardConfigs. Persist только custom assets + cardConfigs в `localStorage` (`qoldau-assets-v1`).
+
+### Added — Icons
+- **`src/components/icons/index.tsx`** — добавлены: `MomIcon`, `DadIcon`, `TutorIcon`, `SleepIcon`, `WalkIcon`, `StudyIcon`, `SOSIcon`, `MessageIcon`, `StarIcon`, `TrophyIcon`, `PhraseIcon`, `AnimalsIcon`, `CarsIcon`, `CartoonIcon`, `TabletIcon`, `UserIcon`, `ArrowLeftIcon`, `CartIcon`. Теперь ~50 иконок в одном стиле.
+
+### Changed
+- **`src/pages/child/ChildCards.tsx`** — теперь читает карточки из `useAssetStore.cardConfigs` и рендерит через `IconRenderer`. В parent/demo mode доступен edit mode (кнопка Settings → AssetPicker → выбор built-in или загрузка своего). Event payload теперь содержит `assetId` и `assetType`.
+
+### Privacy & safety
+- В ImageUpload показывается disclaimer: «В demo-режиме изображение сохраняется только в этом браузере и не отправляется на сервер».
+- File size limit 2 MB enforced.
+- Никаких fetch / XHR в asset-коде.
+- Audio blobs не сохраняются.
+- Built-in registry не содержит medical / sensitive / реальных брендов.
+
+### Documentation
+- **`docs/ASSET_SYSTEM.md`** (new) — типы, registry, IconRenderer, ImageUpload, privacy rules, future backend notes.
+- Обновлены docs по необходимости (privacy/safety ссылаются на ASSET_SYSTEM).
+
+### Build
+- `npm run build` passes.
+- `apps/prototype/package.json` → version `0.3.10`.
+- `VERSIONING.md` → Current Version `v0.3.10`.
+
+### Not changed
+- Event Timeline, store-логика, child UI polish — не трогали.
+- Routes, demo flow — без изменений.
+
+---
+
 ## [0.3.9] — 2026-07-01 (Navigation QA and responsive layout fix)
 
 ### Added — Navigation foundation
