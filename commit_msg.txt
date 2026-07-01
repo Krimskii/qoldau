@@ -1,0 +1,28 @@
+feat(ui): child interface polish per visual reference
+
+Visual reference: 10-screen design from product brief.
+
+New screens:
+- /child/choice — "Что ты хочешь?" 2x2 large image options
+- /child/interface-guide — "Что важно в детском интерфейсе" + методы
+
+Improved screens (match reference):
+- ChildHome: status-badge "Я в порядке", larger avatar header,
+  3x2 action grid + wide "Выбрать из вариантов" CTA, Now/Next timer
+- ChildCards: 11 cards in 4-column grid, large emoji, gradient feedback
+- ChildSpeak: 180px mic button with glow ring, animated voice wave
+  (14 bars, breathe keyframes), inline confirm card
+- PhraseBuilder: chips with semantic colors, dino mascot, send button
+- NowNext: schedule cards with arrow, 60-min timer + progress bar
+- CalmMode: breathing cloud mascot, 6 options grid, soft pastel bgs
+- CallMom: contact cards with 64px avatar + 56px action buttons,
+  large red SOS, message button
+- ChildProgress: celebration card with star, 2x2 achievements,
+  favorite cards with emoji
+
+Build:
+- npm run build passes (TypeScript strict)
+- New routes registered in router.tsx
+
+Docs:
+- docs/UI_IMPROVEMENT_PLAN.md — full roadmap with 5 phases

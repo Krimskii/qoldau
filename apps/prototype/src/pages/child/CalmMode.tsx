@@ -6,13 +6,29 @@ import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 
 const TIMER_SECONDS = 60;
 
+interface CalmOption {
+  id: string;
+  label: string;
+  emoji: string;
+  bg: string;
+}
+
+const OPTIONS: CalmOption[] = [
+  { id: 'music', label: 'Тихая музыка', emoji: '🎵', bg: 'bg-gradient-to-br from-[#F0EBFF] to-[#E0D6F7]' },
+  { id: 'breath', label: 'Дыхание', emoji: '〰️', bg: 'bg-gradient-to-br from-[#E8F4FF] to-[#CCE6F7]' },
+  { id: 'hug', label: 'Объятие', emoji: '💗', bg: 'bg-gradient-to-br from-[#FFEDEA] to-[#FFD9D3]' },
+  { id: 'headphones', label: 'Наушники', emoji: '🎧', bg: 'bg-gradient-to-br from-[#E9F8F0] to-[#CCEBD9]' },
+  { id: 'dark', label: 'Темно', emoji: '🌙', bg: 'bg-gradient-to-br from-[#244a85] to-[#0b2650]' },
+  { id: 'pause', label: 'Пауза', emoji: '⏸', bg: 'bg-gradient-to-br from-[#FFF3CE] to-[#F7E5A3]' },
+];
+
 export const CalmMode: React.FC = () => {
   const navigate = useNavigate();
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [remaining, setRemaining] = useState(TIMER_SECONDS);
+  const [currentEventId, setCurrentEventId] = useState<string | null>(null);
   const { addEvent, updateEvent } = useEventStore();
   const { showToast } = useToastStore();
-  const [currentEventId, setCurrentEventId] = useState<string | null>(null);
 
   useEffect(() => {
     if (startedAt === null) return;
@@ -53,42 +69,52 @@ export const CalmMode: React.FC = () => {
         },
       });
     }
-    showToast(feltCalmer ? 'Отмечено: стало спокойнее' : 'Отмечено: завершено', 'success');
+    showToast(
+      feltCalmer ? 'Отмечено: стало спокойнее' : 'Отмечено: завершено',
+      'success'
+    );
     navigate('/child/home');
   };
 
-  const calmOptions = [
-    { id: 'music', label: 'Тихая музыка', emoji: '🎵' },
-    { id: 'breath', label: 'Дыхание', emoji: '〰️' },
-    { id: 'hug', label: 'Объятие', emoji: '💗' },
-    { id: 'headphones', label: 'Наушники', emoji: '🎧' },
-    { id: 'dark', label: 'Темно', emoji: '🌙' },
-    { id: 'pause', label: 'Пауза', emoji: '⏸' },
-  ];
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="text-center pt-4">
-        <div className="text-5xl mb-3">☁️</div>
-        <h2 className="text-lg font-black text-[#143259]">Можно отдохнуть</h2>
+    <div className="flex flex-col gap-4 min-h-[calc(100vh-80px)]">
+      {/* Облако-маскот — мягкая анимация "дыхания" */}
+      <div className="flex flex-col items-center pt-4">
+        <div
+          className={`text-7xl mb-3 ${startedAt ? 'calm-cloud-active' : ''}`}
+          aria-hidden="true"
+          style={{
+            animation:
+              startedAt
+                ? 'breathe 4s ease-in-out infinite'
+                : 'breathe 3s ease-in-out infinite',
+          }}
+        >
+          ☁️
+        </div>
+        <h2 className="text-xl font-black text-[#143259]">Можно отдохнуть</h2>
+        <p className="text-sm text-muted mt-1">Ты в безопасности</p>
       </div>
 
-      {/* Timer */}
-      <div className="bg-gradient-to-br from-[#E8F3FF] to-[#F0EBFF] border border-mint rounded-2xl p-6 text-center">
+      {/* Таймер / кнопка старта */}
+      <div className="bg-gradient-to-br from-[#E8F3FF] to-[#F0EBFF] border-2 border-mint rounded-3xl p-6 text-center">
         {startedAt === null ? (
           <button
             onClick={handleStart}
-            className="px-8 py-4 bg-gradient-to-br from-teal to-[#037A76] text-white font-black rounded-2xl text-lg shadow-card"
+            className="px-8 py-4 bg-gradient-to-br from-teal to-teal-dark text-white font-black rounded-2xl text-lg shadow-card hover:scale-105 transition-transform"
           >
             Начать (1 минута)
           </button>
         ) : (
           <div>
             <div className="text-5xl font-black text-teal-dark tabular-nums">
-              {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}
+              {minutes}:{String(seconds).padStart(2, '0')}
             </div>
             <p className="text-sm text-muted mt-2">Дыши спокойно</p>
-            <div className="mt-4 flex justify-center gap-2">
+            <div className="mt-4 flex justify-center gap-3">
               <button
                 onClick={() => handleFinish(true)}
                 className="px-5 py-3 rounded-full bg-green-soft text-green font-bold hover:bg-green hover:text-white transition-colors"
@@ -97,7 +123,7 @@ export const CalmMode: React.FC = () => {
               </button>
               <button
                 onClick={() => handleFinish(false)}
-                className="px-5 py-3 rounded-full bg-white border border-line text-muted font-bold hover:bg-bg transition-colors"
+                className="px-5 py-3 rounded-full bg-white border-2 border-line text-muted font-bold hover:bg-bg transition-colors"
               >
                 Выйти
               </button>
@@ -106,21 +132,35 @@ export const CalmMode: React.FC = () => {
         )}
       </div>
 
+      {/* Опции — 3×2 сетка, мягкие пастельные фоны */}
       <div className="grid grid-cols-3 gap-3">
-        {calmOptions.map((option) => (
+        {OPTIONS.map((option) => (
           <button
             key={option.id}
-            className="min-h-[88px] rounded-xl border border-[#d8e8f3] bg-gradient-to-br from-[#f7fbff] to-[#ecf7ff] flex flex-col items-center justify-center gap-2 text-sm font-black text-[#163760] hover:scale-[0.97] transition-transform"
+            aria-label={option.label}
+            className={`min-h-[100px] rounded-2xl border border-[#d8e8f3] ${option.bg} flex flex-col items-center justify-center gap-2 text-sm font-black hover:scale-[0.97] transition-transform ${
+              option.id === 'dark'
+                ? 'text-white'
+                : 'text-[#163760]'
+            }`}
           >
-            <span className="text-3xl">{option.emoji}</span>
+            <span className="text-4xl" aria-hidden="true">{option.emoji}</span>
             {option.label}
           </button>
         ))}
       </div>
 
-      <p className="text-center font-black text-[#2c5e9e] mt-4">
-        Ты в безопасности <span className="text-[#ff7e9b]">❤</span>
+      <p className="text-center font-black text-[#2c5e9e] mt-2 text-sm">
+        Ты в безопасности <span className="text-[#ff7e9b] text-lg">❤</span>
       </p>
+
+      {/* Анимация дыхания */}
+      <style>{`
+        @keyframes breathe {
+          0%, 100% { transform: scale(1); opacity: 0.95; }
+          50% { transform: scale(1.05); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };

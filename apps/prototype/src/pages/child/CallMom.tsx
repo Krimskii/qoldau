@@ -3,9 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 
-const contacts = [
-  { id: 'mom', name: 'Позвать маму', emoji: '👩', bg: 'bg-[#eefbf2]' },
-  { id: 'tutor', name: 'Позвать тьютора', emoji: '👨', bg: 'bg-[#edf6ff]' },
+interface Contact {
+  id: string;
+  name: string;
+  emoji: string;
+  bg: string;
+  border: string;
+}
+
+const CONTACTS: Contact[] = [
+  { id: 'mom', name: 'Позвать маму', emoji: '👩', bg: 'bg-[#eefbf2]', border: 'border-[#cfe9d8]' },
+  { id: 'tutor', name: 'Позвать тьютора', emoji: '👨', bg: 'bg-[#edf6ff]', border: 'border-[#cee0f0]' },
 ];
 
 export const ChildCall: React.FC = () => {
@@ -13,7 +21,7 @@ export const ChildCall: React.FC = () => {
   const [feedback, setFeedback] = useState<string | null>(null);
   const { addEvent } = useEventStore();
 
-  const handleCall = (contact: typeof contacts[number]) => {
+  const handleCall = (contact: Contact | { id: 'sos'; name: string }) => {
     addEvent({
       childId: DEMO_PRIMARY_CHILD.id,
       type: 'sos',
@@ -29,56 +37,77 @@ export const ChildCall: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 relative">
+    <div className="flex flex-col gap-4 relative min-h-[calc(100vh-80px)]">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/child/home')}
-          className="text-3xl font-black text-[#203a60]"
+          className="w-10 h-10 rounded-2xl bg-white border border-[#dce9f4] flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
-          ‹
+          <span className="text-2xl text-[#53677e]">‹</span>
         </button>
         <h2 className="text-lg font-black text-[#143259]">Позвать</h2>
-        <div className="w-8" />
+        <div className="w-10" />
       </div>
 
+      {/* Контакт-карточки — крупнее, как в референсе */}
       <div className="flex flex-col gap-3">
-        {contacts.map((contact) => (
+        {CONTACTS.map((contact) => (
           <button
             key={contact.id}
             onClick={() => handleCall(contact)}
-            className={`grid grid-cols-[56px_1fr_48px_48px] gap-2.5 items-center min-h-[76px] rounded-2xl border border-[#dce9f4] ${contact.bg} p-3 hover:scale-[0.98] transition-transform`}
+            aria-label={`Позвать ${contact.name}`}
+            className={`${contact.bg} border-2 ${contact.border} rounded-2xl px-4 py-4 grid grid-cols-[64px_1fr_56px_56px] gap-3 items-center min-h-[88px] hover:scale-[0.98] active:scale-[0.96] transition-transform shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_10px_rgba(42,73,108,0.04)]`}
           >
-            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center text-3xl">
+            <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-4xl flex-shrink-0">
               {contact.emoji}
             </div>
-            <div className="font-black text-[#173760] leading-tight text-left">
+            <div className="font-black text-ink leading-tight text-base text-left">
               {contact.name}
             </div>
-            <div className="w-12 h-12 rounded-full bg-[#39bb72] flex items-center justify-center text-2xl text-white">
+            <div className="w-14 h-14 rounded-full bg-[#39bb72] flex items-center justify-center text-3xl text-white shadow-md">
               ☎
             </div>
-            <div className="w-12 h-12 rounded-full bg-[#2d9bf0] flex items-center justify-center text-xl text-white">
-              💬
+            <div className="w-14 h-14 rounded-full bg-[#2d9bf0] flex items-center justify-center text-2xl text-white shadow-md">
+              ▣
             </div>
           </button>
         ))}
       </div>
 
-      {/* SOS */}
+      {/* SOS — большая красная кнопка */}
       <button
-        onClick={() => handleCall({ id: 'sos', name: 'SOS', emoji: '!', bg: '' })}
-        className="grid grid-cols-[auto_1fr_auto] items-center gap-3 bg-[#ffe7e5] border border-[#ffc2be] rounded-2xl p-4 text-3xl font-black text-[#cc251d] hover:scale-[0.98] transition-transform"
+        onClick={() =>
+          handleCall({ id: 'sos', name: 'SOS' })
+        }
+        aria-label="SOS — экстренный вызов"
+        className="bg-gradient-to-br from-[#ffe7e5] to-[#ffd0cc] border-2 border-[#ffc2be] rounded-2xl p-5 grid grid-cols-[auto_1fr_auto] items-center gap-4 min-h-[88px] hover:scale-[0.98] active:scale-[0.96] transition-transform shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_10px_rgba(204,37,29,0.10)]"
       >
-        <span>!</span>
-        <span>SOS</span>
-        <span>☎</span>
+        <span className="text-5xl text-coral font-black" aria-hidden="true">!</span>
+        <span className="text-3xl font-black text-[#cc251d] tracking-wider">SOS</span>
+        <span className="text-3xl text-[#cc251d]" aria-hidden="true">☎</span>
+      </button>
+
+      {/* Написать сообщение */}
+      <button
+        onClick={() => handleCall({ id: 'sos', name: 'Сообщение' })}
+        aria-label="Написать сообщение взрослому"
+        className="min-h-[64px] border-2 border-[#dce9f4] rounded-2xl bg-white flex items-center justify-center gap-3 font-black text-[#376488] text-base hover:bg-bg transition-colors"
+      >
+        💬 Написать сообщение
       </button>
 
       {feedback && (
-        <div className="fixed bottom-24 left-4 right-4 bg-coral text-white text-center py-4 rounded-xl font-bold text-lg animate-fade-in shadow-card">
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-24 left-4 right-4 bg-gradient-to-r from-teal to-teal-dark text-white text-center py-5 px-4 rounded-2xl font-black text-lg shadow-card animate-fade-in"
+        >
           ✓ Мама получила сигнал
-          <div className="text-sm font-normal opacity-90 mt-1">Событие добавлено в Event Timeline</div>
+          <div className="text-sm font-normal opacity-90 mt-1">
+            Событие добавлено в Event Timeline
+          </div>
         </div>
       )}
     </div>
