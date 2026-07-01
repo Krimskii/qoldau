@@ -2,6 +2,62 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.18] — 2026-07-02 (Full click-through QA pass + architecture docs)
+
+### Fixed — Broken handlers (7 штук)
+
+1. **`src/pages/parent/VoiceObservation.tsx`** — кнопка «Ввести вручную» вела на несуществующий route `/parent/voice/manual` → `*` → `/overview` (page уводила со страницы записи голоса). Теперь handler `handleEnterManual()` через `transcribeManual('')` + `enterEditingTranscript()` сразу открывает inline-textarea.
+2. **`src/pages/child/ChildHome.tsx`** — кнопка «Собрать фразу» вела на `/child/phrase` (typo). Правильный route — `/child/phrase-builder`. Заменено.
+3. **`src/pages/tutor/TutorHome.tsx`** — cross-role nav `navigate('/parent/events/${event.id}')` из роли tutor ломал bottom nav (parent AppShell). Заменено на `/tutor/events/${event.id}`.
+4. **`src/pages/specialist/SpecialistEvents.tsx`** — аналогично: cross-role nav → заменено на `/specialist/events/${event.id}`.
+
+### Added — Alias routes для cross-role EventDetails
+
+- **`src/app/router.tsx`** — добавлены 2 alias routes, оба рендерят `<EventDetails />`:
+  - `/tutor/events/:eventId`
+  - `/specialist/events/:eventId`
+
+  Это сохраняет единый EventDetails-компонент для всех ролей, но навигация остаётся в рамках текущей роли.
+
+### Fixed — Hardcoded значения
+
+5. **`src/pages/parent/ParentHome.tsx`** — `const today = '2026-07-01'` (хардкод). Если текущая дата != 2026-07-01, вкладка «Сегодня» всегда пустая. Заменено на `new Date().toISOString().slice(0, 10)`.
+6. **`src/pages/parent/ParentHome.tsx`** — QUICK_ACTIONS «Коммуникация» → `/specialist/communication-profile` (cross-role). Заменено на `/parent/events` (parent видит comm events в своём timeline).
+7. **`src/pages/overview/Overview.tsx`** — badge «Demo MVP · v0.3.4» (устаревшая версия). Обновлено до `v0.3.18`.
+
+### Added — Documentation
+
+- **`docs/QA_CLICKTHROUGH_REPORT.md`** — полный QA pass (38 routes проверено, 7 broken handlers найдено и исправлено, 5 cross-role nav задокументированы, smoke-test checklist, summary таблица).
+- **`docs/CURRENT_ARCHITECTURE.md`** — единая точка входа для разработчика (project structure / routing / roles / demo-flow / state management / mock data / event model / STT mock / AI parser / icon system / design system / accessibility / intentionally mocked / must not add / Phase 2 plan / technical debt / how to run).
+- **`README.md`** — обновлён: ссылка на CURRENT_ARCHITECTURE.md, QA_CLICKTHROUGH_REPORT.md, актуальный список 38 routes, bump до v0.3.18.
+
+### Verified
+
+- `npm run build` ✅ — 1671 modules transformed, 6.57s, 0 TS errors.
+- Все 38 routes прошли ручной click-through (через grep + read).
+- UX texts: 0 нарушений safety wording (запрещённые формулировки не найдены).
+- Icon coverage: 50+ builtinKey в CHILD_2D_REGISTRY, 30 soft 3D PNG ассетов.
+- Accessibility: DESIGN_RULES.md compliance (AAC color coding, no ambient loops, tap-zones ≥64px, personalization hooks).
+
+### Diff summary
+
+```
+7 файлов изменено, 2 файла добавлено:
+
+apps/prototype/src/app/router.tsx                    +8 строк (2 alias routes)
+apps/prototype/src/pages/parent/VoiceObservation.tsx +13 строк (handleEnterManual)
+apps/prototype/src/pages/parent/ParentHome.tsx       ~5 строк (today fix + comms path)
+apps/prototype/src/pages/child/ChildHome.tsx         1 строка (/child/phrase typo)
+apps/prototype/src/pages/tutor/TutorHome.tsx         1 строка (cross-role nav)
+apps/prototype/src/pages/specialist/SpecialistEvents.tsx  1 строка (cross-role nav)
+apps/prototype/src/pages/overview/Overview.tsx       1 строка (v0.3.4 → v0.3.18)
+docs/QA_CLICKTHROUGH_REPORT.md                       NEW
+docs/CURRENT_ARCHITECTURE.md                         NEW
+README.md                                            обновлён (~+30 строк)
+```
+
+---
+
 ## [0.3.17] — 2026-07-02 (Specialist insights polish + Demo controls)
 
 ### Changed — Specialist insights (v0.3.17)

@@ -33,7 +33,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   { id: 'toilet', label: 'Туалет', Icon: Droplet, color: 'blue', path: '/parent/care' },
   { id: 'sleep', label: 'Сон', Icon: Moon, color: 'purple', path: '/parent/care' },
   { id: 'behavior', label: 'Поведение', Icon: Smile, color: 'yellow', path: '/parent/behavior' },
-  { id: 'comms', label: 'Коммуникация', Icon: MessageCircle, color: 'purple', path: '/specialist/communication-profile' },
+  { id: 'comms', label: 'Коммуникация', Icon: MessageCircle, color: 'purple', path: '/parent/events' },
 ];
 
 const COLOR_BG: Record<QuickAction['color'], string> = {
@@ -56,10 +56,10 @@ export const ParentHome: React.FC = () => {
   const child = DEMO_PRIMARY_CHILD;
   const mother = DEMO_PARENTS[0];
 
-  const today = '2026-07-01';
+  const today = new Date().toISOString().slice(0, 10);
   const todayEvents = useMemo(
     () => events.filter((e) => e.timestamp.startsWith(today)),
-    [events]
+    [events, today]
   );
 
   const lastEvents = todayEvents.slice(0, 4);

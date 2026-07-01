@@ -69,7 +69,7 @@ export const Overview: React.FC = () => {
         <div className="text-center max-w-3xl mx-auto">
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-soft text-teal-dark text-xs font-bold uppercase tracking-wide">
             <Sparkles className="w-3 h-3" />
-            Demo MVP · v0.3.4
+            Demo MVP · v0.3.18
           </span>
           <h1 className="mt-5 text-5xl md:text-6xl font-black text-ink leading-[1.05] tracking-tight">
             Ребёнок дал сигнал —<br />

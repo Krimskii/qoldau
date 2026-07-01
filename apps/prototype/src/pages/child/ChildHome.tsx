@@ -129,7 +129,7 @@ export const ChildHome: React.FC = () => {
 
       {/* Variants button */}
       <button
-        onClick={() => navigate('/child/phrase')}
+        onClick={() => navigate('/child/phrase-builder')}
         className="mx-5 mt-3 mb-1.5 w-[calc(100%-2.5rem)] rounded-[22px] p-4 cursor-pointer flex items-center gap-3 shadow-card active:scale-[0.98] transition-transform"
         style={{ background: 'linear-gradient(135deg, #eef4fb 0%, #f3eefb 100%)' }}
         aria-label="Собрать фразу"

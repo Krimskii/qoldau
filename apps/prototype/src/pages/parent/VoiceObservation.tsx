@@ -80,6 +80,18 @@ export const VoiceObservation: React.FC = () => {
     await transcribeManual(DEMO_TRANSCRIPT);
   }, [transcribeManual]);
 
+  // «Ввести вручную» — сразу показываем пустой inline-редактор без demo-текста.
+  // Раньше вёл на /parent/voice/manual (route не существует → * → /overview).
+  const handleEnterManual = useCallback(() => {
+    // Берём текущий транскрипт (если был) или пустую строку,
+    // переключаем store в режим редактирования, чтобы UI сразу показал textarea.
+    if (currentTranscript) {
+      enterEditingTranscript();
+    } else {
+      transcribeManual('').then(() => enterEditingTranscript());
+    }
+  }, [currentTranscript, enterEditingTranscript, transcribeManual]);
+
   const handleEdit = useCallback(() => {
     enterEditingTranscript();
   }, [enterEditingTranscript]);
@@ -225,7 +237,7 @@ export const VoiceObservation: React.FC = () => {
             icon={<Sparkles size={18} />}
           />
           <button
-            onClick={() => navigate('/parent/voice/manual')}
+            onClick={handleEnterManual}
             className="min-h-12 px-5 rounded-2xl border border-line text-ink-2 hover:bg-bg transition-colors text-sm font-bold flex items-center justify-center gap-2"
           >
             <Keyboard size={16} />

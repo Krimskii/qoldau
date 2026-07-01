@@ -176,6 +176,11 @@ export const AppRoutes: React.FC = () => {
           path="/tutor/child-profile"
           element={<AppShell><TutorChildProfile /></AppShell>}
         />
+        {/* Tutor event details (alias of parent route — единый EventDetails) */}
+        <Route
+          path="/tutor/events/:eventId"
+          element={<AppShell><EventDetails /></AppShell>}
+        />
 
         {/* Specialist Routes */}
         <Route
@@ -185,6 +190,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/specialist/events"
           element={<AppShell><SpecialistEvents /></AppShell>}
+        />
+        {/* Specialist event details (alias of parent route — единый EventDetails) */}
+        <Route
+          path="/specialist/events/:eventId"
+          element={<AppShell><EventDetails /></AppShell>}
         />
         <Route
           path="/specialist/abc"

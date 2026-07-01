@@ -103,7 +103,7 @@ export const TutorHome: React.FC = () => {
             {tutorEvents.map((event, idx) => (
               <button
                 key={event.id}
-                onClick={() => navigate(`/parent/events/${event.id}`)}
+                onClick={() => navigate(`/tutor/events/${event.id}`)}
                 className={`w-full flex items-center gap-3 py-2.5 text-left hover:bg-bg transition-colors rounded-xl px-2 -mx-2 ${
                   idx < tutorEvents.length - 1 ? 'border-b border-line-soft' : ''
                 }`}

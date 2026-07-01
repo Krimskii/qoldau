@@ -69,7 +69,7 @@ export const SpecialistEvents: React.FC = () => {
             <div
               key={event.id}
               className="relative mb-3 cursor-pointer"
-              onClick={() => navigate(`/parent/events/${event.id}`)}
+              onClick={() => navigate(`/specialist/events/${event.id}`)}
             >
               <div className="absolute left-4 top-4 w-2.5 h-2.5 rounded-full bg-teal shadow-[0_0_0_5px_#E7F8F5]" />
               <div className="ml-12 bg-white border border-line rounded-xl p-3 hover:shadow-card-soft transition-shadow">
