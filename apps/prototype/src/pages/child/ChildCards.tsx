@@ -1,165 +1,175 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { EventType } from '@/types/qoldau';
-import { useAssetStore } from '@/store/useAssetStore';
-import { useRoleStore } from '@/store/useRoleStore';
 import { BackArrowIcon } from '@/components/icons/child2d';
-import { Settings } from 'lucide-react';
-import {
-  CHILD_FAMILY_STYLES,
-  type ChildCardFamily,
-  Food2DIcon,
-  Hurt2DIcon,
-  Tired2DIcon,
-  Home2DIcon,
-  Play2DIcon,
-  Hug2DIcon,
-  No2DIcon,
-  Mom2DIcon,
-  Tutor2DIcon,
-  Cartoon2DIcon,
-  Music2DIcon,
-  Animals2DIcon,
-  Car2DIcon,
-  CalmVid2DIcon,
-} from '@/components/icons/child2d';
+import { ChevronRight } from 'lucide-react';
+import { QUICK_NEEDS, CATEGORIES } from '@/data/categories';
 
 /**
- * ChildCards — быстрые карточки AAC (v0.3.15).
+ * ChildCards (v0.3.25) — «Быстрые карточки».
  *
- * Сетка 3×N (как в child_v2.html), иконки 2D inline SVG.
- * Каждая карточка попадает на pop-анимацию со stagger.
+ * 2 секции:
+ * - **«Потребности»** (3 карточки) → открывает NeedCard (вода/еда/туалет).
+ * - **«Мир вокруг»** (5 категорий) → открывает /child/category/:id с grid items.
  *
- * В parent/demo mode доступен edit mode через Settings.
- * В child mode редактирование скрыто.
+ * Каждая карточка имеет:
+ * - белую подложку с цветной плиткой-иконкой (AAC color coding);
+ * - иконку из child2d.tsx;
+ * - большой label + small description;
+ * - ChevronRight для affordance;
+ * - active:scale-95 + лёгкий hover-эффект.
  */
-
-const CARD_ICON_MAP: Record<string, { Icon: React.FC<{ size?: number; animated?: boolean }>; family: ChildCardFamily }> = {
-  food:      { Icon: Food2DIcon,      family: 'need' },
-  pain:      { Icon: Hurt2DIcon,      family: 'help' },
-  tired:     { Icon: Tired2DIcon,     family: 'need' },
-  home:      { Icon: Home2DIcon,      family: 'feel' },
-  play:      { Icon: Play2DIcon,      family: 'do'   },
-  hug:       { Icon: Hug2DIcon,       family: 'feel' },
-  no:        { Icon: No2DIcon,        family: 'help' },
-  mom:       { Icon: Mom2DIcon,       family: 'help' },
-  tutor:     { Icon: Tutor2DIcon,     family: 'fav'  },
-  cartoon:   { Icon: Cartoon2DIcon,   family: 'fav'  },
-  music:     { Icon: Music2DIcon,     family: 'fav'  },
-  animals:   { Icon: Animals2DIcon,   family: 'do'   },
-  cars:      { Icon: Car2DIcon,       family: 'need' },
-  calmvid:   { Icon: CalmVid2DIcon,   family: 'fav'  },
-};
-
 export const ChildCards: React.FC = () => {
   const navigate = useNavigate();
   const { addEvent } = useEventStore();
-  const { currentRole } = useRoleStore();
-  const cardConfigs = useAssetStore((s) => s.cardConfigs);
-  const assets = useAssetStore((s) => s.assets);
 
-  const isEditable = currentRole !== 'child';
-  const [editingCardId, setEditingCardId] = useState<string | null>(null);
-
-  const childConfigs = useMemo(
-    () =>
-      cardConfigs
-        .filter((c) => c.childId === DEMO_PRIMARY_CHILD.id)
-        .sort((a, b) => a.order - b.order),
-    [cardConfigs],
-  );
-
-  const handleSelect = (config: typeof childConfigs[0]) => {
-    if (editingCardId === config.id) return;
-    const asset = assets.find((a) => a.id === config.assetId);
-    if (!asset) return;
-
-    addEvent({
-      childId: config.childId,
-      type: config.eventType as EventType,
-      title: config.label,
-      description: config.phrase,
-      timestamp: new Date().toISOString(),
-      sourceRole: 'child',
-      status: 'confirmed',
-      payload: {
-        cardId: config.id,
-        cardLabel: config.label,
-        assetId: config.assetId,
-        assetType: asset.type,
-        source: 'aac_card',
-      },
-    });
-  };
+  // Featured card — топовая категория (первая в списке)
+  const featured = CATEGORIES[0];
 
   return (
-    <div className="flex flex-col gap-1 min-h-[calc(100vh-80px)]">
+    <div className="flex flex-col min-h-[calc(100vh-80px)] pb-[100px]">
       {/* Header */}
-      <div className="flex items-center gap-2.5 px-5 pt-3.5 pb-0.5">
+      <div className="flex items-center gap-2.5 px-5 pt-3.5 pb-1">
         <button
           onClick={() => navigate('/child/home')}
-          className="w-[42px] h-[42px] rounded-[14px] bg-white border-0 shadow-card flex items-center justify-center hover:bg-bg transition-colors"
+          className="w-10 h-10 rounded-[13px] border border-line bg-white flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
-          <BackArrowIcon size={22} />
+          <BackArrowIcon size={20} />
         </button>
         <div className="text-xl font-black text-ink">Быстрые карточки</div>
-        {isEditable ? (
-          <button
-            onClick={() => setEditingCardId(editingCardId ? null : childConfigs[0]?.id ?? null)}
-            className={`ml-auto w-[42px] h-[42px] rounded-[14px] border-0 flex items-center justify-center transition-colors ${
-              editingCardId
-                ? 'bg-teal-soft text-teal-dark'
-                : 'bg-white text-ink-soft shadow-card hover:bg-bg'
-            }`}
-            aria-label="Настроить карточки"
-            aria-pressed={!!editingCardId}
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        ) : null}
       </div>
 
-      {/* 14 cards in 3-col grid (5 rows: 3+3+3+3+2) */}
-      <div className="grid grid-cols-3 gap-3.5 px-5 pt-4">
-        {childConfigs.map((config, idx) => {
-          const iconData = CARD_ICON_MAP[config.id];
-          if (!iconData) return null;
-          const { Icon, family } = iconData;
-          const familyStyle = CHILD_FAMILY_STYLES[family];
-          const isEditing = editingCardId === config.id;
+      {/* Featured — top card (slightly larger) */}
+      <button
+        onClick={() => {
+          addEvent({
+            childId: DEMO_PRIMARY_CHILD.id,
+            type: 'phrase',
+            title: `Любимое: ${featured.title}`,
+            description: `Ребёнок открыл «${featured.title}». Это наблюдение, не диагноз.`,
+            timestamp: new Date().toISOString(),
+            sourceRole: 'child',
+            status: 'confirmed',
+            payload: { source: 'featured_card', category: featured.id },
+          });
+          navigate(`/child/category/${featured.id}`);
+        }}
+        className="mx-5 mt-3 rounded-[24px] p-4 shadow-card flex items-center gap-4 active:scale-[0.97] transition-transform text-left"
+        style={{
+          background: `linear-gradient(135deg, ${featured.coverFrom} 0%, ${featured.coverTo} 100%)`,
+        }}
+      >
+        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-card-soft flex-shrink-0">
+          <featured.Icon size={56} animated={false} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[10px] font-black uppercase tracking-wide text-ink-2/70 bg-white/50 px-2 py-0.5 rounded-full">
+              Любимое
+            </span>
+          </div>
+          <h2 className="text-xl font-black text-ink leading-tight">
+            {featured.title}
+          </h2>
+          <p className="text-sm font-bold text-ink-2 mt-0.5">{featured.description}</p>
+        </div>
+        <ChevronRight className="w-5 h-5 text-ink-2 flex-shrink-0" />
+      </button>
 
-          return (
+      {/* Section: Потребности */}
+      <Section title="Потребности" subtitle="Базовые сигналы">
+        <div className="grid grid-cols-3 gap-3">
+          {QUICK_NEEDS.map((need) => (
             <button
-              key={config.id}
-              onClick={() => {
-                if (editingCardId) {
-                  if (editingCardId === config.id) setEditingCardId(null);
-                  return;
-                }
-                handleSelect(config);
-              }}
-              className={`qoldau-icon-pop flex flex-col items-center gap-2.5 px-2 py-4 bg-white rounded-3xl shadow-card cursor-pointer min-h-[120px] transition-all duration-200 hover:-translate-y-1 hover:shadow-card-lg active:scale-[0.94]`}
-              style={{ animationDelay: `${idx * 50}ms` }}
-              aria-label={`${config.label}${editingCardId ? ' (нажмите чтобы изменить иконку)' : ''}`}
+              key={need.id}
+              onClick={() => navigate(need.go)}
+              className="bg-white border border-line rounded-[20px] p-3 flex flex-col items-center gap-2 shadow-card-soft active:scale-[0.95] transition-transform"
+              aria-label={need.title}
             >
-              <div className={`w-14 h-14 rounded-[18px] ${familyStyle.icoBg} flex items-center justify-center`}>
-                <Icon size={46} />
+              <div
+                className={`w-12 h-12 rounded-[14px] ${need.bg} flex items-center justify-center`}
+              >
+                <need.Icon size={32} animated={false} />
               </div>
-              <div className={`text-sm font-black text-center leading-tight ${familyStyle.lbl}`}>
-                {config.label}
+              <div className={`text-xs font-black text-center leading-tight ${need.text}`}>
+                {need.title}
               </div>
-              {isEditing && (
-                <span className="absolute top-1 right-1 text-[10px] font-black uppercase text-teal-dark">
-                  edit
-                </span>
-              )}
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Section: Мир вокруг (категории) */}
+      <Section title="Мир вокруг" subtitle="Открой и выбери">
+        <div className="grid grid-cols-2 gap-3">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => {
+                addEvent({
+                  childId: DEMO_PRIMARY_CHILD.id,
+                  type: 'phrase',
+                  title: `Открыл: ${cat.title}`,
+                  description: `Ребёнок открыл «${cat.title}». Это наблюдение, не диагноз.`,
+                  timestamp: new Date().toISOString(),
+                  sourceRole: 'child',
+                  status: 'confirmed',
+                  payload: { source: 'category_open', category: cat.id },
+                });
+                navigate(`/child/category/${cat.id}`);
+              }}
+              className="bg-white border border-line rounded-[20px] p-3 flex items-center gap-3 shadow-card-soft active:scale-[0.95] transition-transform text-left"
+              aria-label={cat.title}
+            >
+              <div
+                className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0"
+                style={{
+                  background: `linear-gradient(135deg, ${cat.coverFrom} 0%, ${cat.coverTo} 100%)`,
+                }}
+              >
+                <cat.Icon size={32} animated={false} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div
+                  className="text-sm font-black leading-tight truncate"
+                  style={{ color: cat.accent }}
+                >
+                  {cat.title}
+                </div>
+                <div className="text-[11px] text-muted truncate">{cat.description}</div>
+                <div className="text-[10px] text-muted mt-0.5">
+                  {cat.items.length} элементов
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      <p className="px-5 mt-2 text-[11px] text-muted text-center italic">
+        Это наблюдения, не диагноз. Можно обсудить со специалистом.
+      </p>
     </div>
   );
 };
+
+/** Section header + content wrapper. */
+const Section: React.FC<{
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}> = ({ title, subtitle, children }) => (
+  <section className="mt-5">
+    <div className="px-5 mb-2 flex items-baseline justify-between">
+      <h3 className="text-sm font-black text-ink-2 uppercase tracking-wide">
+        {title}
+      </h3>
+      {subtitle && (
+        <span className="text-[11px] text-muted font-bold">{subtitle}</span>
+      )}
+    </div>
+    <div className="px-5">{children}</div>
+  </section>
+);

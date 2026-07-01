@@ -2,6 +2,66 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.25] — 2026-07-02 (NeedCard sticky fix + ChildCards enrichment)
+
+### Fixed — Да/Нет always visible (v0.3.25)
+- **`src/pages/child/NeedCard.tsx`** — Да/Нет перенесены из потока (`mt-auto`) в **фиксированную позицию**:
+  - `position: fixed; left-1/2 -translate-x-1/2; bottom: 80px; max-w-[430px]`
+  - `z-30` (под bottom nav `z-40`)
+  - Контент получил `pb-[112px]` чтобы последние элементы не закрывались
+  - Добавлен gradient fade-up фон под кнопками
+  - Да/Нет ВСЕГДА видны, не уезжают за экран даже если контент (toilet + timer) выше viewport
+
+### Added — Categories data + sub-page (v0.3.25)
+- **`src/data/categories.ts`** — новая структура данных:
+  - `QUICK_NEEDS[]` — 3 «потребности» (вода/еда/туалет) → открывают NeedCard.
+  - `CATEGORIES[]` — 5 категорий «Мир вокруг»:
+    - **Мультик** (Маша и Медведь, Фиксики, Смешарики, ...)
+    - **Животные** (Кот, Собака, Лев, Слон, Мишка, Зайка)
+    - **Машинки** (Легковая, Грузовик, Автобус, Трактор)
+    - **Музыка** (Колыбельная, Весёлая, Спокойная, Птицы, Дождь)
+    - **Звуки вокруг** (Мама зовёт, Дверь, Телефон, Игрушка)
+  - Каждая категория: title, description, icon, gradient cover, accent color, items[].
+  - Цвета плиток-иконок: pink/blue/green/yellow/purple/mint (AAC color coding).
+- **`src/pages/child/ChildCategoryPage.tsx`** — sub-page для категории:
+  - Cover (gradient hero card) с иконкой + title + description + счётчик items.
+  - Grid 2-col items (большие wide-карточки на col-span-2).
+  - Tap на item → addEvent `phrase` + success-toast → возврат на /child/home.
+  - Fallback если категория не найдена — список всех доступных.
+
+### Changed — ChildCards redesign (v0.3.25)
+- **`src/pages/child/ChildCards.tsx`** — «Быстрые карточки» полностью перерисованы:
+  - **Header**: back + «Быстрые карточки».
+  - **Featured top card** (gradient cover, 1 шт) — топовая категория (Мультик) с badge «Любимое».
+  - **Секция «Потребности»** (3 карточки): Хочу пить / Хочу есть / Туалет → открывают NeedCard.
+  - **Секция «Мир вокруг»** (5 категорий, 2-col grid) → открывают /child/category/:id.
+  - Каждая карточка: gradient/icon-bg + icon + title + description + счётчик items + ChevronRight (или аффорданс).
+  - Disclaimer внизу: «Это наблюдения, не диагноз. Можно обсудить со специалистом.»
+- Tap на любую карточку создаёт `phrase` event с `source: 'category_open' | 'category_card' | 'featured_card'`.
+
+### Added — Routes
+- **`/child/category/:categoryId`** → `<ChildCategoryPage />` (поддерживает `cartoon`, `animals`, `cars`, `music`, `sounds`).
+
+### Verified
+- `npm run build` ✅ — 1678 modules (на 2 больше: `ChildCategoryPage` + `categories.ts`), 0 TS errors, 7.82s.
+- CSS bundle 52.53 → 53.16 KB (+0.6 KB за layout + gradient cover cards).
+- JS bundle 492.08 → 500.03 KB (+8 KB за categories + ChildCategoryPage).
+- Да/Нет проверены: всегда в поле зрения на toilet странице (с таймером).
+
+### Diff summary
+```
+5 файлов изменено, 2 добавлено:
+
+apps/prototype/src/data/categories.ts                        NEW (178 строк, 5 категорий + 3 потребности)
+apps/prototype/src/pages/child/ChildCategoryPage.tsx         NEW (149 строк)
+apps/prototype/src/pages/child/NeedCard.tsx                  Да/Нет вынесены в fixed-контейнер
+apps/prototype/src/pages/child/ChildCards.tsx                перерисован с секциями + featured
+apps/prototype/src/app/router.tsx                            +7 строк (новый route)
+apps/prototype/package.json                                  0.3.24 → 0.3.25
+```
+
+---
+
 ## [0.3.24] — 2026-07-02 (NeedCard: единый шаблон «Карточка потребности»)
 
 ### Added — NeedCard template (v0.3.24)

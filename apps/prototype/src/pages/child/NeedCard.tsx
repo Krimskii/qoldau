@@ -190,206 +190,215 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-80px)]">
-      {/* Header */}
-      <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-1">
-        <button
-          onClick={() => navigate(-1)}
-          className="w-10 h-10 rounded-[13px] border border-line bg-white flex items-center justify-center hover:bg-bg transition-colors"
-          aria-label="Назад"
-        >
-          <BackArrowIcon size={20} />
-        </button>
-        <div className="text-xl font-black text-ink flex items-center gap-2">
-          <span
-            className="w-[26px] h-[26px] rounded-[9px] flex items-center justify-center"
-            style={{ background: '#e9f7f5' }}
+    <>
+      {/* Main scrollable content — pb-[112px] reserves space for fixed Да/Нет */}
+      <div className="flex flex-col min-h-[calc(100vh-80px)] pb-[112px]">
+        {/* Header */}
+        <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-1">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-[13px] border border-line bg-white flex items-center justify-center hover:bg-bg transition-colors"
+            aria-label="Назад"
           >
-            <config.HeroIcon size={20} animated={false} />
-          </span>
-          {config.title}
+            <BackArrowIcon size={20} />
+          </button>
+          <div className="text-xl font-black text-ink flex items-center gap-2">
+            <span
+              className="w-[26px] h-[26px] rounded-[9px] flex items-center justify-center"
+              style={{ background: '#e9f7f5' }}
+            >
+              <config.HeroIcon size={20} animated={false} />
+            </span>
+            {config.title}
+          </div>
         </div>
-      </div>
 
-      {/* Phrase strip */}
-      <div
-        className="mx-4 mt-3 mb-1.5 min-h-[76px] bg-white rounded-[20px] flex items-center gap-2 p-3 flex-wrap transition-colors"
-        style={{
-          border: phrase.length > 0 ? '2px solid #7fd1c9' : '2px dashed #cfe0df',
-        }}
-      >
-        {phrase.length === 0 ? (
-          <span className="text-[#9fb3ba] font-bold text-[15px]">{config.phraseHint}</span>
-        ) : (
-          phrase.map((w, i) => {
-            const word = config.words.find((x) => x.text === w);
-            const WordIcon = word?.icon;
-            const isRemoving = removing === w;
-            return (
-              <div
-                key={`${w}-${i}-${phrase.length}`}
-                className="flex flex-col items-center gap-0.5 rounded-[12px] px-2.5 pt-1.5 pb-1"
-                style={{
-                  background: '#e9f7f5',
-                  opacity: isRemoving ? 0 : 1,
-                  transform: isRemoving ? 'scale(0.85)' : 'scale(1)',
-                  transition: 'all 300ms ease-out',
-                  animation: isRemoving
-                    ? undefined
-                    : 'need-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
-                }}
-              >
-                {WordIcon && <WordIcon size={22} animated={false} />}
-                <span className="text-[14px] font-black leading-none" style={{ color: '#0d5c5c' }}>
-                  {w}
-                </span>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Two paths: mic card (top) + words card (bottom) */}
-      <div className="flex flex-col gap-2.5 px-4 pt-1.5 pb-1.5">
-        {/* Mic card — large teal круг с подписью */}
-        <button
-          onClick={toggleMic}
-          className="bg-white border border-line rounded-[20px] shadow-card p-3 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform"
-          aria-label={isRecording ? 'Остановить запись' : 'Сказать голосом'}
+        {/* Phrase strip */}
+        <div
+          className="mx-4 mt-3 mb-1.5 min-h-[76px] bg-white rounded-[20px] flex items-center gap-2 p-3 flex-wrap transition-colors"
+          style={{
+            border: phrase.length > 0 ? '2px solid #7fd1c9' : '2px dashed #cfe0df',
+          }}
         >
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center"
+          {phrase.length === 0 ? (
+            <span className="text-[#9fb3ba] font-bold text-[15px]">{config.phraseHint}</span>
+          ) : (
+            phrase.map((w, i) => {
+              const word = config.words.find((x) => x.text === w);
+              const WordIcon = word?.icon;
+              const isRemoving = removing === w;
+              return (
+                <div
+                  key={`${w}-${i}-${phrase.length}`}
+                  className="flex flex-col items-center gap-0.5 rounded-[12px] px-2.5 pt-1.5 pb-1"
+                  style={{
+                    background: '#e9f7f5',
+                    opacity: isRemoving ? 0 : 1,
+                    transform: isRemoving ? 'scale(0.85)' : 'scale(1)',
+                    transition: 'all 300ms ease-out',
+                    animation: isRemoving
+                      ? undefined
+                      : 'need-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+                  }}
+                >
+                  {WordIcon && <WordIcon size={22} animated={false} />}
+                  <span className="text-[14px] font-black leading-none" style={{ color: '#0d5c5c' }}>
+                    {w}
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Two paths: mic card (top) + words card (bottom) */}
+        <div className="flex flex-col gap-2.5 px-4 pt-1.5 pb-1.5">
+          {/* Mic card — large teal круг с подписью */}
+          <button
+            onClick={toggleMic}
+            className="bg-white border border-line rounded-[20px] shadow-card p-3 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform"
+            aria-label={isRecording ? 'Остановить запись' : 'Сказать голосом'}
+          >
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center"
+              style={{
+                background: isRecording
+                  ? 'linear-gradient(135deg, #E56F5D 0%, #cc251d 100%)'
+                  : 'linear-gradient(135deg, #1ba39a 0%, #12807a 100%)',
+                boxShadow: isRecording
+                  ? '0 6px 16px rgba(229,111,93,0.34)'
+                  : '0 6px 16px rgba(27,163,154,0.28)',
+              }}
+            >
+              {isRecording ? (
+                <MicOff className="w-8 h-8 text-white" strokeWidth={2.5} />
+              ) : (
+                <Mic className="w-8 h-8 text-white" strokeWidth={2.5} />
+              )}
+            </div>
+            <div
+              className="text-[13px] font-black text-center"
+              style={{ color: isRecording ? '#c95f5f' : '#12807a' }}
+            >
+              {isRecording ? formatTime(recordingTime) : 'Сказать голосом'}
+            </div>
+          </button>
+
+          {/* Words card — 2×2 сетка */}
+          <div className="bg-white border border-line rounded-[20px] shadow-card p-2.5">
+            <div className="text-[11px] font-black text-ink-soft tracking-wide px-1.5 mb-2">
+              СОБРАТЬ ИЗ СЛОВ
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {config.words.map((word, i) => {
+                const used = phrase.includes(word.text);
+                const isSpeaking = speaking === word.text;
+                const funcStyle = FUNC_STYLES[word.func];
+                const WordIcon = word.icon;
+                return (
+                  <button
+                    key={`${word.text}-${i}`}
+                    onClick={() => toggleWord(word.text)}
+                    className="border border-line rounded-[13px] bg-white py-2 px-1 flex flex-col items-center gap-0.5 active:scale-[0.92] transition-transform"
+                    style={{
+                      opacity: used ? 0.5 : 1,
+                      outline: used ? `1.5px solid ${funcStyle.text}` : 'none',
+                      animation: isSpeaking
+                        ? 'need-speak-pulse 280ms ease-out both'
+                        : undefined,
+                    }}
+                    aria-label={`Добавить «${word.text}»`}
+                    aria-pressed={used}
+                  >
+                    <div
+                      className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center"
+                      style={{ background: funcStyle.bg }}
+                    >
+                      <WordIcon size={22} animated={false} />
+                    </div>
+                    <div
+                      className="text-[12px] font-black text-center leading-tight"
+                      style={{ color: funcStyle.text }}
+                    >
+                      {word.text}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Speak + clear row */}
+        <div className="flex gap-2 px-4 pt-1.5 pb-1.5">
+          <button
+            onClick={handleSpeak}
+            disabled={phrase.length === 0}
+            className="flex-1 border-0 rounded-[15px] py-3 px-3 font-black text-[14px] flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
             style={{
-              background: isRecording
-                ? 'linear-gradient(135deg, #E56F5D 0%, #cc251d 100%)'
-                : 'linear-gradient(135deg, #1ba39a 0%, #12807a 100%)',
-              boxShadow: isRecording
-                ? '0 6px 16px rgba(229,111,93,0.34)'
-                : '0 6px 16px rgba(27,163,154,0.28)',
+              background: phrase.length > 0 ? '#e9f7f5' : '#f4f8f8',
+              color: phrase.length > 0 ? '#12807a' : '#9fb3ba',
+              cursor: phrase.length === 0 ? 'not-allowed' : 'pointer',
+              animation: speaking === '__speak__' ? 'need-speak-pulse 600ms ease-out both' : undefined,
             }}
           >
-            {isRecording ? (
-              <MicOff className="w-8 h-8 text-white" strokeWidth={2.5} />
-            ) : (
-              <Mic className="w-8 h-8 text-white" strokeWidth={2.5} />
-            )}
-          </div>
-          <div
-            className="text-[13px] font-black text-center"
-            style={{ color: isRecording ? '#c95f5f' : '#12807a' }}
+            <Volume2 className="w-[18px] h-[18px]" />
+            Озвучить фразу
+          </button>
+          <button
+            onClick={clearPhrase}
+            disabled={phrase.length === 0}
+            className="w-12 border border-line rounded-[15px] bg-white flex items-center justify-center active:scale-[0.94] transition-transform"
+            style={{ opacity: phrase.length === 0 ? 0.4 : 1 }}
+            aria-label="Очистить"
           >
-            {isRecording ? formatTime(recordingTime) : 'Сказать голосом'}
-          </div>
-        </button>
+            <Trash2 className="w-5 h-5 text-[#c56a6a]" />
+          </button>
+        </div>
 
-        {/* Words card — 2×2 сетка */}
-        <div className="bg-white border border-line rounded-[20px] shadow-card p-2.5">
-          <div className="text-[11px] font-black text-ink-soft tracking-wide px-1.5 mb-2">
-            СОБРАТЬ ИЗ СЛОВ
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {config.words.map((word, i) => {
-              const used = phrase.includes(word.text);
-              const isSpeaking = speaking === word.text;
-              const funcStyle = FUNC_STYLES[word.func];
-              const WordIcon = word.icon;
-              return (
-                <button
-                  key={`${word.text}-${i}`}
-                  onClick={() => toggleWord(word.text)}
-                  className="border border-line rounded-[13px] bg-white py-2 px-1 flex flex-col items-center gap-0.5 active:scale-[0.92] transition-transform"
-                  style={{
-                    opacity: used ? 0.5 : 1,
-                    outline: used ? `1.5px solid ${funcStyle.text}` : 'none',
-                    animation: isSpeaking
-                      ? 'need-speak-pulse 280ms ease-out both'
-                      : undefined,
-                  }}
-                  aria-label={`Добавить «${word.text}»`}
-                  aria-pressed={used}
-                >
-                  <div
-                    className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center"
-                    style={{ background: funcStyle.bg }}
-                  >
-                    <WordIcon size={22} animated={false} />
-                  </div>
-                  <div
-                    className="text-[12px] font-black text-center leading-tight"
-                    style={{ color: funcStyle.text }}
-                  >
-                    {word.text}
-                  </div>
-                </button>
-              );
-            })}
+        {/* Optional extra (timer for toilet) */}
+        {config.extra && <div className="px-4 pt-1.5 pb-1.5">{config.extra}</div>}
+      </div>
+
+      {/* FIXED ✓ / ✗ — ВСЕГДА в поле зрения, над bottom nav (v0.3.25) */}
+      <div
+        className="fixed left-1/2 -translate-x-1/2 bottom-[80px] w-full max-w-[430px] z-30 px-4 pointer-events-none"
+      >
+        <div
+          className="pointer-events-auto pt-3 pb-2"
+          style={{
+            background: 'linear-gradient(to top, #f4f8f8 60%, rgba(244,248,248,0))',
+          }}
+        >
+          <div className="flex gap-3">
+            <button
+              onClick={handleYes}
+              className="flex-1 h-[88px] border-0 rounded-[22px] flex flex-col items-center justify-center gap-1 active:scale-[0.96] transition-transform"
+              style={{
+                background: '#e9f4ee',
+                color: '#3f9a6a',
+                boxShadow: '0 6px 16px rgba(63,154,106,0.18)',
+              }}
+              aria-label="Подтвердить потребность"
+            >
+              <Check className="w-[38px] h-[38px]" strokeWidth={3} />
+              <span className="text-base font-black">Да</span>
+            </button>
+            <button
+              onClick={handleNo}
+              className="flex-1 h-[88px] border-0 rounded-[22px] flex flex-col items-center justify-center gap-1 active:scale-[0.96] transition-transform"
+              style={{
+                background: '#f7ecec',
+                color: '#c56a6a',
+                boxShadow: '0 6px 16px rgba(197,106,106,0.16)',
+              }}
+              aria-label="Отменить"
+            >
+              <X className="w-[38px] h-[38px]" strokeWidth={3} />
+              <span className="text-base font-black">Нет</span>
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* Speak + clear row */}
-      <div className="flex gap-2 px-4 pt-1.5 pb-1.5">
-        <button
-          onClick={handleSpeak}
-          disabled={phrase.length === 0}
-          className="flex-1 border-0 rounded-[15px] py-3 px-3 font-black text-[14px] flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
-          style={{
-            background: phrase.length > 0 ? '#e9f7f5' : '#f4f8f8',
-            color: phrase.length > 0 ? '#12807a' : '#9fb3ba',
-            cursor: phrase.length === 0 ? 'not-allowed' : 'pointer',
-            animation: speaking === '__speak__' ? 'need-speak-pulse 600ms ease-out both' : undefined,
-          }}
-        >
-          <Volume2 className="w-[18px] h-[18px]" />
-          Озвучить фразу
-        </button>
-        <button
-          onClick={clearPhrase}
-          disabled={phrase.length === 0}
-          className="w-12 border border-line rounded-[15px] bg-white flex items-center justify-center active:scale-[0.94] transition-transform"
-          style={{ opacity: phrase.length === 0 ? 0.4 : 1 }}
-          aria-label="Очистить"
-        >
-          <Trash2 className="w-5 h-5 text-[#c56a6a]" />
-        </button>
-      </div>
-
-      {/* Optional extra (timer for toilet) */}
-      {config.extra && <div className="px-4 pt-1.5 pb-1.5">{config.extra}</div>}
-
-      {/* Big Да/Нет — always visible, always active, прижаты к низу */}
-      <div
-        className="mt-auto flex gap-3 px-4 pt-3 pb-4"
-        style={{
-          background: 'linear-gradient(to top, #f4f8f8, rgba(244,248,248,0))',
-        }}
-      >
-        <button
-          onClick={handleYes}
-          className="flex-1 h-[88px] border-0 rounded-[22px] flex flex-col items-center justify-center gap-1 active:scale-[0.96] transition-transform"
-          style={{
-            background: '#e9f4ee',
-            color: '#3f9a6a',
-            boxShadow: '0 6px 16px rgba(63,154,106,0.18)',
-          }}
-          aria-label="Подтвердить потребность"
-        >
-          <Check className="w-[38px] h-[38px]" strokeWidth={3} />
-          <span className="text-base font-black">Да</span>
-        </button>
-        <button
-          onClick={handleNo}
-          className="flex-1 h-[88px] border-0 rounded-[22px] flex flex-col items-center justify-center gap-1 active:scale-[0.96] transition-transform"
-          style={{
-            background: '#f7ecec',
-            color: '#c56a6a',
-            boxShadow: '0 6px 16px rgba(197,106,106,0.16)',
-          }}
-          aria-label="Отменить"
-        >
-          <X className="w-[38px] h-[38px]" strokeWidth={3} />
-          <span className="text-base font-black">Нет</span>
-        </button>
       </div>
 
       {/* Success overlay */}
@@ -425,6 +434,6 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
           }
         }
       `}</style>
-    </div>
+    </>
   );
 };

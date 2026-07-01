@@ -33,6 +33,7 @@ import { ChildProgress } from '@/pages/child/ChildProgress';
 import { ChildWater } from '@/pages/child/ChildWater';
 import { ChildFood } from '@/pages/child/ChildFood';
 import { ChildToilet } from '@/pages/child/ChildToilet';
+import { ChildCategoryPage } from '@/pages/child/ChildCategoryPage';
 
 // Tutor Pages
 import { TutorHome } from '@/pages/tutor/TutorHome';
@@ -168,6 +169,10 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/child/toilet"
           element={<AppShell><ChildToilet /></AppShell>}
+        />
+        <Route
+          path="/child/category/:categoryId"
+          element={<AppShell><ChildCategoryPage /></AppShell>}
         />
 
         {/* Tutor Routes */}
