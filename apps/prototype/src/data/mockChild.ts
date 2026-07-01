@@ -1,4 +1,4 @@
-import { ChildProfile, Signal, QoldauEvent } from '@/types/qoldau';
+import { ChildProfile, QoldauEvent } from '@/types/qoldau';
 
 export const mockChild: ChildProfile = {
   id: 'child-1',

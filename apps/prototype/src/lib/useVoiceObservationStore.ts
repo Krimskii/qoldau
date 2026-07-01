@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { AIParsedObservation, ParsedEvent } from './aiParser.mock';
+import { AIParsedObservation } from './aiParser.mock';
 import { mockSTTResponse } from './sttClient.mock';
 
 interface VoiceObservationState {
@@ -17,7 +17,7 @@ interface VoiceObservationState {
   reset: () => void;
 }
 
-export const useVoiceObservationStore = create<VoiceObservationState>((set, get) => ({
+export const useVoiceObservationStore = create<VoiceObservationState>((set) => ({
   isRecording: false,
   duration: 0,
   transcript: '',

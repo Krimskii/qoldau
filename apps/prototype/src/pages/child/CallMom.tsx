@@ -1,8 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export const ChildCall: React.FC = () => {
-  const navigate = useNavigate();
 
   const contacts = [
     { id: 'mom', name: 'Позвать маму', emoji: '👩', bg: 'bg-[#eefbf2]' },

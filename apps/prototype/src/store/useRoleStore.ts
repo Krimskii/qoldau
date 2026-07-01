@@ -15,7 +15,7 @@ const rolePermissions: Record<UserRole, string[]> = {
   overview: ['overview'],
 };
 
-export const useRoleStore = create<RoleState>((set, get) => ({
+export const useRoleStore = create<RoleState>((set) => ({
   currentRole: 'parent',
   setRole: (role) => set({ currentRole: role }),
   canAccess: (role, page) => {

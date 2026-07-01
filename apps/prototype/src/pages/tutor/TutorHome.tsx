@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, Bell, CircleHelp } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { mockChild } from '@/data/mockChild';
 import { mockTutorHints } from '@/data/mockTutor';
 

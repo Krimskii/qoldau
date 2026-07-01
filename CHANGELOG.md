@@ -2,6 +2,72 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] — 2026-07-01
+
+### Added
+
+#### Guided Demo Mode
+- **Demo Mode button** on Overview page
+- **Visual step indicator** at bottom of screen
+- **18-step guided tour**: Overview → Parent → Child → Tutor → Specialist → Overview
+- **Navigation controls**: Back / Next / Exit
+- **Auto-navigation** to demo steps
+- New store: `useDemoStore` with state management
+
+#### Event Timeline (improved)
+- **Filters** by event type: all / food / toilet / sensory / communication / behavior / sleep / state
+- **Grouping** by time of day: morning / afternoon / evening / night
+- **Source badges**: parent / child / tutor / AI
+- **Status badges**: confirmed / needs verification / edited
+- **AI observation** at top: "Похоже, сегодня несколько событий связаны с шумом..."
+
+#### EventDetails (improved)
+- Event source display
+- Original phrase / card visualization
+- Related events with navigation
+- Cautious AI hypothesis
+- "What to try" suggestions
+- Action buttons: Edit / Related / Add to report
+
+#### CommunicationProfile (improved)
+- Signal list with meanings
+- Confidence as cautious indicator (high/medium/low)
+- Sources of confirmations
+- Event count and last seen
+- AI observation and recommendations
+
+#### TutorReport (improved)
+- 7-day summary with KPIs
+- "Copy report" button (copies to clipboard)
+- "Send to parent" button
+- Neutral wording: "наблюдалась нервозность" not "проблемное поведение"
+- AI recommendation with safety disclaimer
+
+#### SpecialistDashboard (improved)
+- **KPI cards** with period selector (7/14/30 days)
+- Event count, new signals, communications, confirmation rate
+- AI summary with safety wording
+- Quick links to all sections
+- Repeating situations list
+- "What helped" section
+
+#### Toast notifications
+- In-app feedback (no browser alerts)
+- Types: success, error, info, warning
+- Auto-dismiss after 3 seconds
+- New store: `useToastStore`
+- New component: `ToastContainer`
+
+### Documentation
+- **DEMO_SCRIPT.md**: 10-15 minute demo script for investors, parents, tutors, specialists
+  - Step-by-step walkthrough
+  - Key talking points
+  - Safety disclaimers
+  - FAQ answers
+  - Prohibited medical claims list
+
+---
+
 ## [0.1.1] — 2026-07-01
 
 ### Added
@@ -30,6 +96,8 @@ All notable changes to this project will be documented in this file.
 ### Technical
 - New stores: `useVoiceObservationStore`, `useClarifyingStore`
 - `useEventStore` expanded with addEvents, getEventsByTypeAndDate
+
+---
 
 ## [0.1.0] — 2026-07-01
 

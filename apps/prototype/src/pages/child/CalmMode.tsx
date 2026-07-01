@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const calmOptions = [
   { id: 'music', label: 'Тихая музыка', emoji: '🎵' },
@@ -11,8 +10,6 @@ const calmOptions = [
 ];
 
 export const CalmMode: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="flex flex-col gap-4">
       <div className="text-center">

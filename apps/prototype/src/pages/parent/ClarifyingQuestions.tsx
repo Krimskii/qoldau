@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Droplet, Utensils, Brain } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
-import { useEventStore } from '@/store/useEventStore';
 import { useVoiceObservationStore } from '@/lib/useVoiceObservationStore';
 
 const questions = [
@@ -36,7 +35,7 @@ const questions = [
 
 export const ClarifyingQuestions: React.FC = () => {
   const navigate = useNavigate();
-  const { answers, setAnswer, confirmAll, resetAnswers } = useClarifyingStore();
+  const { answers, setAnswer, confirmAll } = useClarifyingStore();
   const { reset: resetVoiceObservation } = useVoiceObservationStore();
 
   const handleAnswer = (questionId: string, option: string) => {
@@ -111,7 +110,7 @@ const defaultAnswers: Record<string, string> = {
   'noise-around': 'Да',
 };
 
-export const useClarifyingStore = create<ClarifyingState>((set, get) => ({
+export const useClarifyingStore = create<ClarifyingState>((set) => ({
   answers: { ...defaultAnswers },
   
   setAnswer: (questionId, answer) =>

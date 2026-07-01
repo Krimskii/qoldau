@@ -1,11 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, Bell, Utensils, Droplet, Moon, Smile, MessageCircle, ChevronRight } from 'lucide-react';
+import { Mic, Utensils, Droplet, Moon, Smile, MessageCircle, ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
-import { TimelineItem } from '@/components/ui/TimelineItem';
 import { mockChild } from '@/data/mockChild';
 import { useEventStore } from '@/store/useEventStore';
 import { quickActions } from '@/data/mockCards';

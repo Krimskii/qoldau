@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { MicButton } from '@/components/ui/MicButton';
 import { VoiceWave } from '@/components/ui/VoiceWave';
-import { useAppStore } from '@/store/useAppStore';
 
 export const VoiceObservation: React.FC = () => {
   const navigate = useNavigate();
