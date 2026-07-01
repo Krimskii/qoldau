@@ -2,6 +2,22 @@ import React, { useMemo } from 'react';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { SuccessSparkle } from '@/components/illustrations/SuccessSparkle';
+import {
+  WaterIcon,
+  ToiletIcon,
+  HugIcon,
+  MoonIcon,
+  SparkleIcon,
+  type IconProps,
+} from '@/components/icons';
+
+interface AchievementItem {
+  id: string;
+  label: string;
+  Icon: React.FC<IconProps>;
+  iconColor: string;
+  done: boolean;
+}
 
 export const ChildProgress: React.FC = () => {
   const { events } = useEventStore();
@@ -21,22 +37,22 @@ export const ChildProgress: React.FC = () => {
     };
   }, [events]);
 
-  const achievements = [
-    { id: 'water', label: 'Попросил воду', emoji: '💧', done: stats.aac > 0 },
-    { id: 'toilet', label: 'Попросил туалет', emoji: '🚽', done: stats.aac > 1 },
-    { id: 'phrase', label: 'Собрал фразу', emoji: '💬', done: stats.phrases > 0 },
-    { id: 'pause', label: 'Использовал паузу', emoji: '☁️', done: stats.calm > 0 },
+  const achievements: AchievementItem[] = [
+    { id: 'water', label: 'Попросил воду', Icon: WaterIcon, iconColor: 'text-[#1c6cb8]', done: stats.aac > 0 },
+    { id: 'toilet', label: 'Попросил туалет', Icon: ToiletIcon, iconColor: 'text-[#5a3eb4]', done: stats.aac > 1 },
+    { id: 'phrase', label: 'Собрал фразу', Icon: HugIcon, iconColor: 'text-[#cc251d]', done: stats.phrases > 0 },
+    { id: 'pause', label: 'Использовал паузу', Icon: MoonIcon, iconColor: 'text-[#5a3eb4]', done: stats.calm > 0 },
   ];
 
   const topCards = [
-    { id: '1', label: 'Вода', emoji: '💧', count: stats.aac > 0 ? stats.aac : 3 },
-    { id: '2', label: 'Туалет', emoji: '🚽', count: 2 },
-    { id: '3', label: 'Играть', emoji: '🎈', count: 2 },
+    { id: '1', label: 'Вода', Icon: WaterIcon, iconColor: 'text-[#1c6cb8]', count: stats.aac > 0 ? stats.aac : 3 },
+    { id: '2', label: 'Туалет', Icon: ToiletIcon, iconColor: 'text-[#5a3eb4]', count: 2 },
+    { id: '3', label: 'Играть', Icon: HugIcon, iconColor: 'text-[#158647]', count: 2 },
   ];
 
   return (
     <div className="flex flex-col gap-4 min-h-[calc(100vh-80px)]">
-      {/* Celebratory hero — мягкий фон, SuccessSparkle, мягкие тексты */}
+      {/* Celebratory hero */}
       <div className="bg-gradient-to-br from-[#FFFCEC] via-[#FFF8F0] to-[#EAF5FF] border-2 border-[#f2e1b6] rounded-3xl p-6 text-center">
         <div className="flex justify-center mb-2">
           <SuccessSparkle className="w-20 h-20" />
@@ -60,9 +76,7 @@ export const ChildProgress: React.FC = () => {
                   : 'border-line opacity-60'
               }`}
             >
-              <span className="text-4xl" aria-hidden="true">
-                {a.emoji}
-              </span>
+              <a.Icon size={40} className={a.done ? a.iconColor : 'text-muted'} />
               <span className="text-sm font-bold text-ink text-center leading-tight">
                 {a.label}
               </span>
@@ -81,7 +95,8 @@ export const ChildProgress: React.FC = () => {
       {/* Любимые карточки */}
       <div className="bg-white border-2 border-line rounded-2xl p-4">
         <h3 className="text-sm font-black text-ink-2 mb-3 flex items-center gap-2">
-          <span aria-hidden="true">⭐</span> Любимые карточки
+          <SparkleIcon size={16} className="text-[#E3A62F]" />
+          Любимые карточки
         </h3>
         {topCards.map((c) => (
           <div
@@ -89,7 +104,7 @@ export const ChildProgress: React.FC = () => {
             className="flex items-center justify-between gap-3 py-2.5 border-b border-line last:border-0"
           >
             <div className="flex items-center gap-3">
-              <span className="text-2xl" aria-hidden="true">{c.emoji}</span>
+              <c.Icon size={26} className={c.iconColor} />
               <span className="text-sm font-bold">{c.label}</span>
             </div>
             <span className="text-sm font-black text-teal">{c.count} раз</span>
@@ -99,7 +114,7 @@ export const ChildProgress: React.FC = () => {
 
       {/* Поддерживающее завершение */}
       <div className="mt-auto rounded-2xl bg-gradient-to-r from-[#EAF8F0] to-[#DDF5F0] p-5 font-black text-xl text-[#185d36] flex flex-col items-center justify-center gap-1.5 shadow-card">
-        <span className="text-2xl" aria-hidden="true">⭐</span>
+        <SparkleIcon size={26} className="text-[#185d36]" />
         <span>У тебя получается</span>
         <span className="text-sm font-bold opacity-90">Спасибо, что показал</span>
       </div>

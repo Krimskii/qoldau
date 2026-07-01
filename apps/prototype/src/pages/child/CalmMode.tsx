@@ -4,27 +4,36 @@ import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { CloudMascot } from '@/components/illustrations/CloudMascot';
+import {
+  MusicIcon,
+  BreathIcon,
+  HeadphonesIcon,
+  MoonIcon,
+  PauseIcon,
+  HugIcon,
+  type IconProps,
+} from '@/components/icons';
 
 const TIMER_SECONDS = 60;
 
 interface CalmOption {
   id: string;
   label: string;
-  emoji: string;
+  Icon: React.FC<IconProps>;
+  iconColor: string;
   bg: string;
+  textColor: string;
   path?: string;
 }
 
-// 6 спокойных опций — без тревожных цветов. "Темно" — единственный тёмный,
-// но он же и успокаивающий (поэтому оставляем — это намеренный visual contrast
-// к светлому фону, не агрессия).
+// 6 спокойных опций — flat SVG вместо эмодзи.
 const OPTIONS: CalmOption[] = [
-  { id: 'music', label: 'Тихая музыка', emoji: '🎵', bg: 'bg-[#F1EDFF]' },
-  { id: 'breath', label: 'Дыхание', emoji: '〰️', bg: 'bg-[#EAF5FF]' },
-  { id: 'headphones', label: 'Наушники', emoji: '🎧', bg: 'bg-[#EAF8F0]' },
-  { id: 'dark', label: 'Темно', emoji: '🌙', bg: 'bg-[#244a85] text-white' },
-  { id: 'pause', label: 'Пауза', emoji: '⏸', bg: 'bg-[#FFF6DF]' },
-  { id: 'call-mom', label: 'Позвать маму', emoji: '🤗', bg: 'bg-[#F1EDFF]', path: '/child/call' },
+  { id: 'music', label: 'Тихая музыка', Icon: MusicIcon, iconColor: 'text-[#5a3eb4]', bg: 'bg-[#F1EDFF]', textColor: 'text-[#173760]' },
+  { id: 'breath', label: 'Дыхание', Icon: BreathIcon, iconColor: 'text-[#1c6cb8]', bg: 'bg-[#EAF5FF]', textColor: 'text-[#173760]' },
+  { id: 'headphones', label: 'Наушники', Icon: HeadphonesIcon, iconColor: 'text-[#158647]', bg: 'bg-[#EAF8F0]', textColor: 'text-[#173760]' },
+  { id: 'dark', label: 'Темно', Icon: MoonIcon, iconColor: 'text-[#EAF5FF]', bg: 'bg-[#244a85]', textColor: 'text-white' },
+  { id: 'pause', label: 'Пауза', Icon: PauseIcon, iconColor: 'text-[#9a7820]', bg: 'bg-[#FFF6DF]', textColor: 'text-[#173760]' },
+  { id: 'call-mom', label: 'Позвать маму', Icon: HugIcon, iconColor: 'text-[#5a3eb4]', bg: 'bg-[#F1EDFF]', textColor: 'text-[#173760]', path: '/child/call' },
 ];
 
 export const CalmMode: React.FC = () => {
@@ -126,19 +135,19 @@ export const CalmMode: React.FC = () => {
         )}
       </div>
 
-      {/* 6 опций — мягкие пастельные фоны, крупные touch-targets */}
+      {/* 6 опций — flat SVG-иконки на pastel-фонах */}
       <div className="grid grid-cols-3 gap-3">
-        {OPTIONS.map((option) => (
+        {OPTIONS.map(({ id, label, Icon, iconColor, bg, textColor, path }) => (
           <button
-            key={option.id}
-            aria-label={option.label}
+            key={id}
+            aria-label={label}
             onClick={() => {
-              if (option.path) navigate(option.path);
+              if (path) navigate(path);
             }}
-            className={`min-h-[100px] rounded-2xl border border-[#d8e8f3] ${option.bg} flex flex-col items-center justify-center gap-2 text-sm font-black transition-transform duration-200 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40`}
+            className={`min-h-[100px] rounded-2xl border border-[#d8e8f3] ${bg} flex flex-col items-center justify-center gap-2 text-sm font-black transition-transform duration-200 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 ${textColor}`}
           >
-            <span className="text-4xl" aria-hidden="true">{option.emoji}</span>
-            {option.label}
+            <Icon size={36} className={iconColor} />
+            {label}
           </button>
         ))}
       </div>
