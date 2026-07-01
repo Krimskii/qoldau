@@ -1,163 +1,149 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { DinoMascot } from '@/components/illustrations/DinoMascot';
+import { ChildTopBar } from '@/components/layout/ChildTopBar';
 import {
-  WaterSoftIcon,
-  ToiletSoftIcon,
-  HelpSoftIcon,
-  PauseSoftIcon,
-  FavoritesSoftIcon,
-  SpeakIcon,
-  FoodSoftIcon,
-  PlaySoftIcon,
-  HugIcon,
-  SparkleIcon,
-  SunIcon,
-  MoonIcon,
-  SettingsIcon,
-  type IconProps,
-} from '@/components/icons';
-import { QoldauActionCard } from '@/components/ui/QoldauActionCard';
-import { QoldauCard } from '@/components/ui/QoldauCard';
-import { StatusBadge } from '@/components/ui/StatusBadge';
-import { SectionCard } from '@/components/ui/SectionCard';
-import type { QoldauIconColor } from '@/components/ui/QoldauIconCard';
+  Water2DIcon,
+  Toilet2DIcon,
+  Help2DIcon,
+  Pause2DIcon,
+  Fav2DIcon,
+  Mic2DIcon,
+  Heart2DIcon,
+  Puzzle2DIcon,
+  ChildMonsterMascot,
+  Check2DIcon,
+  CHILD_FAMILY_STYLES,
+  type ChildCardFamily,
+} from '@/components/icons/child2d';
 
-/**
- * ChildHome — главный экран ребёнка.
- *
- * Принципы:
- * - Не более 6 ключевых карточек на первом экране.
- * - Всё вторичное — в «Быстрые карточки» (/child/cards).
- * - Чёткий primary CTA: «Позвать маму» (в hero).
- * - Hero: приветствие + статус + CTA, мягкий gradient.
- *
- * Header (TopBar с именем ребёнка + bell) — в AppShell.
- */
-
-interface ActionItem {
+interface ChildHomeCard {
   id: string;
   label: string;
-  Icon: React.FC<IconProps>;
-  color: QoldauIconColor;
-  path: string;
+  Icon: React.FC<{ size?: number; animated?: boolean }>;
+  family: ChildCardFamily;
+  go: string;
 }
 
-const ACTIONS: ActionItem[] = [
-  { id: 'water', label: 'Хочу пить', Icon: WaterSoftIcon, color: 'blue', path: '/child/cards' },
-  { id: 'toilet', label: 'Туалет', Icon: ToiletSoftIcon, color: 'purple', path: '/child/cards' },
-  { id: 'help', label: 'Помощь', Icon: HelpSoftIcon, color: 'green', path: '/child/call' },
-  { id: 'pause', label: 'Пауза', Icon: PauseSoftIcon, color: 'yellow', path: '/child/calm' },
-  { id: 'favorites', label: 'Любимые', Icon: FavoritesSoftIcon, color: 'purple', path: '/child/favorites' },
-  { id: 'speak', label: 'Сказать', Icon: SpeakIcon, color: 'teal', path: '/child/speak' },
+/**
+ * ChildHome — главный экран ребёнка (v0.3.15).
+ *
+ * Структура (как в child_v2.html):
+ * - ChildTopBar: avatar с буквой + brand + bell/settings.
+ * - Hello card: gradient + monster mascot + «Привет, Алихан!» + status chip.
+ * - Call Mom CTA: gradient с heartbeat-анимацией сердечка.
+ * - 6 cards в сетке 3×2 (попарно, со stagger pop-анимацией).
+ * - Variants button «Собрать фразу» / «Выбрать из вариантов».
+ *
+ * Использует inline 2D SVG иконки + CSS-анимации (float/sway/pulse/blink).
+ */
+
+const HOME_ROW_1: ChildHomeCard[] = [
+  { id: 'water', label: 'Хочу пить', Icon: Water2DIcon, family: 'need', go: '/child/speak' },
+  { id: 'toilet', label: 'Туалет', Icon: Toilet2DIcon, family: 'need', go: '/child/calm' },
+  { id: 'help', label: 'Помощь', Icon: Help2DIcon, family: 'help', go: '/child/calm' },
 ];
+
+const HOME_ROW_2: ChildHomeCard[] = [
+  { id: 'pause', label: 'Пауза', Icon: Pause2DIcon, family: 'feel', go: '/child/calm' },
+  { id: 'fav', label: 'Любимые', Icon: Fav2DIcon, family: 'fav', go: '/child/cards' },
+  { id: 'speak', label: 'Сказать', Icon: Mic2DIcon, family: 'do', go: '/child/speak' },
+];
+
+const HomeCard: React.FC<{ c: ChildHomeCard; delay: number }> = ({ c, delay }) => {
+  const navigate = useNavigate();
+  const family = CHILD_FAMILY_STYLES[c.family];
+  return (
+    <button
+      onClick={() => navigate(c.go)}
+      className={`qoldau-icon-pop flex flex-col items-center gap-2.5 px-2 py-4 bg-white rounded-3xl shadow-card cursor-pointer min-h-[120px] transition-all duration-200 hover:-translate-y-1 hover:shadow-card-lg active:scale-[0.94] group`}
+      style={{ animationDelay: `${delay}ms` }}
+      aria-label={c.label}
+    >
+      <div className={`w-14 h-14 rounded-[18px] ${family.icoBg} flex items-center justify-center transition-transform group-active:qoldau-icon-wiggle`}>
+        <c.Icon size={46} />
+      </div>
+      <div className={`text-sm font-black text-center leading-tight ${family.lbl}`}>
+        {c.label}
+      </div>
+    </button>
+  );
+};
 
 export const ChildHome: React.FC = () => {
   const navigate = useNavigate();
   const child = DEMO_PRIMARY_CHILD;
 
   return (
-    <div className="flex flex-col gap-5 min-h-[calc(100vh-80px)]">
-      {/* Hero — приветствие + статус + CTA «Позвать маму» */}
-      <section
-        aria-label="Приветствие"
-        className="px-5 py-5 rounded-3xl bg-gradient-to-br from-[#F0FBFF] via-[#EAF5FF] to-[#F1EDFF] border border-[#dceaf4] flex flex-col gap-4 shadow-card-soft"
+    <div className="flex flex-col min-h-[calc(100vh-80px)]">
+      <ChildTopBar />
+
+      {/* Hello card */}
+      <div
+        className="mx-5 mt-1.5 mb-1 rounded-[26px] p-[18px] flex items-center gap-3.5 shadow-card"
+        style={{ background: 'linear-gradient(135deg, #eef6fb 0%, #eaf7f4 100%)' }}
       >
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 flex items-center justify-center flex-shrink-0" aria-hidden="true">
-            <DinoMascot animated className="w-20 h-20" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-black tracking-tight text-ink leading-tight">
-              Привет, {child.name}!
-            </h1>
-            <div className="mt-2 flex items-center gap-2 flex-wrap">
-              <StatusBadge
-                kind="ok"
-                label="Я в порядке"
-                icon={<SparkleIcon size={14} className="text-[#158647]" />}
-              />
-            </div>
+        <div className="w-[66px] h-[66px] flex-none">
+          <ChildMonsterMascot size={66} animated />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-[22px] font-black leading-tight m-0">
+            Привет, {child.name}!
+          </h1>
+          <div
+            className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold"
+            style={{ background: '#dff3ec', color: '#1f7a5e' }}
+          >
+            <Check2DIcon size={14} />
+            <span>Я в порядке</span>
           </div>
         </div>
-
-        {/* Primary CTA — крупная кнопка «Позвать маму» */}
-        <button
-          onClick={() => navigate('/child/call')}
-          className="w-full min-h-[68px] px-5 rounded-2xl bg-[#FFEAEA] border-2 border-[#FFC2BE] flex items-center justify-center gap-3 text-base font-black text-[#cc251d] transition-transform duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E56F5D]/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_10px_rgba(204,37,29,0.06)]"
-          aria-label="Позвать маму"
-        >
-          <HugIcon size={28} className="text-[#cc251d]" />
-          Позвать маму
-        </button>
-      </section>
-
-      {/* 6 ключевых действий — единая сетка 3×2 */}
-      <SectionCard title="Что хочешь сделать?" accent="teal">
-        <div className="grid grid-cols-3 gap-2.5">
-          {ACTIONS.map(({ id, label, Icon, color, path }) => (
-            <QoldauActionCard
-              key={id}
-              icon={Icon}
-              label={label}
-              color={color}
-              onClick={() => navigate(path)}
-            />
-          ))}
-        </div>
-      </SectionCard>
-
-      {/* Вторичное — выбор из вариантов и Сейчас/Потом */}
-      <QoldauCard padding="md" className="flex flex-col gap-3">
-        <button
-          onClick={() => navigate('/child/choice')}
-          className="w-full min-h-[72px] rounded-2xl border-2 border-[#dce9f4] bg-gradient-to-r from-[#FFF6DF] to-[#F1EDFF] flex items-center justify-center gap-3 text-base font-black text-ink transition-transform duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_10px_rgba(42,73,108,0.04)]"
-          aria-label="Выбрать из вариантов"
-        >
-          <span className="flex items-center gap-2" aria-hidden="true">
-            <FoodSoftIcon size={22} className="text-[#cc251d]" />
-            <PlaySoftIcon size={22} className="text-[#158647]" />
-            <FavoritesSoftIcon size={22} className="text-[#5a3eb4]" />
-          </span>
-          Выбрать из вариантов
-        </button>
-
-        {/* Сейчас / Потом */}
-        <button
-          onClick={() => navigate('/child/now-next')}
-          className="grid grid-cols-[1fr_auto_1fr] bg-gradient-to-r from-[#edfff4] to-[#f3ebff] border border-[#dce9f4] rounded-2xl overflow-hidden min-h-[72px] hover:shadow-card-soft transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
-          aria-label="Сейчас и потом"
-        >
-          <div className="flex flex-col items-center justify-center gap-1 font-black text-[#163b62] py-2.5 px-2">
-            <div className="flex items-center gap-2">
-              <SunIcon size={20} className="text-[#E3A62F]" />
-              <span className="text-sm text-muted">Сейчас</span>
-            </div>
-            <span className="text-base">Занятие</span>
-          </div>
-          <div className="w-px bg-[#b5c9df]" aria-hidden="true" />
-          <div className="flex flex-col items-center justify-center gap-1 font-black text-[#163b62] py-2.5 px-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted">Потом</span>
-              <MoonIcon size={20} className="text-[#5a3eb4]" />
-            </div>
-            <span className="text-base">Отдых</span>
-          </div>
-        </button>
-      </QoldauCard>
-
-      {/* Подсказки для интерфейса (settings для взрослого) */}
-      <div className="flex items-center justify-center">
-        <button
-          onClick={() => navigate('/child/interface-guide')}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-line text-xs font-bold text-muted hover:text-ink hover:bg-bg transition-colors"
-          aria-label="Подсказки по интерфейсу"
-        >
-          <SettingsIcon size={14} />
-          Подсказки
-        </button>
       </div>
+
+      {/* Call Mom CTA */}
+      <button
+        onClick={() => navigate('/child/call')}
+        className="mx-5 my-3 w-[calc(100%-2.5rem)] border-0 rounded-[22px] p-4 cursor-pointer flex items-center justify-center gap-3 text-[18px] font-black active:scale-[0.97] transition-transform"
+        style={{
+          background: 'linear-gradient(135deg, #fdecec 0%, #fbe0e0 100%)',
+          color: '#c95f5f',
+          boxShadow: '0 6px 16px rgba(201,95,95,0.16)',
+        }}
+        aria-label="Позвать маму"
+      >
+        <Heart2DIcon size={26} animated />
+        Позвать маму
+      </button>
+
+      {/* 6 cards: 3×2 с stagger */}
+      <div className="grid grid-cols-3 gap-3.5 px-5 pt-1.5 pb-1">
+        {HOME_ROW_1.map((c, i) => (
+          <HomeCard key={c.id} c={c} delay={i * 60} />
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-3.5 px-5 pt-1.5 pb-1">
+        {HOME_ROW_2.map((c, i) => (
+          <HomeCard key={c.id} c={c} delay={180 + i * 60} />
+        ))}
+      </div>
+
+      {/* Variants button */}
+      <button
+        onClick={() => navigate('/child/phrase')}
+        className="mx-5 mt-3 mb-1.5 w-[calc(100%-2.5rem)] rounded-[22px] p-4 cursor-pointer flex items-center gap-3 shadow-card active:scale-[0.98] transition-transform"
+        style={{ background: 'linear-gradient(135deg, #eef4fb 0%, #f3eefb 100%)' }}
+        aria-label="Собрать фразу"
+      >
+        <Puzzle2DIcon size={34} animated />
+        <div className="text-left">
+          <div className="text-base font-black text-ink">Собрать фразу</div>
+          <div className="text-[13px] text-ink-soft font-semibold">
+            Выбрать из вариантов
+          </div>
+        </div>
+      </button>
+
+      <div style={{ height: 12 }} />
     </div>
   );
 };

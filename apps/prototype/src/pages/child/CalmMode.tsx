@@ -3,51 +3,73 @@ import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { QoldauCard } from '@/components/ui/QoldauCard';
-import { QoldauIconCard, type QoldauIconColor } from '@/components/ui/QoldauIconCard';
-import { CalmPanel } from '@/components/ui/CalmPanel';
-import { SectionCard } from '@/components/ui/SectionCard';
-import { PrimaryAction } from '@/components/ui/Primitives';
+import { BackArrowIcon } from '@/components/icons/child2d';
 import {
-  MusicSoftIcon,
-  BreathIcon,
-  HeadphonesSoftIcon,
-  MoonIcon,
-  PauseSoftIcon,
-  HugSoftIcon,
-  type IconProps,
-} from '@/components/icons';
+  Music2DIcon,
+  Breath2DIcon,
+  Headphones2DIcon,
+  Pause2DIcon,
+  Dark2DIcon,
+  Mom2DIcon,
+  ChildCloudMascot,
+  CHILD_FAMILY_STYLES,
+  type ChildCardFamily,
+} from '@/components/icons/child2d';
 
 const TIMER_SECONDS = 60;
 
-interface CalmOption {
+interface CalmCard {
   id: string;
   label: string;
-  Icon: React.FC<IconProps>;
-  color: QoldauIconColor;
-  path?: string;
+  Icon: React.FC<{ size?: number; animated?: boolean }>;
+  family: ChildCardFamily;
+  go?: string;
 }
 
-// 6 спокойных опций — единый QoldauIconCard для визуального порядка.
-const OPTIONS: CalmOption[] = [
-  { id: 'music', label: 'Музыка', Icon: MusicSoftIcon, color: 'purple' },
-  { id: 'breath', label: 'Дыхание', Icon: BreathIcon, color: 'blue' },
-  { id: 'headphones', label: 'Наушники', Icon: HeadphonesSoftIcon, color: 'green' },
-  { id: 'pause', label: 'Пауза', Icon: PauseSoftIcon, color: 'yellow' },
-  { id: 'dark', label: 'Темно', Icon: MoonIcon, color: 'teal' },
-  { id: 'call-mom', label: 'Позвать маму', Icon: HugSoftIcon, color: 'coral', path: '/child/call' },
+const CALM_ROW_1: CalmCard[] = [
+  { id: 'music',     label: 'Тихая музыка', Icon: Music2DIcon,     family: 'fav'  },
+  { id: 'breath',    label: 'Дыхание',      Icon: Breath2DIcon,    family: 'need' },
+  { id: 'head',      label: 'Наушники',     Icon: Headphones2DIcon, family: 'do'   },
+];
+const CALM_ROW_2: CalmCard[] = [
+  { id: 'pause',     label: 'Пауза',        Icon: Pause2DIcon,     family: 'feel' },
+  { id: 'dark',      label: 'Темно',        Icon: Dark2DIcon,      family: 'need' },
+  { id: 'call-mom',  label: 'Позвать маму', Icon: Mom2DIcon,       family: 'help', go: '/child/home' },
 ];
 
+const CalmTile: React.FC<{ c: CalmCard; delay: number; onClick: () => void }> = ({
+  c,
+  delay,
+  onClick,
+}) => {
+  const family = CHILD_FAMILY_STYLES[c.family];
+  return (
+    <button
+      onClick={onClick}
+      className="qoldau-icon-pop flex flex-col items-center gap-2.5 px-2 py-4 bg-white rounded-3xl shadow-card cursor-pointer min-h-[120px] transition-all duration-200 hover:-translate-y-1 hover:shadow-card-lg active:scale-[0.94]"
+      style={{ animationDelay: `${delay}ms` }}
+      aria-label={c.label}
+    >
+      <div className={`w-14 h-14 rounded-[18px] ${family.icoBg} flex items-center justify-center`}>
+        <c.Icon size={46} />
+      </div>
+      <div className={`text-sm font-black text-center leading-tight ${family.lbl}`}>
+        {c.label}
+      </div>
+    </button>
+  );
+};
+
 /**
- * CalmMode — самый спокойный экран Qoldau.
+ * CalmMode — самый спокойный экран (v0.3.15).
  *
- * Структура:
- * - CalmPanel: gradient фон + CloudMascot + поддерживающий текст.
- * - Карточка таймера / старта.
- * - 6 опций спокойствия в сетке 3×2.
- * - Footer note «Я рядом».
- *
- * Без анимаций > 360ms, без резких переходов.
+ * Структура (как в child_v2.html):
+ * - Back button.
+ * - CloudMascot (124×124, cloudFloat анимация).
+ * - "Можно отдохнуть" + "Ты в безопасности · Я рядом".
+ * - Timer card + "Начать" big-btn + "Вернуться на главную" link.
+ * - 6 calm options в 2×3 сетке.
+ * - "Я рядом 💚" footer note.
  */
 export const CalmMode: React.FC = () => {
   const navigate = useNavigate();
@@ -122,32 +144,54 @@ export const CalmMode: React.FC = () => {
   const seconds = remaining % 60;
 
   return (
-    <CalmPanel
-      title={startedAt === null ? 'Можно отдохнуть' : 'Дыши спокойно'}
-      subtitle={startedAt === null ? 'Ты в безопасности · Я рядом' : 'В любой момент можно выйти'}
-      mood={startedAt ? 'happy' : 'calm'}
-      footerNote={
-        <span>
-          Я рядом <span className="text-[#4EC28A] text-base" aria-hidden="true">♥</span>
-        </span>
-      }
+    <div
+      className="-mx-5 -mt-2 px-5 pt-2 pb-4 rounded-t-3xl min-h-[calc(100vh-80px)] text-center"
+      style={{
+        background: 'linear-gradient(180deg, #eaf4fb 0%, #f0f7fb 60%, #f4f8f8 100%)',
+      }}
     >
-      {/* Карточка таймера / старта */}
-      <QoldauCard variant="elevated" padding="lg">
+      {/* Back button (no title для calm — minimalist) */}
+      <div className="flex items-center gap-2.5 pt-3.5 pb-0.5">
+        <button
+          onClick={() => navigate('/child/home')}
+          className="w-[42px] h-[42px] rounded-[14px] bg-white border-0 shadow-card flex items-center justify-center hover:bg-bg transition-colors"
+          aria-label="Назад"
+        >
+          <BackArrowIcon size={22} />
+        </button>
+      </div>
+
+      {/* Cloud mascot */}
+      <div className="mx-auto w-[124px] h-[124px] mt-6 mb-1.5">
+        <ChildCloudMascot size={124} animated />
+      </div>
+
+      <h2 className="text-[26px] mt-1.5 mb-0.5 font-black">Можно отдохнуть</h2>
+      <div className="font-bold mb-[18px]" style={{ color: '#12807a' }}>
+        Ты в безопасности · Я рядом
+      </div>
+
+      {/* Timer card */}
+      <div className="bg-white rounded-3xl p-5 mx-5 shadow-card text-left">
         {startedAt === null ? (
           <div className="flex flex-col items-center gap-3">
-            <p className="text-sm text-ink-2 text-center leading-relaxed">
+            <p className="m-0 mb-0 text-ink-soft font-semibold text-sm">
               Таймер на 1 минуту. В любой момент можно выйти.
             </p>
-            <PrimaryAction
-              label="Начать"
+            <button
               onClick={handleStart}
-              variant="primary"
-              size="lg"
-            />
+              className="w-full border-0 rounded-[18px] py-[18px] text-white text-[18px] font-black cursor-pointer"
+              style={{
+                background: '#1ba39a',
+                boxShadow: '0 8px 20px rgba(27,163,154,0.28)',
+              }}
+            >
+              Начать (1 минута)
+            </button>
             <button
               onClick={handleExitToHome}
-              className="text-xs text-muted hover:text-ink transition-colors"
+              className="bg-transparent border-0 font-bold mt-3 cursor-pointer text-[15px]"
+              style={{ color: '#12807a' }}
             >
               Вернуться на главную
             </button>
@@ -155,16 +199,17 @@ export const CalmMode: React.FC = () => {
         ) : (
           <div className="text-center">
             <div
-              className="text-6xl font-black text-teal-dark tabular-nums tracking-tight"
+              className="text-[44px] font-black tabular-nums tracking-tight"
+              style={{ color: '#0d5c5c' }}
               aria-live="polite"
             >
               {minutes}:{String(seconds).padStart(2, '0')}
             </div>
             <p className="text-sm text-muted mt-2">Спокойно и ровно</p>
-            <div className="mt-5 flex justify-center gap-3">
+            <div className="mt-4 flex justify-center gap-3">
               <button
                 onClick={() => handleFinish(true)}
-                className="px-5 py-3 rounded-full bg-[#EAF8F0] text-[#158647] font-bold hover:bg-[#d6f1e0] transition-colors"
+                className="px-5 py-3 rounded-full bg-green-soft text-green font-bold hover:bg-[#d6f1e0] transition-colors"
               >
                 Стало спокойнее
               </button>
@@ -177,29 +222,40 @@ export const CalmMode: React.FC = () => {
             </div>
           </div>
         )}
-      </QoldauCard>
+      </div>
 
-      {/* 6 опций — SectionCard для структуры */}
-      <SectionCard
-        title="Что поможет?"
-        subtitle="Выбери, что тебе сейчас подходит"
-        accent="teal"
-      >
-        <div className="grid grid-cols-3 gap-2.5">
-          {OPTIONS.map(({ id, label, Icon, color, path }) => (
-            <QoldauIconCard
-              key={id}
-              icon={Icon}
-              label={label}
-              color={color}
-              size="md"
-              onClick={() => {
-                if (path) navigate(path);
-              }}
-            />
-          ))}
-        </div>
-      </SectionCard>
-    </CalmPanel>
+      {/* 6 calm options: 2×3 */}
+      <div className="grid grid-cols-3 gap-3.5 px-5 pt-4">
+        {CALM_ROW_1.map((c, i) => (
+          <CalmTile
+            key={c.id}
+            c={c}
+            delay={i * 60}
+            onClick={() => {
+              if (c.go) navigate(c.go);
+            }}
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-3.5 px-5 pt-1.5">
+        {CALM_ROW_2.map((c, i) => (
+          <CalmTile
+            key={c.id}
+            c={c}
+            delay={180 + i * 60}
+            onClick={() => {
+              if (c.go) navigate(c.go);
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div className="text-center font-bold mt-4 mb-2" style={{ color: '#12807a' }}>
+        Я рядом <span aria-hidden="true">💚</span>
+      </div>
+
+      <div style={{ height: 12 }} />
+    </div>
   );
 };

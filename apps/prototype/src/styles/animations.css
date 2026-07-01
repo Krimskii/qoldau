@@ -52,6 +52,86 @@
   }
 }
 
+/* === Child 2D icons (v0.3.15) === */
+
+@keyframes qoldau-icon-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes qoldau-icon-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+@keyframes qoldau-icon-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+@keyframes qoldau-icon-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
+@keyframes qoldau-icon-heartbeat {
+  0%, 100% { transform: scale(1); }
+  12% { transform: scale(1.18); }
+  24% { transform: scale(1); }
+  36% { transform: scale(1.12); }
+  48% { transform: scale(1); }
+}
+@keyframes qoldau-icon-cloud-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes qoldau-icon-wiggle {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-7deg); }
+  75% { transform: rotate(7deg); }
+}
+@keyframes qoldau-icon-pop {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes qoldau-icon-rec {
+  0% { box-shadow: 0 0 0 0 rgba(27,163,154,0.45); }
+  70% { box-shadow: 0 0 0 26px rgba(27,163,154,0); }
+  100% { box-shadow: 0 0 0 0 rgba(27,163,154,0); }
+}
+
+.qoldau-icon-float {
+  animation: qoldau-icon-float 3.4s ease-in-out infinite;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+.qoldau-icon-sway {
+  animation: qoldau-icon-sway 4s ease-in-out infinite;
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+.qoldau-icon-pulse {
+  animation: qoldau-icon-pulse 2.8s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+.qoldau-icon-blink {
+  animation: qoldau-icon-blink 4s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+.qoldau-icon-heartbeat {
+  animation: qoldau-icon-heartbeat 2.6s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+.qoldau-icon-cloud-float {
+  animation: qoldau-icon-cloud-float 6s ease-in-out infinite;
+  will-change: transform;
+}
+.qoldau-icon-pop {
+  animation: qoldau-icon-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.qoldau-icon-rec {
+  animation: qoldau-icon-rec 1.2s infinite;
+}
+
 .qoldau-breathe {
   animation: qoldau-breathe 4s ease-in-out infinite;
   transform-origin: center;
@@ -83,7 +163,16 @@
   .qoldau-float,
   .qoldau-soft-pulse,
   .qoldau-success-pop,
-  .qoldau-check {
+  .qoldau-check,
+  .qoldau-icon-float,
+  .qoldau-icon-sway,
+  .qoldau-icon-pulse,
+  .qoldau-icon-blink,
+  .qoldau-icon-heartbeat,
+  .qoldau-icon-cloud-float,
+  .qoldau-icon-wiggle,
+  .qoldau-icon-pop,
+  .qoldau-icon-rec {
     animation: none !important;
   }
 

@@ -1,204 +1,157 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { SpeakIcon, YesIcon, NoIcon } from '@/components/icons';
-import { QoldauCard } from '@/components/ui/QoldauCard';
+import { BackArrowIcon } from '@/components/icons/child2d';
+import {
+  Water2DIcon,
+  Mom2DIcon,
+  Help2DIcon,
+  CHILD_FAMILY_STYLES,
+  type ChildCardFamily,
+} from '@/components/icons/child2d';
 
-const VoiceWave: React.FC<{ active?: boolean }> = ({ active = true }) => {
+/**
+ * ChildSpeak — голосовой ввод (v0.3.15).
+ *
+ * Структура (как в child_v2.html):
+ * - Back button + title.
+ * - Big mic (150×150), teal gradient, pulse при recording.
+ * - Hint text.
+ * - Heard area (32px teal текст).
+ * - 3 word-кнопки (Вода / Мама / Дай).
+ */
+
+interface SpeakWord {
+  id: string;
+  label: string;
+  spoken: string;
+  hint: string;
+  Icon: React.FC<{ size?: number; animated?: boolean }>;
+  family: ChildCardFamily;
+}
+
+const SPEAK_WORDS: SpeakWord[] = [
+  { id: 'water', label: 'Вода', spoken: 'Вода', hint: 'ва', Icon: Water2DIcon, family: 'need' },
+  { id: 'mom',   label: 'Мама', spoken: 'Мама', hint: 'ма', Icon: Mom2DIcon,   family: 'feel' },
+  { id: 'give',  label: 'Дай',  spoken: 'Дай',  hint: 'дай', Icon: Help2DIcon, family: 'do' },
+];
+
+const SpeakWordCard: React.FC<{ w: SpeakWord; delay: number; onClick: () => void }> = ({
+  w,
+  delay,
+  onClick,
+}) => {
+  const family = CHILD_FAMILY_STYLES[w.family];
   return (
-    <div
-      className={`flex items-end justify-center gap-1.5 h-16 px-4 ${
-        active ? 'wave-animation-active' : ''
-      }`}
-      aria-hidden="true"
+    <button
+      onClick={onClick}
+      className="qoldau-icon-pop flex flex-col items-center gap-2.5 px-2 py-4 bg-white rounded-3xl shadow-card cursor-pointer min-h-[120px] transition-all duration-200 hover:-translate-y-1 hover:shadow-card-lg active:scale-[0.94]"
+      style={{ animationDelay: `${delay}ms` }}
+      aria-label={w.label}
     >
-      {Array.from({ length: 14 }).map((_, i) => (
-        <span
-          key={i}
-          className="w-1.5 bg-teal rounded-full inline-block"
-          style={{
-            height: '40%',
-            animation: active
-              ? `waveBar 0.8s ease-in-out ${i * 0.07}s infinite alternate`
-              : 'none',
-          }}
-        />
-      ))}
-      <style>{`
-        @keyframes waveBar {
-          0% { height: 25%; }
-          100% { height: 90%; }
-        }
-      `}</style>
-    </div>
+      <div className={`w-14 h-14 rounded-[18px] ${family.icoBg} flex items-center justify-center`}>
+        <w.Icon size={46} />
+      </div>
+      <div className={`text-sm font-black text-center leading-tight ${family.lbl}`}>
+        {w.label}
+      </div>
+    </button>
   );
 };
 
-/**
- * ChildSpeak — голосовой ввод для ребёнка.
- *
- * Принципы:
- * - Одна огромная кнопка-микрофон — главный touch target.
- * - После записи — карточка с распознаванием и подтверждением.
- * - Подсказки-примеры под кнопкой (короткие слова).
- * - Без medical claims: «Похоже, это вода» вместо диагноза.
- */
 export const ChildSpeak: React.FC = () => {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [heard, setHeard] = useState<string | null>(null);
-  const [suggestion, setSuggestion] = useState<string | null>(null);
   const { addEvent } = useEventStore();
 
-  // Авто-имитация после 3 сек записи
-  useEffect(() => {
-    if (!isRecording) return;
-    const id = setTimeout(() => {
-      setIsRecording(false);
-      setHeard('ва');
-      setSuggestion('вода');
-    }, 3000);
-    return () => clearTimeout(id);
-  }, [isRecording]);
-
-  const handleMic = () => {
+  const toggleRec = () => {
     if (isRecording) {
       setIsRecording(false);
       setHeard('ва');
-      setSuggestion('вода');
       return;
     }
     setIsRecording(true);
     setHeard(null);
-    setSuggestion(null);
   };
 
-  const handleConfirm = () => {
-    if (!heard) return;
+  const sayWord = (w: SpeakWord) => {
+    setHeard(`${w.spoken} («${w.hint}»)`);
     addEvent({
       childId: DEMO_PRIMARY_CHILD.id,
       type: 'communication',
       title: 'Голосовой запрос',
-      description: `Сказал: «${heard}». Похоже, это может быть связано с водой. Нужно подтвердить.`,
+      description: `Сказал: «${w.spoken}». Похоже, это может быть связано с ${w.spoken.toLowerCase()}. Нужно подтвердить.`,
       timestamp: new Date().toISOString(),
       sourceRole: 'child',
       status: 'confirmed',
-      payload: { heard, suggestion, source: 'voice' },
+      payload: { heard: w.hint, suggestion: w.spoken, source: 'voice' },
     });
-    setHeard(null);
-    setSuggestion(null);
   };
-
-  const handleReject = () => {
-    setHeard(null);
-    setSuggestion(null);
-  };
-
-  const examples = ['вода', 'мама', 'домой'];
 
   return (
-    <div className="flex flex-col gap-5 min-h-[calc(100vh-80px)]">
+    <div className="flex flex-col min-h-[calc(100vh-80px)] text-center">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2.5 px-5 pt-3.5 pb-0.5">
         <button
           onClick={() => navigate('/child/home')}
-          className="w-10 h-10 rounded-2xl bg-white border border-[#dce9f4] flex items-center justify-center hover:bg-bg transition-colors"
+          className="w-[42px] h-[42px] rounded-[14px] bg-white border-0 shadow-card flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
-          <span className="text-2xl text-[#53677e]">‹</span>
+          <BackArrowIcon size={22} />
         </button>
-        <h1 className="text-base font-black text-ink">Нажми и скажи</h1>
-        <div className="w-10" />
+        <div className="text-xl font-black text-ink">Сказать</div>
       </div>
 
-      {/* Большая зона с микрофоном */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
-        {/* Кнопка-микрофон */}
-        <button
-          onClick={handleMic}
-          aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
-          className={`w-[180px] h-[180px] rounded-full flex items-center justify-center transition-transform duration-200 ease-out active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal/30 ${
-            !isRecording ? 'qoldau-soft-pulse' : ''
-          } ${
-            isRecording
-              ? 'bg-gradient-to-br from-[#FFEAEA] to-[#FFD9D3] border-4 border-[#FFB6B0]'
-              : 'bg-gradient-to-br from-[#10c8bd] to-[#008982] shadow-card'
-          }`}
-        >
-          <SpeakIcon
-            size={84}
-            strokeWidth={2.5}
-            className={isRecording ? 'text-[#cc251d]' : 'text-white'}
+      {/* Big mic */}
+      <button
+        onClick={toggleRec}
+        className={`mx-auto my-7 w-[150px] h-[150px] rounded-full border-0 cursor-pointer bg-white flex items-center justify-center relative ${
+          isRecording ? 'qoldau-icon-rec' : ''
+        }`}
+        style={{
+          background: 'linear-gradient(135deg, #7fd1c9 0%, #1ba39a 100%)',
+          boxShadow: isRecording
+            ? undefined
+            : '0 14px 34px rgba(27,163,154,0.34)',
+        }}
+        aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
+      >
+        <svg viewBox="0 0 24 24" width={66} height={66} style={{ overflow: 'visible' }} aria-hidden="true">
+          <rect x={9} y={3} width={6} height={12} rx={3} fill="#fff" />
+          <path d="M6 11a6 6 0 0 0 12 0" stroke="#fff" strokeWidth={2} fill="none" strokeLinecap="round" />
+          <path d="M12 17v4M8 21h8" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {/* Hint */}
+      <div className="text-ink-soft font-bold text-[17px] mt-1.5">
+        {isRecording ? 'Слушаю… говори' : 'Нажми и скажи слово'}
+      </div>
+
+      {/* Heard area */}
+      <div
+        className="mx-5 my-4.5 bg-white rounded-[20px] p-5 shadow-card text-[32px] font-black min-h-[40px] flex items-center justify-center"
+        style={{ color: '#12807a' }}
+        aria-live="polite"
+      >
+        {heard ?? '…'}
+      </div>
+
+      {/* 3 word buttons */}
+      <div className="grid grid-cols-3 gap-3.5 px-5">
+        {SPEAK_WORDS.map((w, i) => (
+          <SpeakWordCard
+            key={w.id}
+            w={w}
+            delay={i * 60}
+            onClick={() => sayWord(w)}
           />
-        </button>
-
-        {/* Волна только когда идёт запись */}
-        {isRecording && (
-          <div className="w-full max-w-xs">
-            <VoiceWave active />
-          </div>
-        )}
-
-        {/* Расшифровка */}
-        {heard && !isRecording && (
-          <div role="status" aria-live="polite" className="qoldau-success-pop w-full">
-            <QoldauCard variant="tinted-teal" padding="lg">
-              <div className="text-center">
-                <p className="text-sm font-bold text-muted mb-1">Я услышал</p>
-                <p className="text-xl font-black text-ink mb-3">«{heard}»</p>
-                {suggestion && (
-                  <p className="text-base font-black text-teal-dark mb-1">
-                    Похоже: {suggestion}
-                  </p>
-                )}
-                <p className="text-xs text-muted mb-4">Это наблюдение, не диагноз</p>
-                <div className="flex gap-3 justify-center">
-                  <button
-                    onClick={handleConfirm}
-                    className="px-6 py-3 rounded-full bg-green text-white font-black text-base hover:opacity-90 transition-opacity flex items-center gap-2 shadow-card"
-                  >
-                    <YesIcon size={18} />
-                    Да, верно
-                  </button>
-                  <button
-                    onClick={handleReject}
-                    className="px-6 py-3 rounded-full bg-white border-2 border-line text-muted font-black text-base hover:bg-bg transition-colors flex items-center gap-2"
-                  >
-                    <NoIcon size={18} />
-                    Нет
-                  </button>
-                </div>
-              </div>
-            </QoldauCard>
-          </div>
-        )}
-
-        {!heard && !isRecording && (
-          <p className="text-center text-muted font-bold text-sm">
-            Нажми на кнопку и скажи слово
-          </p>
-        )}
+        ))}
       </div>
 
-      {/* Примеры */}
-      {!heard && !isRecording && (
-        <QoldauCard variant="tinted-blue" padding="md">
-          <div className="text-center">
-            <p className="text-muted font-bold mb-3 text-sm">Например:</p>
-            <div className="flex gap-2 justify-center flex-wrap">
-              {examples.map((ex) => (
-                <span
-                  key={ex}
-                  className="border-2 border-[#dce9f4] bg-white rounded-full px-6 py-2.5 text-sm font-black text-ink-2"
-                >
-                  {ex}
-                </span>
-              ))}
-            </div>
-          </div>
-        </QoldauCard>
-      )}
+      <div style={{ height: 16 }} />
     </div>
   );
 };
