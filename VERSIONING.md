@@ -54,7 +54,17 @@ main          — стабильные релизы
 
 ## Current Version
 
-Текущая версия: **v0.3.8** (Icon system + soft gamification)
+Текущая версия: **v0.3.9** (Navigation QA and responsive layout fix)
+
+### v0.3.9 — Navigation QA
+- `src/config/navigation.ts` — единый реестр routes + helpers.
+- `src/components/navigation/BackButton.tsx` — безопасная кнопка «Назад» с fallback.
+- `src/components/layout/PageScaffold.tsx` — переиспользуемая обёртка экрана.
+- `PageHeader` использует `BackButton` (раньше был голый `navigate(-1)`, мог быть тупик).
+- `BottomNav`: убран дубль `tutor/ai-review`.
+- Документы: `NAVIGATION_MAP.md`, `NAVIGATION_QA_CHECKLIST.md`.
+
+### v0.3.8 — Icon system + soft gamification
 
 ### v0.3.8 — Icon system + soft gamification
 - `src/components/icons/` — 25 flat SVG-иконок (outline-only, currentColor, 32×32).

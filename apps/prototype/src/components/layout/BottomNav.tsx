@@ -10,6 +10,7 @@ import {
   Brain,
   Plus,
   Mic,
+  FileText,
 } from 'lucide-react';
 import { UserRole } from '@/types/qoldau';
 
@@ -36,8 +37,8 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
   ],
   tutor: [
     { icon: Home, label: 'Главная', path: '/tutor/home' },
-    { icon: Calendar, label: 'События', path: '/tutor/ai-review' },
     { icon: Brain, label: 'AI', path: '/tutor/ai-review' },
+    { icon: FileText, label: 'Отчёт', path: '/tutor/report' },
     { icon: User, label: 'Профиль', path: '/tutor/child-profile' },
   ],
   specialist: [

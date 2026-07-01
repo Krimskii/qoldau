@@ -1,41 +1,50 @@
 import React from 'react';
 import clsx from 'clsx';
-import { ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { BackButton } from '@/components/navigation/BackButton';
+import { getFallbackPath } from '@/config/navigation';
+import { useLocation } from 'react-router-dom';
 
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
   showBack?: boolean;
+  /** Override fallback path (например, для child UI: '/child/home'). */
+  fallbackPath?: string;
+  /** Override label для back chip ("Домой" vs "Назад"). */
+  backLabel?: string;
   rightAction?: React.ReactNode;
   accent?: 'teal' | 'blue' | 'purple';
   className?: string;
 }
 
 /**
- * PageHeader — title in dark-navy, optional subtitle in muted.
- * Back chevron is a circular white button with soft shadow.
+ * PageHeader — title в dark-navy, optional subtitle, optional back.
+ *
+ * Back теперь безопасен: использует BackButton с fallback через navigation config,
+ * поэтому пользователь НИКОГДА не оказывается в тупике.
  */
 export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   subtitle,
   showBack,
+  fallbackPath,
+  backLabel,
   rightAction,
   accent = 'teal',
   className,
 }) => {
-  const navigate = useNavigate();
+  const location = useLocation();
+  const resolvedFallback = fallbackPath ?? getFallbackPath(location.pathname);
+
   return (
     <header className={clsx('flex items-start justify-between gap-3 mb-4', className)}>
       <div className="flex items-start gap-3 min-w-0 flex-1">
         {showBack && (
-          <button
-            onClick={() => navigate(-1)}
-            className="w-10 h-10 mt-0.5 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft flex-shrink-0"
-            aria-label="Назад"
-          >
-            <ChevronLeft className="w-5 h-5 text-ink" />
-          </button>
+          <BackButton
+            fallbackPath={resolvedFallback}
+            label={backLabel}
+            className="mt-0.5"
+          />
         )}
         <div className="min-w-0 flex-1">
           <h1

@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.9] — 2026-07-01 (Navigation QA and responsive layout fix)
+
+### Added — Navigation foundation
+- **`src/config/navigation.ts`** (new) — единый реестр всех routes с `RouteMeta[]` (path/title/role/showBottomNav/showAppHeader/fallbackPath/variant/demoStep/backLabel) и helpers: `getRouteMeta(pathname)`, `getFallbackPath(pathname)`, `getRoleHome(role)`, `getRoutesByRole(role)`, `getNavRoutesByRole(role)`.
+- **`src/components/navigation/BackButton.tsx`** (new) — безопасная кнопка «Назад». Если browser history есть → `navigate(-1)`, иначе → fallback из navigation config. Variants: `icon` / `text` / `pill`. Props: `fallbackPath`, `label`, `variant`.
+- **`src/components/layout/PageScaffold.tsx`** (new) — переиспользуемая обёртка (title/subtitle/showBack/rightAction/withBottomNav/variant). Использует `BackButton` под капотом.
+
+### Changed — Navigation safety
+- **`src/components/layout/PageHeader.tsx`** — теперь использует `BackButton` вместо inline `navigate(-1)`. Fallback берётся из `getFallbackPath()` через `useLocation()`. Невозможно попасть в тупик.
+- **`src/components/layout/BottomNav.tsx`** — убран дубль `tutor/ai-review` (были Calendar→ai-review + Brain→ai-review на одних и тех же 4 элементах tutor nav). Теперь: Главная / AI / Отчёт / Профиль.
+- **AppShell header** — кнопка «Домой» (сердечко) по-прежнему ведёт на `/overview` (выход из роли).
+
+### Documentation
+- **`docs/NAVIGATION_MAP.md`** (new) — таблица всех routes с entry points, primary actions, fallback и BottomNav по ролям.
+- **`docs/NAVIGATION_QA_CHECKLIST.md`** (new) — 10-секционный чек-лист: все экраны открываются, у каждого есть выход, BottomNav помещается, demo-flow без тупиков, responsive проверки.
+
+### Build
+- `npm run build` passes.
+- `apps/prototype/package.json` → version `0.3.9`.
+- `VERSIONING.md` → Current Version `v0.3.9`.
+
+### Not changed
+- Продуктовая логика, Event Timeline, store-логика, child UI polish — не трогали.
+- Routes, demo flow, EventStore — без изменений.
+
+---
+
 ## [0.3.8] — 2026-07-01 (Icon system + soft gamification)
 
 ### Added — Visual foundation
