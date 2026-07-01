@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.8] — 2026-07-01 (Icon system + soft gamification)
+
+### Added — Visual foundation
+- **`src/styles/animations.css`** (new) — sensory-safe анимации: `qoldau-breathe` (4s), `qoldau-float` (5s), `qoldau-soft-pulse` (3s), `qoldau-success-pop` (420ms one-shot). Полная поддержка `prefers-reduced-motion: reduce`. Импортируется через `main.tsx`.
+- **`src/styles/designTokens.ts`** — добавлен export `qoldauColors` (short alias под спеку).
+- **`src/components/icons/index.tsx`** — 25 flat SVG-иконок (Water, Food, Toilet, Tired, Sad, Speak, Hug, Help, Yes, No, Other, Music, Breath, Headphones, Moon, Pause, Play, Favorites, Home, Sparkle, Check, ArrowRight, Bell, Settings, Sun, Chart, Calendar, Plus). Outline-only, 2px stroke, `currentColor`.
+
+### Added — Reusable UI components
+- **`QoldauIconCard`** (`src/components/ui/QoldauIconCard.tsx`) — универсальная карточка для AAC, calm options, choice. Props: icon/label/color/state/size.
+- **`QoldauActionCard`** (`src/components/ui/QoldauActionCard.tsx`) — большая child-кнопка (min-h-110px).
+
+### Added — Soft gamification
+- **`lib/game/achievementRules.ts`** — 6 правил достижений как чистые функции над `QoldauEvent[]` (water/toilet/phrase/voice/pause/help). `computeAchievements()` для UI.
+- **`game/AchievementCard`** — карточка достижения с мягким состоянием «Скоро!».
+- **`game/ProgressBadge`** — маленький badge для горизонтального стрипа.
+- **`game/DailyProgressStrip`** — горизонтальная полоса только выполненных достижений. Пустая — не рендерится.
+
+### Changed — Child UI
+- **`ChildHome`** — CTA «Позвать маму» в hero (через coralSoft, не пугающий), 6 actions через `QoldauActionCard`, компактный Now/Next strip.
+- **`ChildCards`** — 11 AAC-карточек через `QoldauIconCard`. Success feedback с `qoldau-success-pop`.
+- **`ChildSpeak`** — `SpeakIcon` (flat) + `qoldau-soft-pulse` на микрофоне + `YesIcon`/`NoIcon` в feedback.
+- **`CallMom`** — flat icons (`HugIcon`/`SpeakIcon`), SOS через coralSoft (не пугающий), `SuccessSparkle` feedback.
+- **`ChildProgress`** — `AchievementCard` для 6 достижений + `DailyProgressStrip` для выполненных сегодня.
+- **`CalmMode`** — 6 calm options через `QoldauIconCard` (цвета blue/green/purple/yellow/teal/coral).
+- **`PhraseBuilderPage`** — `SuccessSparkle` overlay после отправки (без alert).
+- **`src/styles/globals.css`** — убраны `qoldau-*` (переехали в `animations.css`).
+
+### Changed — Docs
+- `docs/ICON_SYSTEM.md` (new) — каталог иконок, иллюстраций, универсальных компонентов, чек-лист.
+- `docs/GAMIFICATION_PRINCIPLES.md` (new) — мягкая геймификация без streaks/рейтингов/проигрышей.
+- `docs/SENSORY_SAFE_DESIGN_GUIDE.md` (обновлён) — ссылка на icon system.
+- `docs/DESIGN_SYSTEM.md` (обновлён) — упоминание QoldauIconCard/ActionCard.
+- `docs/CHILD_INTERFACE_GUIDE.md` (обновлён) — ссылки на icon system и gamification.
+- `docs/UI_IMPROVEMENT_PLAN.md` (обновлён) — v0.3.8 секция (foundation, иконки, components, gamification, экраны).
+
+### Safety
+- SOS на `CallMom` использует `coralSoft` (`#FFEAEA`), не ярко-красный.
+- AchievementCard не показывает «не сделал» — только «Скоро!».
+- DailyProgressStrip не показывает пустой state (невыполненные достижения не отображаются как «проигрыш»).
+
+### Build
+- `npm run build` passes (1646+ modules, 0 errors).
+- `apps/prototype/package.json` → version `0.3.8`.
+- `VERSIONING.md` → Current Version `v0.3.8`.
+
+### Not changed
+- Event Timeline logic, `useEventStore`, `useVoiceObservationStore`, STT/AI abstraction, routes, demo dataset, product logic.
+- Создание событий (aac_card, phrase, calm_mode, sos, communication) работает как раньше.
+
+---
+
 ## [0.3.8] — 2026-07-01 (Sensory-safe SVG visual polish)
 
 ### Added — Visual polish for child UI

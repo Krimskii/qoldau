@@ -2,7 +2,10 @@
 
 > Single source of truth for visual decisions. See also `src/styles/designTokens.ts` and `tailwind.config.js`.
 >
-> **Для детского UI обязательно прочитай [`SENSORY_SAFE_DESIGN_GUIDE.md`](./SENSORY_SAFE_DESIGN_GUIDE.md)** — там правила анимации, палитра, touch-targets и reduced-motion.
+> **Для детского UI обязательно прочитай:**
+> - [`SENSORY_SAFE_DESIGN_GUIDE.md`](./SENSORY_SAFE_DESIGN_GUIDE.md) — палитра, анимация, touch-targets, reduced-motion.
+> - [`ICON_SYSTEM.md`](./ICON_SYSTEM.md) — flat-иконки, иллюстрации, QoldauIconCard/ActionCard.
+> - [`GAMIFICATION_PRINCIPLES.md`](./GAMIFICATION_PRINCIPLES.md) — мягкая геймификация без давления.
 
 ## 1. Принципы
 
@@ -170,11 +173,14 @@ Wrapper для всех экранов кроме Overview. Phone-panel (max-wid
 
 Детский интерфейс использует:
 - `min-h-[110px]` для кнопок (touch target ≥ 96px)
-- `text-3xl`–`text-4xl` для эмодзи
-- pastel-фоны (`bg-[#E5F4FF]`, `bg-[#FFEDEA]` и т.д.)
+- pastel-фоны (`bg-[#EAF5FF]`, `bg-[#FFEAEA]` и т.д.)
 - минимум текста (1–2 слова)
-- большие иконки эмодзи
+- **flat SVG-иконки** (см. [`ICON_SYSTEM.md`](./ICON_SYSTEM.md)) вместо эмодзи
 - in-app feedback вместо alert
+- **универсальные компоненты:**
+  - `QoldauIconCard` — AAC-карточки, calm options, choice варианты.
+  - `QoldauActionCard` — большие 6 actions на ChildHome.
+  - `AchievementCard` + `DailyProgressStrip` — мягкие достижения.
 
 ### SVG-иллюстрации (v0.3.8)
 
@@ -182,7 +188,7 @@ Wrapper для всех экранов кроме Overview. Phone-panel (max-wid
 - `src/components/illustrations/DinoMascot.tsx` — дружелюбный динозаврик.
 - `src/components/illustrations/SuccessSparkle.tsx` — success-галочка после действия.
 
-Все принимают `animated?: boolean` (по умолчанию `true`) и `className?`. Все имеют `aria-label`. Используются в ChildHome, CalmMode, PhraseBuilder, ChildCards, ChildProgress, EmptyState. Подробности — `SENSORY_SAFE_DESIGN_GUIDE.md` § 9.
+Все принимают `animated?: boolean` (по умолчанию `true`) и `className?`. Все имеют `aria-label`. Используются в ChildHome, CalmMode, PhraseBuilder, ChildCards, ChildProgress, EmptyState, CallMom.
 
 ## 10. Accessibility
 

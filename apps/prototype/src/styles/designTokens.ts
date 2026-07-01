@@ -42,6 +42,34 @@ export const palette = {
   greenSoft: '#EAF8F0',
 } as const;
 
+/**
+ * qoldauColors — короткий alias под спеку v0.3.8.
+ * Использовать в новых компонентах для удобства:
+ *   import { qoldauColors } from '@/styles/designTokens';
+ *   <div style={{ color: qoldauColors.teal }} />
+ */
+export const qoldauColors = {
+  bg: '#F7FAFA',
+  surface: '#FFFFFF',
+  ink: '#071B3A',
+  inkSoft: '#344B68',
+  muted: '#6B7C8F',
+  line: '#DDE8EA',
+
+  teal: '#009688',
+  tealDark: '#00796F',
+  tealSoft: '#DDF5F0',
+
+  skySoft: '#EAF5FF',
+  greenSoft: '#EAF8F0',
+  lavenderSoft: '#F1EDFF',
+  yellowSoft: '#FFF6DF',
+  coralSoft: '#FFEAEA',
+
+  success: '#4EC28A',
+  warning: '#F7C948',
+} as const;
+
 export const radii = {
   sm: 12,
   md: 16,

@@ -54,7 +54,16 @@ main          — стабильные релизы
 
 ## Current Version
 
-Текущая версия: **v0.3.8** (Sensory-safe SVG visual polish)
+Текущая версия: **v0.3.8** (Icon system + soft gamification)
+
+### v0.3.8 — Icon system + soft gamification
+- `src/components/icons/` — 25 flat SVG-иконок (outline-only, currentColor, 32×32).
+- `QoldauIconCard` + `QoldauActionCard` — универсальные карточки для child UI.
+- `game/` — `AchievementCard`, `ProgressBadge`, `DailyProgressStrip` (мягкая геймификация).
+- `lib/game/achievementRules.ts` — 6 правил достижений из Event Timeline.
+- `styles/animations.css` — sensory-safe анимации + `prefers-reduced-motion`.
+- Обновлены ChildHome (CTA «Позвать маму»), ChildCards, CalmMode, PhraseBuilder, ChildSpeak, CallMom, ChildProgress.
+- Документы: `ICON_SYSTEM.md`, `GAMIFICATION_PRINCIPLES.md`, обновлены SENSORY_SAFE/DESIGN/CHILD_INTERFACE.
 
 ### v0.3.8 — Sensory-safe SVG visual polish
 - CloudMascot / DinoMascot / SuccessSparkle в `src/components/illustrations/`

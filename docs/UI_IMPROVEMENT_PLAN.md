@@ -221,3 +221,55 @@
 
 - Event Timeline logic, `useEventStore`, `useVoiceObservationStore`, STT/AI abstraction, routes, demo dataset, product logic.
 - Создание событий (ChildCards → `aac_card`, PhraseBuilder → `phrase`, CalmMode → `calm_mode`, CallMom → `sos`) работает как раньше.
+
+## v0.3.8 — Icon system + soft gamification
+
+**Цель:** единый flat-icon-стек, минимальная анимация и мягкая геймификация для child UI.
+
+### Foundation
+
+- **`src/styles/designTokens.ts`** — добавлен export `qoldauColors` (короткий alias под спеку).
+- **`src/styles/animations.css`** (новый файл) — все `qoldau-*` keyframes + utility classes + `prefers-reduced-motion: reduce`. Импортируется через `main.tsx`.
+- **`src/styles/globals.css`** — убраны `qoldau-*` (теперь в `animations.css`).
+
+### Иконки
+
+- **`src/components/icons/index.tsx`** — 25 flat SVG-иконок (Water/Food/Toilet/Sad/Tired/Speak/Hug/Help/Yes/No/Other/Music/Breath/Headphones/Moon/Pause/Play/Favorites/Home/Sparkle/Check/ArrowRight/Bell/Settings/Sun/Chart/Calendar/Plus).
+- Все: outline-only, 2px stroke, `currentColor` через `text-*`, 32×32 viewBox, optional `animated`.
+
+### Универсальные компоненты
+
+- **`QoldauIconCard`** (`src/components/ui/QoldauIconCard.tsx`) — универсальная карточка (AAC, calm options, choice). Props: icon/label/color/state/size.
+- **`QoldauActionCard`** (`src/components/ui/QoldauActionCard.tsx`) — большая child-кнопка (min-h-110px).
+- **`game/AchievementCard`** — карточка достижения.
+- **`game/ProgressBadge`** — маленький badge для стрипа.
+- **`game/DailyProgressStrip`** — горизонтальный strip из выполненных.
+
+### Геймификация (без давления)
+
+- **`lib/game/achievementRules.ts`** — 6 правил достижений, чистые `match()` функции над `QoldauEvent[]`:
+  - `aac_card + cardLabel="Вода"` → «Попросил воду»
+  - `aac_card + cardLabel="Туалет"` → «Попросил туалет»
+  - `phrase` → «Собрал фразу»
+  - `communication + source=voice` → «Попробовал сказать»
+  - `calm_mode` → «Сделал паузу»
+  - `sos` → «Позвал взрослого»
+- **Без streaks / рейтингов / «проигрышей».** Подробно — [`GAMIFICATION_PRINCIPLES.md`](./GAMIFICATION_PRINCIPLES.md).
+
+### Обновлённые child screens
+
+- **`ChildHome`** — CTA «Позвать маму» в hero, `QoldauActionCard` для 6 actions.
+- **`ChildCards`** — 11 AAC-карточек через `QoldauIconCard`, success feedback с `qoldau-success-pop`.
+- **`CalmMode`** — 6 calm options через `QoldauIconCard` (цвета blue/green/purple/yellow/teal/coral).
+- **`PhraseBuilderPage`** — `SuccessSparkle` overlay после отправки.
+- **`ChildSpeak`** — `SpeakIcon` (flat) + `qoldau-soft-pulse` на микрофоне + `YesIcon`/`NoIcon` в feedback.
+- **`CallMom`** — flat icons (`HugIcon`/`SpeakIcon`), SOS через `coralSoft` (не пугающий), `SuccessSparkle` feedback.
+- **`ChildProgress`** — `AchievementCard` для 6 достижений + `DailyProgressStrip` для выполненных сегодня.
+
+### Документация
+
+- `docs/ICON_SYSTEM.md` (new) — каталог иконок, иллюстраций, универсальных компонентов.
+- `docs/GAMIFICATION_PRINCIPLES.md` (new) — мягкая геймификация без давления.
+- `docs/SENSORY_SAFE_DESIGN_GUIDE.md` (обновлён) — ссылка на icon system.
+- `docs/DESIGN_SYSTEM.md` (обновлён) — упоминание QoldauIconCard/ActionCard.
+- `docs/CHILD_INTERFACE_GUIDE.md` (обновлён) — ссылки на icon system и gamification.

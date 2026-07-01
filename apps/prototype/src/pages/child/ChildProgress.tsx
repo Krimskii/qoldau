@@ -2,22 +2,10 @@ import React, { useMemo } from 'react';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { SuccessSparkle } from '@/components/illustrations/SuccessSparkle';
-import {
-  WaterIcon,
-  ToiletIcon,
-  HugIcon,
-  MoonIcon,
-  SparkleIcon,
-  type IconProps,
-} from '@/components/icons';
-
-interface AchievementItem {
-  id: string;
-  label: string;
-  Icon: React.FC<IconProps>;
-  iconColor: string;
-  done: boolean;
-}
+import { AchievementCard } from '@/components/game/AchievementCard';
+import { DailyProgressStrip } from '@/components/game/DailyProgressStrip';
+import { SparkleIcon, WaterIcon, ToiletIcon, HugIcon } from '@/components/icons';
+import { computeAchievements } from '@/lib/game/achievementRules';
 
 export const ChildProgress: React.FC = () => {
   const { events } = useEventStore();
@@ -37,12 +25,10 @@ export const ChildProgress: React.FC = () => {
     };
   }, [events]);
 
-  const achievements: AchievementItem[] = [
-    { id: 'water', label: 'Попросил воду', Icon: WaterIcon, iconColor: 'text-[#1c6cb8]', done: stats.aac > 0 },
-    { id: 'toilet', label: 'Попросил туалет', Icon: ToiletIcon, iconColor: 'text-[#5a3eb4]', done: stats.aac > 1 },
-    { id: 'phrase', label: 'Собрал фразу', Icon: HugIcon, iconColor: 'text-[#cc251d]', done: stats.phrases > 0 },
-    { id: 'pause', label: 'Использовал паузу', Icon: MoonIcon, iconColor: 'text-[#5a3eb4]', done: stats.calm > 0 },
-  ];
+  const achievements = useMemo(
+    () => computeAchievements(events, DEMO_PRIMARY_CHILD.id, 7),
+    [events],
+  );
 
   const topCards = [
     { id: '1', label: 'Вода', Icon: WaterIcon, iconColor: 'text-[#1c6cb8]', count: stats.aac > 0 ? stats.aac : 3 },
@@ -63,31 +49,18 @@ export const ChildProgress: React.FC = () => {
         <p className="text-sm text-muted mt-1">{stats.total} событий за неделю</p>
       </div>
 
-      {/* Достижения — 2×2 */}
+      {/* Daily Progress Strip — горизонтальный soft strip */}
       <div>
-        <h3 className="text-sm font-black text-ink-2 mb-2 px-1">Что получилось</h3>
+        <h3 className="text-sm font-black text-ink-2 mb-2 px-1">Что сегодня получилось</h3>
+        <DailyProgressStrip achievements={achievements} />
+      </div>
+
+      {/* Achievements — 2×2 через AchievementCard */}
+      <div>
+        <h3 className="text-sm font-black text-ink-2 mb-2 px-1">Все достижения</h3>
         <div className="grid grid-cols-2 gap-3">
           {achievements.map((a) => (
-            <div
-              key={a.id}
-              className={`bg-white border-2 rounded-2xl min-h-[110px] flex flex-col items-center justify-center gap-2 p-3 transition-shadow ${
-                a.done
-                  ? 'border-teal/30 bg-[#EAF8F0]/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_10px_rgba(42,73,108,0.04)]'
-                  : 'border-line opacity-60'
-              }`}
-            >
-              <a.Icon size={40} className={a.done ? a.iconColor : 'text-muted'} />
-              <span className="text-sm font-bold text-ink text-center leading-tight">
-                {a.label}
-              </span>
-              {a.done ? (
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#4EC28A] to-[#1e7a52] flex items-center justify-center text-white text-sm font-black mt-1 shadow-sm">
-                  ✓
-                </div>
-              ) : (
-                <span className="text-xs text-muted">Скоро!</span>
-              )}
-            </div>
+            <AchievementCard key={a.rule.id} achievement={a} />
           ))}
         </div>
       </div>

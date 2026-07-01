@@ -2,7 +2,10 @@
 
 > Правила построения детского UI. Основано на визуальных референсах.
 >
-> **Обязательно также:** [`SENSORY_SAFE_DESIGN_GUIDE.md`](./SENSORY_SAFE_DESIGN_GUIDE.md) — палитра, правила анимации, touch-targets, reduced-motion, SVG-иллюстрации.
+> **Обязательно также:**
+> - [`SENSORY_SAFE_DESIGN_GUIDE.md`](./SENSORY_SAFE_DESIGN_GUIDE.md) — палитра, анимация, touch-targets, reduced-motion.
+> - [`ICON_SYSTEM.md`](./ICON_SYSTEM.md) — flat-иконки + `QoldauIconCard` / `QoldauActionCard`.
+> - [`GAMIFICATION_PRINCIPLES.md`](./GAMIFICATION_PRINCIPLES.md) — мягкая геймификация.
 
 ## 1. Главные принципы
 
@@ -169,6 +172,9 @@ Glow-ring вокруг — фирменный элемент, привлекае
 ## Связь
 
 - `DESIGN_SYSTEM.md` — общий design system
+- `SENSORY_SAFE_DESIGN_GUIDE.md` — палитра, анимация, touch-targets
+- `ICON_SYSTEM.md` — flat-иконки + QoldauIconCard/ActionCard
+- `GAMIFICATION_PRINCIPLES.md` — мягкая геймификация
 - `UX_WRITING_GUIDE.md` — формулировки
 - `SAFETY_WORDING.md` — запрещённые фразы
 - `EVENT_MODEL.md` — какие события создаются на каждом экране

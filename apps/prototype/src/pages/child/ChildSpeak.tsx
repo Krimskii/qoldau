@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic } from 'lucide-react';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { SpeakIcon, YesIcon, NoIcon } from '@/components/icons';
 
-// Анимированная волна — больше баров, ярче анимация при записи
 const VoiceWave: React.FC<{ active?: boolean }> = ({ active = true }) => {
   return (
     <div
@@ -99,32 +98,28 @@ export const ChildSpeak: React.FC = () => {
           <span className="text-2xl text-[#53677e]">‹</span>
         </button>
         <h2 className="text-lg font-black text-[#143259]">Нажми и скажи</h2>
-        <button
-          className="w-10 h-10 rounded-2xl bg-white border border-[#dce9f4] flex items-center justify-center hover:bg-bg transition-colors"
-          aria-label="Очистить"
-        >
-          <span className="text-2xl text-[#53677e]">⌫</span>
-        </button>
+        <div className="w-10" />
       </div>
 
-      {/* Большая зона с микрофоном — занимает основную часть */}
+      {/* Большая зона с микрофоном */}
       <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
-        {/* Кнопка-микрофон — крупнее, мягкое свечение */}
+        {/* Кнопка-микрофон — flat SVG-иконка, qoldau-soft-pulse при ожидании */}
         <button
           onClick={handleMic}
           aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
-          className={`w-[180px] h-[180px] rounded-full flex items-center justify-center transition-all ${
+          className={`w-[180px] h-[180px] rounded-full flex items-center justify-center transition-transform duration-200 ease-out active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal/30 ${
+            !isRecording ? 'qoldau-soft-pulse' : ''
+          } ${
             isRecording
-              ? 'bg-gradient-to-br from-coral to-[#cc251d] scale-110'
-              : 'bg-gradient-to-br from-[#10c8bd] to-[#008982] hover:scale-105'
+              ? 'bg-gradient-to-br from-[#FFEAEA] to-[#FFD9D3] border-4 border-[#FFB6B0]'
+              : 'bg-gradient-to-br from-[#10c8bd] to-[#008982] shadow-card'
           }`}
-          style={{
-            boxShadow: isRecording
-              ? '0 0 0 18px rgba(229,111,93,0.10), 0 0 0 36px rgba(229,111,93,0.05), 0 22px 36px rgba(229,111,93,0.30)'
-              : '0 0 0 18px rgba(0,150,143,0.08), 0 0 0 36px rgba(0,150,143,0.045), 0 22px 36px rgba(0,150,143,0.22)',
-          }}
         >
-          <Mic className="w-24 h-24 text-white" strokeWidth={2.5} />
+          <SpeakIcon
+            size={84}
+            strokeWidth={2.5}
+            className={isRecording ? 'text-[#cc251d]' : 'text-white'}
+          />
         </button>
 
         {/* Волна только когда идёт запись */}
@@ -139,26 +134,29 @@ export const ChildSpeak: React.FC = () => {
           <div
             role="status"
             aria-live="polite"
-            className="text-center bg-white border-2 border-teal/30 rounded-3xl px-8 py-5 animate-fade-in"
+            className="text-center bg-white border-2 border-[#DDF5F0] rounded-3xl px-8 py-5 qoldau-success-pop"
           >
             <p className="text-base font-black text-[#657a97] mb-1">Я услышал: «{heard}»</p>
             {suggestion && (
-              <p className="text-base font-black text-teal">
-                Похоже: {suggestion} <span className="text-muted text-xs">(нужно подтвердить)</span>
+              <p className="text-base font-black text-[#00796F]">
+                Возможно: {suggestion}{' '}
+                <span className="text-muted text-xs font-bold">(нужно подтвердить)</span>
               </p>
             )}
             <div className="flex gap-3 justify-center mt-4">
               <button
                 onClick={handleConfirm}
-                className="px-7 py-3 rounded-full bg-[#e8faef] font-black text-green text-base hover:bg-green hover:text-white transition-colors"
+                className="px-7 py-3 rounded-full bg-[#EAF8F0] font-black text-[#158647] text-base hover:bg-[#4EC28A] hover:text-white transition-colors flex items-center gap-1.5"
               >
-                Да ✓
+                <YesIcon size={18} />
+                Да
               </button>
               <button
                 onClick={handleReject}
-                className="px-7 py-3 rounded-full bg-[#ffeceb] font-black text-coral text-base hover:bg-coral hover:text-white transition-colors"
+                className="px-7 py-3 rounded-full bg-[#FFEAEA] font-black text-[#cc251d] text-base hover:bg-[#E56F5D] hover:text-white transition-colors flex items-center gap-1.5"
               >
-                Нет ✕
+                <NoIcon size={18} />
+                Нет
               </button>
             </div>
           </div>
