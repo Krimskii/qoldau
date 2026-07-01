@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { SuccessSparkle } from '@/components/illustrations/SuccessSparkle';
 
 export const ChildProgress: React.FC = () => {
   const { events } = useEventStore();
@@ -35,12 +36,15 @@ export const ChildProgress: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4 min-h-[calc(100vh-80px)]">
-      {/* Праздничная карточка */}
-      <div className="bg-gradient-to-br from-[#FFFDF4] via-[#FFFCEC] to-white border-2 border-[#f2e1b6] rounded-3xl p-6 text-center">
-        <div className="text-4xl" aria-hidden="true">🎉</div>
-        <strong className="text-lg font-black block mt-1">Сегодня получилось!</strong>
-        <div className="text-8xl my-3" aria-hidden="true">⭐</div>
-        <p className="text-sm text-muted">{stats.total} событий за неделю</p>
+      {/* Celebratory hero — мягкий фон, SuccessSparkle, мягкие тексты */}
+      <div className="bg-gradient-to-br from-[#FFFCEC] via-[#FFF8F0] to-[#EAF5FF] border-2 border-[#f2e1b6] rounded-3xl p-6 text-center">
+        <div className="flex justify-center mb-2">
+          <SuccessSparkle className="w-20 h-20" />
+        </div>
+        <strong className="text-lg font-black block mt-1 text-[#102544]">
+          Ты молодец!
+        </strong>
+        <p className="text-sm text-muted mt-1">{stats.total} событий за неделю</p>
       </div>
 
       {/* Достижения — 2×2 */}
@@ -52,7 +56,7 @@ export const ChildProgress: React.FC = () => {
               key={a.id}
               className={`bg-white border-2 rounded-2xl min-h-[110px] flex flex-col items-center justify-center gap-2 p-3 transition-shadow ${
                 a.done
-                  ? 'border-teal/30 bg-teal-soft/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_10px_rgba(42,73,108,0.04)]'
+                  ? 'border-teal/30 bg-[#EAF8F0]/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_10px_rgba(42,73,108,0.04)]'
                   : 'border-line opacity-60'
               }`}
             >
@@ -63,7 +67,7 @@ export const ChildProgress: React.FC = () => {
                 {a.label}
               </span>
               {a.done ? (
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green to-[#1e7a52] flex items-center justify-center text-white text-sm font-black mt-1 shadow-sm">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#4EC28A] to-[#1e7a52] flex items-center justify-center text-white text-sm font-black mt-1 shadow-sm">
                   ✓
                 </div>
               ) : (
@@ -93,11 +97,11 @@ export const ChildProgress: React.FC = () => {
         ))}
       </div>
 
-      {/* Молодец! */}
-      <div className="mt-auto rounded-2xl bg-gradient-to-r from-[#bff2d3] to-[#79dba2] p-5 font-black text-xl text-[#185d36] flex items-center justify-center gap-3 shadow-card">
-        <span className="text-3xl" aria-hidden="true">🏆</span>
-        Молодец!
-        <span className="text-base font-bold">Ты отлично справился!</span>
+      {/* Поддерживающее завершение */}
+      <div className="mt-auto rounded-2xl bg-gradient-to-r from-[#EAF8F0] to-[#DDF5F0] p-5 font-black text-xl text-[#185d36] flex flex-col items-center justify-center gap-1.5 shadow-card">
+        <span className="text-2xl" aria-hidden="true">⭐</span>
+        <span>У тебя получается</span>
+        <span className="text-sm font-bold opacity-90">Спасибо, что показал</span>
       </div>
 
       <p className="text-xs text-muted text-center italic">

@@ -1,6 +1,8 @@
 # Design System — Qoldau AI
 
 > Single source of truth for visual decisions. See also `src/styles/designTokens.ts` and `tailwind.config.js`.
+>
+> **Для детского UI обязательно прочитай [`SENSORY_SAFE_DESIGN_GUIDE.md`](./SENSORY_SAFE_DESIGN_GUIDE.md)** — там правила анимации, палитра, touch-targets и reduced-motion.
 
 ## 1. Принципы
 
@@ -174,6 +176,14 @@ Wrapper для всех экранов кроме Overview. Phone-panel (max-wid
 - большие иконки эмодзи
 - in-app feedback вместо alert
 
+### SVG-иллюстрации (v0.3.8)
+
+- `src/components/illustrations/CloudMascot.tsx` — спокойное облачко (mood: `calm` / `happy` / `sleepy`).
+- `src/components/illustrations/DinoMascot.tsx` — дружелюбный динозаврик.
+- `src/components/illustrations/SuccessSparkle.tsx` — success-галочка после действия.
+
+Все принимают `animated?: boolean` (по умолчанию `true`) и `className?`. Все имеют `aria-label`. Используются в ChildHome, CalmMode, PhraseBuilder, ChildCards, ChildProgress, EmptyState. Подробности — `SENSORY_SAFE_DESIGN_GUIDE.md` § 9.
+
 ## 10. Accessibility
 
 - Все кнопки имеют `aria-label` если иконка без текста
@@ -184,14 +194,21 @@ Wrapper для всех экранов кроме Overview. Phone-panel (max-wid
 
 ## 11. Анимации
 
-| Анимация | Использование |
-|----------|---------------|
-| `animate-fade-in` | Появление toast, feedback |
-| `animate-breathe` | Calm mode cloud |
-| `animate-pulse-soft` | Recording indicator |
-| `animate-slideUp` | Modal transitions |
+| Класс | Где использовать | Длительность |
+|-------|------------------|--------------|
+| `qoldau-breathe` | CloudMascot, спокойные state-плашки | 4s loop |
+| `qoldau-float` | DinoMascot | 5s loop |
+| `qoldau-soft-pulse` | Мягкий glow вокруг активного элемента (опц.) | 3.2s loop |
+| `qoldau-check` | SuccessSparkle после действия | 420ms one-shot |
+| `animate-fade-in` | Toast, feedback | 250ms |
+| `animate-pulse-soft` | Recording indicator | 1.6s |
+| `animate-slideUp` | Modal transitions | 300ms |
 
-Все анимации ≤ 1 секунды, без агрессивных таймингов.
+**Sensory-safe правила (см. [`SENSORY_SAFE_DESIGN_GUIDE.md` § 5](./SENSORY_SAFE_DESIGN_GUIDE.md)):**
+
+- Запрещены: flashing, strobe, shake loops, fast bounce, aggressive zoom.
+- Loop-анимации на одном экране — максимум 1.
+- При `prefers-reduced-motion: reduce` все `qoldau-*` loop-анимации отключаются через CSS.
 
 ## Связь с другими документами
 

@@ -195,4 +195,29 @@
 - `UX_WRITING_GUIDE.md` — формулировки
 - `SAFETY_WORDING.md` — что нельзя писать
 - `EVENT_MODEL.md` — какие события создаются
-- `CHILD_INTERFACE_GUIDE.md` (создать) — правила детского интерфейса
+- `CHILD_INTERFACE_GUIDE.md` — правила детского интерфейса
+- `SENSORY_SAFE_DESIGN_GUIDE.md` — палитра, анимация, reduced-motion, SVG-иллюстрации
+
+## v0.3.8 — Sensory-safe SVG visual polish
+
+**Цель:** мягкие animated SVG-иллюстрации вместо/рядом с эмодзи, спокойная палитра, безопасные анимации.
+
+### Что сделано
+
+- **`src/components/illustrations/`** — новые компоненты:
+  - `CloudMascot` (mood: `calm` / `happy` / `sleepy`) — для CalmMode и EmptyState.
+  - `DinoMascot` — для ChildHome hero и PhraseBuilder.
+  - `SuccessSparkle` — success-обратная связь.
+- **CSS-анимации в `src/styles/globals.css`** — `qoldau-breathe`, `qoldau-float`, `qoldau-soft-pulse`, `qoldau-check`. Поддержка `prefers-reduced-motion: reduce`.
+- **`EmptyState`** теперь может показывать `CloudMascot` вместо эмодзи (`useCloud` / `cloudMood` props).
+- **`ChildHome`** — DinoMascot в hero, мягкий gradient-фон, спокойные pressed states.
+- **`CalmMode`** — CloudMascot, поддерживающие тексты, 6 спокойных опций (без тревожного красного).
+- **`PhraseBuilderPage`** — DinoMascot маленький сбоку, мягкая подсветка выбранных слов, SuccessSparkle после сборки.
+- **`ChildCards`** — success-карточка с SuccessSparkle вместо alert. Не сломано создание `aac_card` event.
+- **`ChildProgress`** — SuccessSparkle в hero, мягкие supporting copy («У тебя получается», «Спасибо, что показал»).
+- **`docs/SENSORY_SAFE_DESIGN_GUIDE.md`** — новый документ с принципами, палитрой, правилами анимации, touch-targets.
+
+### Что НЕ меняли
+
+- Event Timeline logic, `useEventStore`, `useVoiceObservationStore`, STT/AI abstraction, routes, demo dataset, product logic.
+- Создание событий (ChildCards → `aac_card`, PhraseBuilder → `phrase`, CalmMode → `calm_mode`, CallMom → `sos`) работает как раньше.

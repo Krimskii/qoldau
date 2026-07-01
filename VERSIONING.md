@@ -54,7 +54,24 @@ main          — стабильные релизы
 
 ## Current Version
 
-Текущая версия: **v0.1.0** (Prototype MVP)
+Текущая версия: **v0.3.8** (Sensory-safe SVG visual polish)
+
+### v0.3.8 — Sensory-safe SVG visual polish
+- CloudMascot / DinoMascot / SuccessSparkle в `src/components/illustrations/`
+- Sensory-safe анимации в `src/styles/globals.css` + `prefers-reduced-motion`
+- Обновлены ChildHome, CalmMode, PhraseBuilderPage, ChildCards, ChildProgress, EmptyState
+- `docs/SENSORY_SAFE_DESIGN_GUIDE.md` — новый документ
+
+### v0.3.4 — Visual Design Alignment
+- Полный design system, designTokens, tailwind темизация
+- Все Parent / Child / Tutor / Specialist страницы переписаны под референс
+- AppShell + BottomNav + PageHeader + AIInsightCard + Card/Button/Badge variants
+
+### v0.3.0 — Full Demo MVP
+- Demo dataset (3 детей, 60+ событий), все страницы наполнены реальными данными
+- Toast notifications (без `alert`), useDemoStore (18 шагов)
+- Mock STT + mock AI parser
+- Event Timeline data model
 
 ### v0.1.0 — MVP Prototype
 - Voice-first родительский интерфейс
