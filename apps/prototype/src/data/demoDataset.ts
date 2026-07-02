@@ -65,6 +65,36 @@ export const DEMO_CHILDREN: ChildProfile[] = [
 export const getDemoChild = (id: string): ChildProfile | undefined =>
   DEMO_CHILDREN.find((c) => c.id === id);
 
+// =====================================================================
+// FAMILY OVERRIDE (pilot) — реальная семья вводит имя своего ребёнка один
+// раз при настройке; оно подменяет "Демо-профиль 1" здесь, при инициализации
+// модуля, поэтому все места в коде, читающие DEMO_PRIMARY_CHILD.name,
+// получают реальное имя без единой правки в них. id остаётся прежним
+// ('child-alikhan') — это по-прежнему единственный ребёнок на устройство,
+// просто с настоящим именем вместо демо-плейсхолдера.
+// =====================================================================
+const FAMILY_CHILD_NAME_KEY = 'qoldau-family-child-name-v1';
+
+export function getFamilyChildName(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(FAMILY_CHILD_NAME_KEY);
+}
+
+export function setFamilyChildName(name: string): void {
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  localStorage.setItem(FAMILY_CHILD_NAME_KEY, trimmed);
+}
+
+export function clearFamilyChildName(): void {
+  localStorage.removeItem(FAMILY_CHILD_NAME_KEY);
+}
+
+const familyChildName = getFamilyChildName();
+if (familyChildName) {
+  DEMO_CHILDREN[0] = { ...DEMO_CHILDREN[0], name: familyChildName };
+}
+
 export const DEMO_PRIMARY_CHILD = DEMO_CHILDREN[0];
 
 // =====================================================================

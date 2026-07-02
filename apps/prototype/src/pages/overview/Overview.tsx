@@ -31,6 +31,7 @@ import { HealthCheckBanner } from '@/components/ui/HealthCheckBanner';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { DemoControlsCard } from '@/components/ui/DemoControlsCard';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { FamilySetupCard } from '@/components/ui/FamilySetupCard';
 import type { UserRole } from '@/types/qoldau';
 
 interface RoleDef {
@@ -153,6 +154,11 @@ export const Overview: React.FC = () => {
           </button>
           <p className="text-xs text-muted">{t('landing.demoHint')}</p>
         </div>
+      </section>
+
+      {/* Family setup — реальная семья, отдельно от демо */}
+      <section className="max-w-[1100px] mx-auto px-6 pb-4">
+        <FamilySetupCard />
       </section>
 
       {/* System health + demo controls */}

@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
-import { Smartphone, Shield, ChevronRight } from 'lucide-react';
-import { DEMO_PRIMARY_CHILD, DEMO_PARENTS, DEMO_TUTORS, DEMO_SPECIALISTS } from '@/data/demoDataset';
+import { Smartphone, Shield, ChevronRight, Pencil, Check } from 'lucide-react';
+import {
+  DEMO_PRIMARY_CHILD,
+  DEMO_PARENTS,
+  DEMO_TUTORS,
+  DEMO_SPECIALISTS,
+  setFamilyChildName,
+} from '@/data/demoDataset';
 
 export const ParentProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +17,15 @@ export const ParentProfile: React.FC = () => {
   const mother = DEMO_PARENTS[0];
   const tutor = DEMO_TUTORS[0];
   const specialist = DEMO_SPECIALISTS[0];
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(child.name);
+
+  const handleSaveName = () => {
+    if (!nameInput.trim()) return;
+    setFamilyChildName(nameInput);
+    window.location.reload();
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -22,8 +37,41 @@ export const ParentProfile: React.FC = () => {
           <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-2xl shadow-card-soft">
             👦
           </div>
-          <div>
-            <h3 className="font-black text-lg text-ink">{child.name}</h3>
+          <div className="flex-1 min-w-0">
+            {editingName ? (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                  autoFocus
+                  className="flex-1 min-w-0 h-9 px-3 rounded-xl border border-line focus:border-teal/60 focus:outline-none text-sm font-black text-ink"
+                />
+                <button
+                  onClick={handleSaveName}
+                  disabled={!nameInput.trim()}
+                  aria-label="Сохранить имя"
+                  className="w-9 h-9 rounded-xl bg-teal text-white flex items-center justify-center flex-shrink-0 disabled:opacity-40"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <h3 className="font-black text-lg text-ink">{child.name}</h3>
+                <button
+                  onClick={() => {
+                    setNameInput(child.name);
+                    setEditingName(true);
+                  }}
+                  aria-label="Изменить имя ребёнка"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted hover:bg-white hover:text-teal-dark transition-colors flex-shrink-0"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
             <p className="text-xs text-muted">
               {child.age} лет · Сейчас: {child.currentState}
             </p>
