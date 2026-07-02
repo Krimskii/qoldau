@@ -15,6 +15,7 @@ import {
   CHILD_FAMILY_STYLES,
   type ChildCardFamily,
 } from '@/components/icons/child2d';
+import { formatDuration } from '@/utils/formatDuration';
 
 const TIMER_SECONDS = 60;
 // Mock-длительность «аудио от мамы» — имитирует воспроизведение без реального файла.
@@ -205,9 +206,6 @@ export const CalmMode: React.FC = () => {
 
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
-  const audioSec = audioProgress;
-  const audioMin = Math.floor(audioSec / 60);
-  const audioRemSec = audioSec % 60;
 
   return (
     <div
@@ -335,7 +333,7 @@ export const CalmMode: React.FC = () => {
               />
             </div>
             <div className="text-[11px] text-muted mt-1 tabular-nums">
-              {String(audioMin).padStart(2, '0')}:{String(audioRemSec).padStart(2, '0')} / 00:{String(MOCK_AUDIO_DURATION).padStart(2, '0')}
+              {formatDuration(audioProgress)} / {formatDuration(MOCK_AUDIO_DURATION)}
             </div>
           </div>
           <button

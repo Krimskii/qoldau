@@ -9,6 +9,7 @@ import {
 } from '@/components/icons/child2d';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { formatDuration } from '@/utils/formatDuration';
 
 /**
  * TimerExtra — компактный таймер для NeedCard (v0.3.24).
@@ -34,12 +35,6 @@ const TimerExtra: React.FC = () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [startedAt]);
-
-  const fmt = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-  };
 
   const handleStart = () => {
     setStartedAt(Date.now());
@@ -98,7 +93,7 @@ const TimerExtra: React.FC = () => {
             style={{ color: '#0d5c5c' }}
             aria-live="polite"
           >
-            {fmt(elapsed)}
+            {formatDuration(elapsed)}
           </div>
           <button
             onClick={handleStop}

@@ -136,8 +136,8 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
         action: config.eventType,
         source: 'need_card',
         phrase: phraseText,
-        voiceRecorded: isRecording || recordingTime > 0,
-        voiceDurationSec: recordingTime,
+        voiceRecorded: mic.isActive || mic.seconds > 0,
+        voiceDurationSec: mic.seconds,
       },
     });
     setShowSuccess(true);
@@ -148,9 +148,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
   };
 
   const handleNo = () => {
-    if (recordIntervalRef.current) clearInterval(recordIntervalRef.current);
-    setIsRecording(false);
-    setRecordingTime(0);
+    mic.reset();
     navigate(-1);
   };
 
@@ -229,20 +227,20 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
           <button
             onClick={toggleMic}
             className="bg-white border border-line rounded-[20px] shadow-card p-3 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform"
-            aria-label={isRecording ? 'Остановить запись' : 'Сказать голосом'}
+            aria-label={mic.isActive ? 'Остановить запись' : 'Сказать голосом'}
           >
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center"
               style={{
-                background: isRecording
+                background: mic.isActive
                   ? 'linear-gradient(135deg, #E56F5D 0%, #cc251d 100%)'
                   : 'linear-gradient(135deg, #1ba39a 0%, #12807a 100%)',
-                boxShadow: isRecording
+                boxShadow: mic.isActive
                   ? '0 6px 16px rgba(229,111,93,0.34)'
                   : '0 6px 16px rgba(27,163,154,0.28)',
               }}
             >
-              {isRecording ? (
+              {mic.isActive ? (
                 <MicOff className="w-8 h-8 text-white" strokeWidth={2.5} />
               ) : (
                 <Mic className="w-8 h-8 text-white" strokeWidth={2.5} />
@@ -250,9 +248,9 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
             </div>
             <div
               className="text-[13px] font-black text-center"
-              style={{ color: isRecording ? '#c95f5f' : '#12807a' }}
+              style={{ color: mic.isActive ? '#c95f5f' : '#12807a' }}
             >
-              {isRecording ? formatTime(recordingTime) : 'Сказать голосом'}
+              {mic.isActive ? formatDuration(mic.seconds) : 'Сказать голосом'}
             </div>
           </button>
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Bell } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { ChildTopBar } from './ChildTopBar';
@@ -20,13 +20,14 @@ interface AppShellProps {
  *           max-width 1100 (tablet) для specialist.
  * - Soft background, white cards, centered.
  *
- * v0.6.2: landing /overview восстановлен. currentRole === 'overview'
- * означает «не выбрана роль» — не оборачиваем в shell.
+ * v0.6.2: landing /overview восстановлен.
+ * v0.6.11: кнопка выхода в header (parent/tutor) — аналогично ChildTopBar.
  */
 export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) => {
-  const { currentRole } = useRoleStore();
+  const { currentRole, setRole } = useRoleStore();
   const navigate = useNavigate();
   const { events } = useEventStore();
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
 
   // currentRole === 'overview' → пользователь на landing, не в роли.
   if (currentRole === 'overview') {
@@ -54,6 +55,12 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
     paddingTop: 'max(env(safe-area-inset-top), 12px)',
   };
 
+  const handleExit = () => {
+    setRole('overview');
+    setExitConfirmOpen(false);
+    navigate('/overview');
+  };
+
   return (
     <div className="min-h-screen bg-bg flex justify-center">
       <div
@@ -75,18 +82,29 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
                 {normalizedRole === 'parent' ? 'Родитель' : 'Тьютор'}
               </p>
             </div>
-            <button
-              onClick={() => navigate('/parent/notifications')}
-              className="relative w-11 h-11 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft"
-              aria-label="Уведомления"
-            >
-              <Bell className="w-4 h-4 text-ink" />
-              {notifCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-coral text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
-                  {Math.min(notifCount, 9)}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/parent/notifications')}
+                className="relative w-11 h-11 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft"
+                aria-label="Уведомления"
+              >
+                <Bell className="w-4 h-4 text-ink" />
+                {notifCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-coral text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
+                    {Math.min(notifCount, 9)}
+                  </span>
+                )}
+              </button>
+              {/* Кнопка выхода на landing (v0.6.11) — аналог ChildTopBar */}
+              <button
+                onClick={() => setExitConfirmOpen(true)}
+                className="w-11 h-11 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-coral-soft hover:text-coral transition-colors shadow-card-soft"
+                aria-label="Выйти на начальный экран"
+                title="Выйти на начальный экран"
+              >
+                <LogOut className="w-4 h-4 text-ink-soft" />
+              </button>
+            </div>
           </header>
         )}
 
@@ -96,6 +114,46 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
         </main>
 
         {showNav && <BottomNav role={normalizedRole} />}
+
+        {/* Exit confirm dialog (parent/tutor) — аналог ChildTopBar */}
+        {exitConfirmOpen && (
+          <div
+            className="fixed inset-0 z-[95] flex items-center justify-center px-5 bg-ink/50 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Выйти на начальный экран?"
+            onClick={() => setExitConfirmOpen(false)}
+          >
+            <div
+              className="w-full max-w-[360px] bg-white rounded-3xl p-6 shadow-card-hover"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center bg-coral-soft">
+                <LogOut className="w-7 h-7 text-coral" />
+              </div>
+              <h3 className="text-lg font-black text-ink text-center mb-1">
+                Выйти на начальный экран?
+              </h3>
+              <p className="text-sm text-muted text-center mb-5 leading-relaxed">
+                Сменим пользователя. Локальные данные сохранятся.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setExitConfirmOpen(false)}
+                  className="flex-1 py-3 rounded-2xl border-2 border-line text-ink font-bold text-sm hover:bg-bg transition-colors"
+                >
+                  Остаться
+                </button>
+                <button
+                  onClick={handleExit}
+                  className="flex-1 py-3 rounded-2xl text-white font-black text-sm transition-transform active:scale-[0.97] bg-gradient-to-br from-coral to-[#cc251d] shadow-card hover:shadow-card-hover"
+                >
+                  Выйти
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
