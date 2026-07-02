@@ -2,6 +2,125 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.9] - 2026-07-02 (Real STT в ChildSpeak)
+
+### Added
+- **`ChildSpeak`** — подключён `useSpeechRecognition` hook к mic (150px teal).
+  startRecording → speech.start(), stopRecording → speech.stop() + использует
+  speech.transcript как label записи. Live preview «{transcript}» под таймером.
+  Fallback: если Web Speech API не поддерживается или transcript пустой —
+  случайный mock label из `DEMO_LABELS` (как раньше).
+
+### Verified
+- 20/20 tests passed (4.81s)
+- Build clean, PWA SW regenerated
+
+## [0.6.8] - 2026-07-02 (Demo controls + Theme toggle + Dark mode)
+
+### Added
+- **`DemoControlsCard`** — карточка сброса demo-данных на landing.
+  Показывает количество восстановленных событий + время сброса.
+  Использует `useDemoControlsStore.resetEvents()`.
+- **`ThemeToggle`** — циклический переключатель light/dark/system (Sun/Moon/Monitor).
+  Persistence в localStorage `qoldau-theme-v1`. Слушает `prefers-color-scheme`
+  для system-режима.
+
+### Added — Dark mode
+- `globals.css` — `html.dark` класс с полным набором CSS variables.
+  Soft variants (`--teal-soft`, `--blue-soft`, etc.) инвертированы для тёмного фона.
+  Body background адаптируется (radial gradients темнее).
+
+### Changed
+- **Landing** — DemoControlsCard в grid с HealthCheckBanner; ThemeToggle в top bar.
+
+### Verified
+- 20/20 tests passed
+- Build clean
+
+## [0.6.7] - 2026-07-02 (PWA + lazy routes + OfflineBanner)
+
+### Added — PWA
+- **`vite-plugin-pwa`** с autoUpdate. Service worker генерируется при build
+  (отключён в dev). Workbox runtime caching:
+  - `/api/{events,recordings,children,health}` → NetworkFirst (5 мин TTL)
+  - `/api/{ai,stt}/` → NetworkOnly (дорогие ответы не кешируем)
+  - Изображения → CacheFirst (30 дней)
+- precache 50 entries (~36 MB)
+- PWA files: `dist/sw.js`, `dist/workbox-*.js`
+
+### Added — Lazy loading
+- 4 крупные страницы теперь `React.lazy()`: VoiceObservation, AIReview,
+  ChildCards, PhraseBuilderPage. Каждая в своём chunk (4-9 kB).
+- **`<Suspense>`** wrapper + `PageLoader` (Loader2 spinner).
+- Главный chunk: 336kB → **313kB** (gzip 81kB)
+
+### Added — OfflineBanner
+- `components/ui/OfflineBanner.tsx` — fixed-top баннер когда `navigator.onLine === false`.
+  Safe-area-inset-top padding. `role="alert"` для screen readers.
+- Подключён в `App.tsx`.
+
+### Changed
+- `dateFormat.ts` — `formatTime`/`formatDate` принимают `number` (timestamp).
+- `ChildSpeak` — переименован import `formatTime → formatClock` (конфликт с локальной
+  `formatTime(seconds → MM:SS)`).
+
+### Verified
+- 20/20 tests passed
+- Build: PWA SW generated, 0 TS errors, 14.5s
+
+## [0.6.6] - 2026-07-02 (i18n: ru/kk/en + LanguageSwitcher)
+
+### Added
+- **i18next + react-i18next + i18next-browser-languagedetector**
+- 3 языка: **ru** (default), **kk** (казахский), **en** (English)
+- Persistence: localStorage `qoldau-lang-v1`
+- Auto-detect от `navigator.language` / browser, fallback `ru`
+
+### Locale files
+- `app` — brand name, tagline
+- `auth` — login/logout
+- `landing` — hero, flow steps (5), roles (3), features (3), MVP/Phase2, disclaimer
+- `healthCheck` — status labels
+- `common` — back/home/next/save/cancel/delete/edit/close
+
+### UI
+- `LanguageSwitcher` — dropdown с globe icon в top bar landing
+- `Overview` переведён полностью (все видимые строки)
+- `main.tsx` — подключение `./i18n/config`
+
+### Verified
+- 20/20 frontend tests passed
+- 16/16 backend tests passed
+- Build clean (vendor chunk 73kB с i18next, главный 336kB)
+
+## [0.6.5] - 2026-07-02 (Frontend tests + CI + CSP)
+
+### Added — Tests
+- `vitest` + `@testing-library/react` + `jsdom` (devDeps)
+- `vite.config.ts` — test config (globals, jsdom, setupFiles)
+- `test/setup.ts` — `@testing-library/jest-dom`, matchMedia mock, SpeechRecognition mock
+  (auto-fires onstart/onend через setTimeout(0))
+- 3 test файла: `useRoleStore.test.ts` (7), `useEventStore.test.ts` (7), `useSpeechRecognition.test.ts` (6)
+- `npm test` / `npm run test:watch`
+- **20/20 tests passed in 3.83s**
+
+### Added — CI
+- `.github/workflows/ci.yml`:
+  - **Frontend job**: typecheck + test + build, upload dist artifact
+  - **Backend job**: prisma migrate + typecheck + test + build (Postgres service)
+  - **Matrix job**: typecheck on Node 20 и 22
+
+### Added — CSP
+- `apps/api/src/index.ts` — helmet с CSP directives (self-only, unsafe-eval в dev для
+  Vite HMR, unsafe-inline для Tailwind)
+- `index.html` — meta CSP для static deploy (Capacitor / GH Pages), разрешает
+  connect к `localhost:4000` + `https:` для real APIs
+
+### Verified
+- 20/20 frontend tests passed
+- 16/16 backend tests passed
+- Build clean, 0 TS errors
+
 ## [0.6.4] - 2026-07-02 (Skeleton + EmptyState + EventStore loading state)
 
 ### Added
