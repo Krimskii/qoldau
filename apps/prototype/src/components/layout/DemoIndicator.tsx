@@ -63,9 +63,9 @@ export const DemoIndicator: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
+    <div className="fixed left-0 right-0 z-50 pointer-events-none" style={{ bottom: '80px' }}>
       <div className="max-w-[430px] mx-auto pointer-events-auto">
-        <div className="bg-gradient-to-br from-teal to-teal-dark text-white shadow-card-hover">
+        <div className="bg-gradient-to-br from-teal to-teal-dark text-white shadow-card-hover" style={{ borderRadius: '16px 16px 0 0' }}>
           {/* Handle — always visible */}
           <button
             onClick={() => setExpanded((v) => !v)}

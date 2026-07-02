@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] — 2026-07-02 (Child exit + DemoIndicator alignment + visual polish)
+
+### Added — Выход из режима Ребёнок (v0.5.1)
+- **`ChildTopBar.tsx`** — кнопка `LogOut` справа (после Settings). Tap → confirm dialog с 2 кнопками:
+  - «Остаться» (ghost) — закрывает диалог.
+  - «Выйти» (coral gradient) — `setRole('overview')` + `navigate('/overview')`.
+  - Hover на coral-soft + coral-цвет.
+- **`ChildSettingsSheet.tsx`** — новая секция «Для взрослого» в bottom of settings:
+  - Coral-tinted карточка с `LogOut` иконкой.
+  - Текст: «Выйти из режима Ребёнок — Вернуться на обзор ролей».
+  - Альтернативный quick-access к той же функции `handleExit`.
+
+### Fixed — DemoIndicator alignment (v0.5.1)
+- **`DemoIndicator.tsx`** — раньше overlapал с `BottomNav` (оба `fixed bottom-0`).
+- Fix: `bottom: 80px` (высота bottom nav) + `border-radius: 16px 16px 0 0` для визуального зазора.
+- Bottom nav (z-40) и demo slider (z-50) теперь не перекрываются.
+
+### Verified
+- `npm run build` ✅ — 1684 modules, 0 TS errors, 9.31s.
+- CSS +0.06 KB за новый exit dialog + settings секцию.
+- Роли: при клике «Выйти» → `currentRole` сбрасывается в `overview` → BottomNav исчезает → видны 5 кнопок ролей.
+
+### Diff summary
+```
+2 файла изменено:
+
+apps/prototype/src/components/layout/ChildTopBar.tsx         +LogOut button + confirm dialog
+apps/prototype/src/components/layout/DemoIndicator.tsx        bottom: 0 → 80px, border-radius fix
+apps/prototype/src/components/child/ChildSettingsSheet.tsx    +Выход из режима section
+apps/prototype/package.json                                    0.4.0 → 0.5.1
+```
+
+---
+
 ## [0.5.0] — 2026-07-02 (Prisma + SQLite + cache layer)
 
 ### Added — Prisma ORM + persistent storage (v0.5.0)

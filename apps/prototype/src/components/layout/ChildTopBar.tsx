@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
+import { useRoleStore } from '@/store/useRoleStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { Bell2DIcon, Settings2DIcon } from '@/components/icons/child2d';
 import { useChildSettingsStore, applyChildSettings } from '@/store/useChildSettingsStore';
 import { ChildSettingsSheet } from '@/components/child/ChildSettingsSheet';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, LogOut } from 'lucide-react';
 
 interface ChildTopBarProps {
   /** Кастомный action справа (например, назад на sub-странице). */
@@ -31,11 +32,19 @@ export const ChildTopBar: React.FC<ChildTopBarProps> = ({
   className,
 }) => {
   const navigate = useNavigate();
+  const setRole = useRoleStore((s) => s.setRole);
   const { events } = useEventStore();
   const settings = useChildSettingsStore();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const child = DEMO_PRIMARY_CHILD;
   const firstLetter = child.name.charAt(0).toUpperCase();
+
+  const handleExit = () => {
+    setRole('overview');
+    setExitConfirmOpen(false);
+    navigate('/overview');
+  };
 
   const notifCount = events.filter(
     (e) =>
@@ -117,6 +126,17 @@ export const ChildTopBar: React.FC<ChildTopBarProps> = ({
           >
             <Settings2DIcon size={22} />
           </button>
+
+          {/* Выход из режима Ребёнок — для взрослого (v0.5.1) */}
+          <button
+            onClick={() => setExitConfirmOpen(true)}
+            className="w-11 h-11 rounded-[14px] bg-white border-0 shadow-card flex items-center justify-center hover:bg-coral-soft hover:text-coral transition-colors"
+            aria-label="Выйти из режима"
+            title="Выйти из режима Ребёнок"
+            data-testid="topbar-exit"
+          >
+            <LogOut className="w-5 h-5 text-ink-soft" />
+          </button>
         </div>
       </header>
 
@@ -124,6 +144,53 @@ export const ChildTopBar: React.FC<ChildTopBarProps> = ({
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
+
+      {/* Exit confirm dialog */}
+      {exitConfirmOpen && (
+        <div
+          className="fixed inset-0 z-[95] flex items-center justify-center px-5"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Выйти из режима?"
+          style={{ background: 'rgba(7,27,58,0.5)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setExitConfirmOpen(false)}
+        >
+          <div
+            className="w-full max-w-[360px] bg-white rounded-3xl p-6 shadow-card-hover"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center"
+              style={{ background: '#FFEDEA' }}
+            >
+              <LogOut className="w-7 h-7" style={{ color: '#E56F5D' }} />
+            </div>
+            <h3 className="text-lg font-black text-ink text-center mb-1">
+              Выйти из режима Ребёнок?
+            </h3>
+            <p className="text-sm text-muted text-center mb-5 leading-relaxed">
+              Вернёмся на обзор ролей, чтобы выбрать родителя, тьютора или специалиста.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setExitConfirmOpen(false)}
+                className="flex-1 py-3 rounded-2xl border-2 border-line text-ink font-bold text-sm hover:bg-bg transition-colors"
+              >
+                Остаться
+              </button>
+              <button
+                onClick={handleExit}
+                className="flex-1 py-3 rounded-2xl text-white font-black text-sm transition-transform active:scale-[0.97]"
+                style={{
+                  background: 'linear-gradient(135deg, #E56F5D 0%, #cc251d 100%)',
+                  boxShadow: '0 4px 12px rgba(229,111,93,0.28)',
+                }}
+              >
+                Выйти
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

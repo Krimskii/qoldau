@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { useChildSettingsStore } from '@/store/useChildSettingsStore';
+import { useRoleStore } from '@/store/useRoleStore';
 
 interface ChildSettingsSheetProps {
   isOpen: boolean;
@@ -87,6 +90,15 @@ function ChoiceRow<T extends string | number>({ label, description, options, val
 export const ChildSettingsSheet: React.FC<ChildSettingsSheetProps> = ({ isOpen, onClose }) => {
   const settings = useChildSettingsStore();
   const { set } = settings;
+  const navigate = useNavigate();
+  const setRole = useRoleStore((s) => s.setRole);
+
+  /** Выход из режима Ребёнок → возврат на /overview. */
+  const handleExit = () => {
+    setRole('overview');
+    onClose();
+    navigate('/overview');
+  };
 
   if (!isOpen) return null;
 
@@ -171,6 +183,33 @@ export const ChildSettingsSheet: React.FC<ChildSettingsSheetProps> = ({ isOpen, 
               { value: 1.2, label: 'А++' },
             ]}
           />
+        </QoldauCard>
+
+        {/* Выход из режима — отдельный coral-блок, чтобы не путать с обычными настройками */}
+        <QoldauCard variant="default" padding="md" className="mx-4 mb-8 mt-3">
+          <h3 className="text-xs font-black text-coral uppercase tracking-wide mb-2">
+            Для взрослого
+          </h3>
+          <button
+            onClick={handleExit}
+            className="w-full flex items-center gap-3 py-3 text-left active:scale-[0.99] transition-transform"
+            aria-label="Выйти из режима Ребёнок"
+          >
+            <div
+              className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: '#FFEDEA' }}
+            >
+              <LogOut className="w-5 h-5" style={{ color: '#E56F5D' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-black text-ink leading-tight">
+                Выйти из режима Ребёнок
+              </div>
+              <div className="text-xs text-muted leading-snug mt-0.5">
+                Вернуться на обзор ролей
+              </div>
+            </div>
+          </button>
         </QoldauCard>
       </div>
     </div>
