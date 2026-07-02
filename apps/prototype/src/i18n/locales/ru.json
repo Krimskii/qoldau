@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "Qoldau AI",
+    "tagline": "Voice-first сопровождение"
+  },
+  "auth": {
+    "login": "Войти",
+    "logout": "Выйти",
+    "loginTitle": "Вход",
+    "loginSubtitle": "Войти в Qoldau"
+  },
+  "landing": {
+    "heroTitle1": "Ребёнок дал сигнал —",
+    "heroTitle2": "система услышала",
+    "heroSubtitle": "Voice-first платформа сопровождения детей с РАС. Ребёнок даёт сигнал → взрослый говорит → AI структурирует → система помогает видеть повторяющиеся ситуации и реакции.",
+    "startDemo": "Запустить демо",
+    "demoHint": "Пошаговый гид по 18 экранам",
+    "flowTitle": "Главная цепочка",
+    "flowStep1": "Ребёнок даёт сигнал",
+    "flowStep2": "Взрослый говорит",
+    "flowStep3": "AI структурирует",
+    "flowStep4": "Взрослый подтверждает",
+    "flowStep5": "Event Timeline",
+    "rolesTitle": "Три роли, один ребёнок",
+    "rolesSubtitle": "Выберите, кто сейчас с системой",
+    "roleParent": "Родитель",
+    "roleChild": "Ребёнок",
+    "roleTutor": "Тьютор",
+    "roleParentDesc": "Голосовые наблюдения, подтверждение событий",
+    "roleChildDesc": "AAC карточки, голосовой ввод, любимые",
+    "roleTutorDesc": "Наблюдения, отчёты родителям",
+    "featureVoice": "Voice-first",
+    "featureVoiceDesc": "Голосовые наблюдения за 30 секунд — без клавиатуры",
+    "featureTimeline": "Event Timeline",
+    "featureTimelineDesc": "Единая лента событий от ребёнка, тьютора и специалиста",
+    "featureAi": "AI-наблюдения",
+    "featureAiDesc": "Гипотезы и паттерны. Не диагноз — только подсказки",
+    "mvpTitle": "Что входит в MVP",
+    "phase2Title": "Phase 2",
+    "disclaimer": "Qoldau AI не является медицинским устройством, не диагностирует, не лечит и не заменяет специалиста. Все AI-выводы формулируются как гипотезы: «Похоже…», «Возможно…», «Нужно подтвердить.» Можно обсудить со специалистом."
+  },
+  "healthCheck": {
+    "title": "Состояние системы",
+    "api": "API",
+    "db": "Database",
+    "ai": "AI",
+    "stt": "STT",
+    "online": "online",
+    "offline": "offline",
+    "real": "real",
+    "mock": "mock",
+    "checking": "проверка…",
+    "backendDown": "Backend недоступен. Приложение работает в demo-режиме."
+  },
+  "common": {
+    "back": "Назад",
+    "home": "На главную",
+    "next": "Далее",
+    "previous": "Назад",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "close": "Закрыть"
+  }
+}

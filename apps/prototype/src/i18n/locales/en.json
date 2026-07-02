@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "Qoldau AI",
+    "tagline": "Voice-first support"
+  },
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out",
+    "loginTitle": "Sign in",
+    "loginSubtitle": "Sign in to Qoldau"
+  },
+  "landing": {
+    "heroTitle1": "Child sent a signal —",
+    "heroTitle2": "the system heard it",
+    "heroSubtitle": "Voice-first platform for supporting children with ASD. Child signals → adult speaks → AI structures → system helps spot repeated patterns.",
+    "startDemo": "Start demo",
+    "demoHint": "Step-by-step guide through 18 screens",
+    "flowTitle": "Main flow",
+    "flowStep1": "Child signals",
+    "flowStep2": "Adult speaks",
+    "flowStep3": "AI structures",
+    "flowStep4": "Adult confirms",
+    "flowStep5": "Event Timeline",
+    "rolesTitle": "Three roles, one child",
+    "rolesSubtitle": "Choose who is using the system now",
+    "roleParent": "Parent",
+    "roleChild": "Child",
+    "roleTutor": "Tutor",
+    "roleParentDesc": "Voice observations, event confirmation",
+    "roleChildDesc": "AAC cards, voice input, favorites",
+    "roleTutorDesc": "Observations, parent reports",
+    "featureVoice": "Voice-first",
+    "featureVoiceDesc": "30-second voice observations — no keyboard",
+    "featureTimeline": "Event Timeline",
+    "featureTimelineDesc": "Unified event feed from child, tutor and specialist",
+    "featureAi": "AI observations",
+    "featureAiDesc": "Hypotheses and patterns. Not a diagnosis — just hints",
+    "mvpTitle": "What's in MVP",
+    "phase2Title": "Phase 2",
+    "disclaimer": "Qoldau AI is not a medical device, does not diagnose, treat or replace a specialist. All AI outputs are formulated as hypotheses: \"Seems like…\", \"Possibly…\", \"Needs confirmation.\" Can be discussed with a specialist."
+  },
+  "healthCheck": {
+    "title": "System status",
+    "api": "API",
+    "db": "Database",
+    "ai": "AI",
+    "stt": "STT",
+    "online": "online",
+    "offline": "offline",
+    "real": "real",
+    "mock": "mock",
+    "checking": "checking…",
+    "backendDown": "Backend unavailable. App is running in demo mode."
+  },
+  "common": {
+    "back": "Back",
+    "home": "Home",
+    "next": "Next",
+    "previous": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close"
+  }
+}

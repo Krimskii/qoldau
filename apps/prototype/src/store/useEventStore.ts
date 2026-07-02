@@ -77,7 +77,7 @@ export const useEventStore = create<EventState>()(
               events: state.events.map((e) => (e.id === newEvent.id ? { ...e, id: serverId } : e)),
             }));
           }).catch((err) => {
-            console.warn('[useEventStore] API create failed, kept local:', err);
+            if (import.meta.env.DEV) console.warn('[useEventStore] API create failed, kept local:', err);
           });
         }
         return newEvent;
@@ -141,16 +141,16 @@ export const useEventStore = create<EventState>()(
         try {
           const available = await isApiAvailable();
           if (!available) {
-            console.info('[useEventStore] API unavailable, using local mock data');
+            if (import.meta.env.DEV) console.info('[useEventStore] API unavailable, using local mock data');
             set({ isLoading: false, error: 'API недоступен' });
             return;
           }
           const res = await api.events.list();
           const remoteEvents = (res as { events: QoldauEvent[] }).events;
           set({ events: remoteEvents, apiMode: true, isLoading: false });
-          console.info(`[useEventStore] Loaded ${remoteEvents.length} events from API`);
+          if (import.meta.env.DEV) console.info(`[useEventStore] Loaded ${remoteEvents.length} events from API`);
         } catch (err) {
-          console.warn('[useEventStore] Failed to load from API, using local:', err);
+          if (import.meta.env.DEV) console.warn('[useEventStore] Failed to load from API, using local:', err);
           set({ isLoading: false, error: err instanceof Error ? err.message : String(err) });
         }
       },

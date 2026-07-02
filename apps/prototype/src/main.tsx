@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { App } from './app/App';
 import { useAuthStore } from './store/useAuthStore';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import './i18n/config';
 import './styles/globals.css';
 import './styles/animations.css';
 

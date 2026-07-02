@@ -52,7 +52,7 @@ export const useRecordingsStore = create<RecordingsState>()(
         // Фоновая синхронизация с API
         if (get().apiMode) {
           api.recordings.create(r as unknown as Record<string, unknown>).catch((err) => {
-            console.warn('[useRecordingsStore] API create failed, kept local:', err);
+            if (import.meta.env.DEV) console.warn('[useRecordingsStore] API create failed, kept local:', err);
           });
         }
         return recording;
@@ -74,9 +74,9 @@ export const useRecordingsStore = create<RecordingsState>()(
           const res = await api.recordings.list();
           const remote = (res as { recordings: Recording[] }).recordings;
           set({ recordings: remote, apiMode: true });
-          console.info(`[useRecordingsStore] Loaded ${remote.length} recordings from API`);
+          if (import.meta.env.DEV) console.info(`[useRecordingsStore] Loaded ${remote.length} recordings from API`);
         } catch (err) {
-          console.warn('[useRecordingsStore] Failed to load from API:', err);
+          if (import.meta.env.DEV) console.warn('[useRecordingsStore] Failed to load from API:', err);
         }
       },
     }),
