@@ -24,6 +24,7 @@ import { sttRouter } from './routes/stt.js';
 import { aiRouter } from './routes/ai.js';
 import { authRouter } from './routes/auth.js';
 import { childrenRouter } from './routes/children.js';
+import { audioRouter } from './modules/audio-pipeline/audio.routes.js';
 import { prisma, disconnectPrisma } from './db/prisma.js';
 import { getCache } from './db/cache.js';
 import { runSeed } from './db/seed-runner.js';
@@ -66,7 +67,7 @@ app.use(cors({
     : ['http://localhost:5173', 'http://localhost:4173'],
   credentials: true,
 }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT ?? '35mb' }));
 app.use(logger);
 
 // ===== Routes =====
@@ -88,6 +89,7 @@ app.use('/api/recordings', recordingsRouter);
 app.use('/api/stt', sttRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/audio', audioRouter);
 
 // Reset endpoint на /api/reset
 import { Router as ResetRouter } from 'express';

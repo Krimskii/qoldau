@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.5] - 2026-07-02 (Audio pipeline: record → STT → AI → events)
+
+### Audio Pipeline (bounded module: `apps/api/src/modules/audio-pipeline/`)
+- **`POST /api/audio/ingest`** — sync MVP: audioBase64 → STT → LLM parser →
+  recording + events → realtime broadcast → JSON response.
+- **Modular monolith** boundaries — easy to extract to queue worker later
+  (Phase 2). Same `sttService` + `llmService` + `realtimeService` + repos.
+- **Bounded payload** — `AUDIO_MAX_MB` env (default 25), base64 size check,
+  sourceRole/eventType whitelists, structured `AudioPipelineError` (400/413).
+- **AI insight + clarification questions** returned in response
+  (no extra request needed).
+- **Frontend client** `apps/prototype/src/api/audio.ts` —
+  `uploadAudioObservation({ blob, childId, sourceRole, ... })`.
+
+### Files added
+- `apps/api/src/modules/audio-pipeline/audio.routes.ts` (36 lines)
+- `apps/api/src/modules/audio-pipeline/audioPipeline.service.ts` (198 lines)
+- `apps/api/src/modules/audio-pipeline/audioPipeline.types.ts` (58 lines)
+- `apps/api/test/audioPipeline.test.ts` (66 lines, 2 tests)
+- `apps/prototype/src/api/audio.ts` (67 lines)
+- `docs/AUDIO_PIPELINE_TZ.md` (architecture + contract)
+
+### Files modified
+- `apps/api/src/index.ts` — register `audioRouter` at `/api/audio`, increase
+  JSON body limit to 35 MB (was 10 MB) via `JSON_BODY_LIMIT` env.
+- `apps/api/package.json`, `apps/prototype/package.json` — bump 0.7.4 → 0.7.5
+
+### Verified
+- Backend: 18/18 tests passed (5.06s) — 2 new tests for audio pipeline
+- Frontend: 20/20 tests passed, build clean
+- Typecheck: backend clean
+- Pre-existing CI fix: `npm install` instead of `npm ci` (handles
+  platform-specific esbuild/rollup optional deps on Linux runners)
+
 ## [0.7.4] - 2026-07-02 (Privacy hardening + Stage 1 demo-ready)
 
 ### Privacy
