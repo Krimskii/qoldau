@@ -1,51 +1,28 @@
 /**
- * GET /api/children — список детей (hard-coded в Phase 1).
- * GET /api/children/:id — одно дитя.
+ * Children routes (v0.5.0) — uses Prisma repository.
  */
 import { Router } from 'express';
+import { childrenRepo } from '../repositories/children.js';
 
 export const childrenRouter = Router();
 
-const CHILDREN = [
-  {
-    id: 'child-alikhan',
-    name: 'Алихан',
-    age: 7,
-    diagnosisLabel: 'РАС',
-    currentState: 'спокойный',
-    avatar: 'А',
-    mainSignals: [
-      { id: 'sig-1', signal: '«ту-ту»', possibleMeaning: 'возможно — туалет', confidence: 0.82, confirmedCount: 14 },
-      { id: 'sig-2', signal: '«ва»', possibleMeaning: 'возможно — пить', confidence: 0.88, confirmedCount: 18 },
-      { id: 'sig-3', signal: 'закрывает уши', possibleMeaning: 'шум / перегрузка', confidence: 0.90, confirmedCount: 22 },
-    ],
-  },
-  {
-    id: 'child-mira',
-    name: 'Мира',
-    age: 5,
-    diagnosisLabel: 'РАС',
-    currentState: 'активная',
-    avatar: 'М',
-  },
-  {
-    id: 'child-timur',
-    name: 'Тимур',
-    age: 9,
-    diagnosisLabel: 'РАС',
-    currentState: 'сфокусирован',
-    avatar: 'Т',
-  },
-];
-
-childrenRouter.get('/', (_req, res) => {
-  res.json({ ok: true, count: CHILDREN.length, children: CHILDREN });
+childrenRouter.get('/', async (_req, res, next) => {
+  try {
+    const children = await childrenRepo.list();
+    res.json({ ok: true, count: children.length, children });
+  } catch (err) {
+    next(err);
+  }
 });
 
-childrenRouter.get('/:id', (req, res) => {
-  const child = CHILDREN.find((c) => c.id === req.params.id);
-  if (!child) {
-    return res.status(404).json({ ok: false, error: 'Child not found' });
+childrenRouter.get('/:id', async (req, res, next) => {
+  try {
+    const child = await childrenRepo.get(req.params.id);
+    if (!child) {
+      return res.status(404).json({ ok: false, error: 'Child not found' });
+    }
+    res.json({ ok: true, child });
+  } catch (err) {
+    next(err);
   }
-  res.json({ ok: true, child });
 });

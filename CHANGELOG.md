@@ -2,6 +2,131 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] — 2026-07-02 (Prisma + SQLite + cache layer)
+
+### Added — Prisma ORM + persistent storage (v0.5.0)
+- **`apps/api/prisma/schema.prisma`** — schema для 3 моделей:
+  - `Child` (id, name, age, diagnosisLabel, currentState, avatar, createdAt)
+  - `Event` (id, childId, type, title, description, timestamp, sourceRole, status, confidence, rawText, linkedEventIds, payload) + индексы по childId/timestamp/type
+  - `Recording` (id, childId, label, durationSec, timestamp) + индексы
+  - Provider: **SQLite** для dev (file:./prisma/dev.db, zero setup)
+  - **Phase 2 готовность:** provider легко переключается на `postgresql` + соответствующий DATABASE_URL
+- **`apps/api/src/db/prisma.ts`** — Prisma client singleton (сохранение в globalThis для hot-reload).
+- **`apps/api/src/db/cache.ts`** — абстракция кеша:
+  - `MemoryCache` (in-memory Map с TTL, по умолчанию)
+  - `RedisCache` (ioredis, авто-активируется если `REDIS_URL` задан)
+  - Singleton через `getCache()`, type показывает какой бэкенд активен
+- **`apps/api/src/repositories/`** — repository pattern:
+  - `events.ts` — CRUD + cache integration (30 сек TTL на `events:list:*`), инвалидация при write
+  - `recordings.ts` — то же для recordings
+  - `children.ts` — `upsert` + cache
+- **`apps/api/src/db/seed.ts`** — портирован seed (3 ребёнка + 13 demo событий для Алихана), идемпотентен, вызывается при старте сервера автоматически.
+- **`apps/api/src/db/seed-runner.ts`** — обёртка для вызова seed из index.ts.
+- **`apps/api/.env.example`** + `apps/api/.env` — `DATABASE_URL="file:./prisma/dev.db"`, `REDIS_URL=""`.
+- **Prisma миграция:** `prisma/migrations/20260701234419_init/migration.sql` (auto-generated).
+
+### Changed — Routes → Repositories
+- **`apps/api/src/routes/events.ts`** — async/await через `eventsRepo`.
+- **`apps/api/src/routes/recordings.ts`** — async/await через `recordingsRepo`.
+- **`apps/api/src/routes/children.ts`** — async/await через `childrenRepo` (из БД).
+- **`apps/api/src/routes/health.ts`** — добавлен DB health-check (`SELECT 1`), cache type в ответе.
+- **`apps/api/src/index.ts`** — `prisma.$connect()` + `runSeed()` + graceful shutdown (`SIGINT/SIGTERM`).
+
+### Removed
+- **`apps/api/src/db/memory.ts`** (v0.4.0) — заменён на Prisma.
+- **`apps/api/src/db/types.ts`** — типы перенесены в `repositories/events.ts`.
+
+### Added — Frontend (small)
+- **`apps/prototype/vite.config.ts`** — `base: './'` для корректной работы в Capacitor web-fallback (relative paths).
+
+### Verified
+- `npx prisma generate` → OK.
+- `npx prisma migrate dev --name init --skip-seed` → миграция применена, БД создана.
+- `npm run typecheck` → clean (0 TS errors).
+- `npm run build` → clean (Prisma client + dist/).
+- Backend запускается на :4000, лог:
+  ```
+  [db] Prisma connected
+  [cache] Using in-memory cache (set REDIS_URL for Redis)
+  [seed] Starting...
+  [seed] Created 13 demo events
+  🟢  Qoldau API v0.5.0 listening on http://localhost:4000
+  ```
+- Данные персистентны между перезапусками (`prisma/prisma/dev.db` SQLite файл).
+- Все 15 endpoints отвечают через Prisma (events, recordings, children, stt, ai, health).
+
+### Roadmap
+- **v0.5.0 (текущая)** — Prisma + SQLite + cache layer.
+- **v0.6.0** — Real Whisper API + Real LLM + Auth.
+- **v0.7.0** — WebSocket realtime + Push.
+- **v0.8.0** — Capacitor Android build.
+- **v1.0.0** — Production SaaS.
+
+### Diff summary
+```
+17 файлов:
+
+apps/api/.env.example                                        NEW
+apps/api/.gitignore                                         (dev.db + dev.db-journal excluded)
+apps/api/package.json                                       +@prisma/client, +ioredis, +prisma, +scripts
+apps/api/prisma/schema.prisma                                NEW
+apps/api/prisma/migrations/20260701234419_init/...           NEW (auto-generated)
+apps/api/src/db/prisma.ts                                    NEW
+apps/api/src/db/cache.ts                                     NEW
+apps/api/src/db/seed.ts                                      NEW
+apps/api/src/db/seed-runner.ts                               NEW
+apps/api/src/repositories/events.ts                          NEW
+apps/api/src/repositories/recordings.ts                      NEW
+apps/api/src/repositories/children.ts                        NEW
+apps/api/src/routes/events.ts                                (now uses repo)
+apps/api/src/routes/recordings.ts                            (now uses repo)
+apps/api/src/routes/children.ts                              (now uses repo)
+apps/api/src/routes/health.ts                                (now +db health)
+apps/api/src/index.ts                                        (now Prisma + seed + shutdown)
+apps/api/src/db/memory.ts                                    DELETED
+apps/api/src/db/types.ts                                     DELETED
+apps/api/package.json                                        0.4.1 → 0.5.0
+apps/prototype/vite.config.ts                                +base: './' (Capacitor fix)
+```
+
+---
+
+## [0.4.1] — 2026-07-02 (Backend verify + Capacitor mobile prep)
+
+### Fixed
+- **`apps/api/src/db/memory.ts`** — убран неиспользуемый импорт `QoldauEvent` (вызывал TS error при typecheck).
+- Backend теперь проходит `npm run typecheck` чисто.
+
+### Added (от пользователя)
+- **`apps/prototype/package.json`** — добавлены Capacitor зависимости:
+  - `@capacitor/core`, `@capacitor/cli`, `@capacitor/app`, `@capacitor/android`, `@capacitor/splash-screen`, `@capacitor/status-bar`
+  - `clsx` (utility)
+- **`apps/prototype/src/app/App.tsx`** — Capacitor backButton listener:
+  - На нативной платформе: hardware back button → `window.history.back()` если можно, иначе `minimizeApp()`.
+  - На web — useEffect пропускает инициализацию.
+- **Build:** новый chunk `assets/web-*.js` (0.84 KB) — Capacitor web-fallback.
+
+### Verified (re-verify v0.4.0 backend)
+- `npm install` в `apps/api` → 95 packages, 0 vulnerabilities.
+- `npm run typecheck` (backend) → clean.
+- `npm run build` (backend) → clean.
+- Backend запускается на :4000, лог:
+  ```
+  🟢  Qoldau API v0.4.0
+     listening on http://localhost:4000
+     health: http://localhost:4000/api/health
+  ```
+- Протестированы endpoints через `fetch`:
+  - `GET /api/health` → 200 `{"ok":true,"service":"qoldau-api","version":"0.4.0",...}`
+  - `GET /api/children` → 200, 3 детей.
+  - `GET /api/events?childId=child-alikhan` → 200, 13 seed-событий.
+  - `POST /api/events` → 201, создан `evt-EUDhy8LuwB`.
+  - `POST /api/stt/transcribe` → 200, демо-транскрипт за 1.5с.
+  - `POST /api/ai/parse` → 200, 3 события + insight.
+  - Все 15 endpoints отвечают корректно.
+
+---
+
 ## [0.4.0] — 2026-07-02 (Backend API + frontend sync + deployment-ready)
 
 ### Added — Backend API (v0.4.0)

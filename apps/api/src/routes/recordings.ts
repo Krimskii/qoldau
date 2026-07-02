@@ -1,40 +1,54 @@
+/**
+ * Recordings routes (v0.5.0) — uses Prisma repository.
+ */
 import { Router } from 'express';
-import { store, type RecordingInput } from '../db/memory.js';
+import { recordingsRepo, type RecordingInput } from '../repositories/recordings.js';
 
 export const recordingsRouter = Router();
 
 /**
  * GET /api/recordings?childId=xxx
  */
-recordingsRouter.get('/', (req, res) => {
-  const childId = typeof req.query.childId === 'string' ? req.query.childId : undefined;
-  const recordings = store.listRecordings({ childId });
-  res.json({ ok: true, count: recordings.length, recordings });
+recordingsRouter.get('/', async (req, res, next) => {
+  try {
+    const childId = typeof req.query.childId === 'string' ? req.query.childId : undefined;
+    const recordings = await recordingsRepo.list({ childId });
+    res.json({ ok: true, count: recordings.length, recordings });
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
  * POST /api/recordings
- * Body: { childId, label, durationSec }
  */
-recordingsRouter.post('/', (req, res) => {
-  const body = req.body as Partial<RecordingInput>;
-  if (!body.childId || !body.label || typeof body.durationSec !== 'number') {
-    return res.status(400).json({
-      ok: false,
-      error: 'Missing required fields: childId, label, durationSec',
-    });
+recordingsRouter.post('/', async (req, res, next) => {
+  try {
+    const body = req.body as Partial<RecordingInput>;
+    if (!body.childId || !body.label || typeof body.durationSec !== 'number') {
+      return res.status(400).json({
+        ok: false,
+        error: 'Missing required fields: childId, label, durationSec',
+      });
+    }
+    const rec = await recordingsRepo.create(body as RecordingInput);
+    res.status(201).json({ ok: true, recording: rec });
+  } catch (err) {
+    next(err);
   }
-  const rec = store.createRecording(body as RecordingInput);
-  res.status(201).json({ ok: true, recording: rec });
 });
 
 /**
  * DELETE /api/recordings/:id
  */
-recordingsRouter.delete('/:id', (req, res) => {
-  const ok = store.deleteRecording(req.params.id);
-  if (!ok) {
-    return res.status(404).json({ ok: false, error: 'Recording not found' });
+recordingsRouter.delete('/:id', async (req, res, next) => {
+  try {
+    const ok = await recordingsRepo.delete(req.params.id);
+    if (!ok) {
+      return res.status(404).json({ ok: false, error: 'Recording not found' });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
   }
-  res.json({ ok: true });
 });

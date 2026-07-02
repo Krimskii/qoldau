@@ -1,0 +1,70 @@
+// Qoldau AI — Prisma schema (v0.5.0).
+//
+// Phase 1 (current): SQLite (file:./dev.db) для dev / демо.
+// Phase 2 (next): заменить provider на "postgresql" + DATABASE_URL на Postgres connection string.
+//
+// Структура полностью совместима с обоими провайдерами.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Ребёнок (3 демо: Алихан, Мира, Тимур).
+model Child {
+  id              String   @id
+  name            String
+  age             Int
+  diagnosisLabel  String?
+  currentState    String?
+  avatar          String?
+  createdAt       DateTime @default(now())
+
+  events     Event[]
+  recordings Recording[]
+
+  @@map("children")
+}
+
+// Событие в Event Timeline.
+// Поля payload / linkedEventIds хранятся как JSON-строки (SQLite не имеет native JSON).
+model Event {
+  id             String   @id @default(cuid())
+  childId        String
+  type           String
+  title          String
+  description    String
+  timestamp      DateTime @default(now())
+  sourceRole     String
+  status         String   @default("confirmed")
+  confidence     Float?
+  rawText        String?
+  linkedEventIds String?
+  payload        String?
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@index([timestamp])
+  @@index([type])
+  @@map("events")
+}
+
+// Запись голоса ребёнка (mic на /child/speak).
+model Recording {
+  id          String   @id @default(cuid())
+  childId     String
+  label       String
+  durationSec Int
+  timestamp   DateTime @default(now())
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@index([timestamp])
+  @@map("recordings")
+}
