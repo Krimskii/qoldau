@@ -14,12 +14,12 @@ import {
   ClarificationQuestion,
   ParsedEvent,
 } from './aiParser.types';
+import { formatTime } from '@/utils/dateFormat';
 
 const SAFETY_DISCLAIMER =
   'Это наблюдение, не диагноз. Можно обсудить со специалистом.';
 
-const baseTimestamp = (): string =>
-  new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+const baseTimestamp = (): string => formatTime(new Date());
 
 const mkEvent = (
   type: ParsedEvent['type'],

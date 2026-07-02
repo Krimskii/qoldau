@@ -4,6 +4,7 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { AppRoutes } from './router';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 
 export const App: React.FC = () => {
   useEffect(() => {
@@ -26,5 +27,10 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  return <AppRoutes />;
+  return (
+    <>
+      <OfflineBanner />
+      <AppRoutes />
+    </>
+  );
 };

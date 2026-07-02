@@ -14,6 +14,7 @@ import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
 import { DEMO_CHILDREN } from '@/data/demoDataset';
+import { formatDate } from '@/utils/dateFormat';
 
 interface Signal {
   id: string;
@@ -59,7 +60,7 @@ export const CommunicationProfile: React.FC = () => {
             signal: event.rawText.slice(0, 15) + (event.rawText.length > 15 ? '...' : ''),
             meaning: event.description || 'Значение уточняется',
             confirmed: 1,
-            lastSeen: new Date(event.timestamp).toLocaleDateString('ru-RU'),
+            lastSeen: formatDate(event.timestamp, {}),
             sources: [event.sourceRole],
             confidence: event.status === 'confirmed' ? 'high' : 'medium',
             relatedEvents: 1,
@@ -76,7 +77,7 @@ export const CommunicationProfile: React.FC = () => {
         signal: s.signal,
         meaning: s.possibleMeaning,
         confirmed: s.confirmedCount,
-        lastSeen: new Date(s.lastSeenAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+        lastSeen: formatDate(s.lastSeenAt, { day: 'numeric', month: 'short' }),
         sources: s.kind === 'aac' ? ['parent', 'child'] : s.kind === 'sound' ? ['parent', 'tutor'] : ['parent'],
         confidence: s.confidence >= 0.85 ? 'high' : s.confidence >= 0.7 ? 'medium' : 'low',
         relatedEvents: s.confirmedCount,

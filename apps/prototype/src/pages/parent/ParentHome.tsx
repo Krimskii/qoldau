@@ -18,6 +18,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD, DEMO_PARENTS } from '@/data/demoDataset';
+import { formatTime } from '@/utils/dateFormat';
 
 interface QuickAction {
   id: string;
@@ -167,10 +168,7 @@ export const ParentHome: React.FC = () => {
                 }`}
               >
                 <span className="text-xs text-muted font-bold tabular-nums min-w-[40px]">
-                  {new Date(event.timestamp).toLocaleTimeString('ru-RU', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatTime(event.timestamp)}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-ink truncate">

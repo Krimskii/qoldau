@@ -7,6 +7,7 @@ import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
 import { DEMO_CHILDREN } from '@/data/demoDataset';
+import { formatDate } from '@/utils/dateFormat';
 
 interface AbcCard {
   id: string;
@@ -233,12 +234,7 @@ const AbcColumn: React.FC<AbcColumnProps> = ({
             <p className="text-xs font-black text-ink leading-tight">{it.title}</p>
             <p className="text-[11px] text-muted leading-snug mt-0.5">{it.description}</p>
             <p className="text-[10px] text-muted mt-1">
-              {new Date(it.timestamp).toLocaleDateString('ru-RU', {
-                day: 'numeric',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {formatDate(it.timestamp, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
         ))

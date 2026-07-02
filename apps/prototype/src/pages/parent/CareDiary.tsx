@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useEventStore } from '@/store/useEventStore';
 import { EventType } from '@/types/qoldau';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { formatDate, formatTime } from '@/utils/dateFormat';
 
 interface TabConfig {
   key: string;
@@ -46,10 +47,7 @@ export const CareDiary: React.FC = () => {
   // Group by date
   const grouped: Record<string, typeof childEvents> = {};
   childEvents.forEach((e) => {
-    const day = new Date(e.timestamp).toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'long',
-    });
+    const day = formatDate(e.timestamp);
     if (!grouped[day]) grouped[day] = [];
     grouped[day].push(e);
   });
@@ -105,10 +103,7 @@ export const CareDiary: React.FC = () => {
                     <p className="text-xs text-muted truncate">{event.description}</p>
                   </div>
                   <span className="text-xs font-bold text-muted tabular-nums">
-                    {new Date(event.timestamp).toLocaleTimeString('ru-RU', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {formatTime(event.timestamp)}
                   </span>
                 </div>
               ))}

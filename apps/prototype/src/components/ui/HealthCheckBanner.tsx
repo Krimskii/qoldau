@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { Activity, Database, Cpu, Mic } from 'lucide-react';
 import { api } from '@/api/client';
 import { AppIcon } from './AppIcon';
+import { formatTime } from '@/utils/dateFormat';
 
 interface HealthState {
   ok: boolean;
@@ -79,7 +80,7 @@ export const HealthCheckBanner: React.FC = () => {
         <h3 className="text-sm font-black text-ink">Состояние системы</h3>
         <span className="ml-auto text-[10px] text-muted">
           {state.lastChecked
-            ? new Date(state.lastChecked).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+            ? formatTime(state.lastChecked)
             : 'проверка…'}
         </span>
       </div>

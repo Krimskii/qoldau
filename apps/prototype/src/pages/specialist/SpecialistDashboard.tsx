@@ -20,6 +20,7 @@ import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
 import { DEMO_CHILDREN } from '@/data/demoDataset';
+import { formatDate } from '@/utils/dateFormat';
 
 const PERIODS = ['7', '14', '30'] as const;
 type Period = typeof PERIODS[number];
@@ -116,10 +117,7 @@ export const SpecialistDashboard: React.FC = () => {
       return currentChild.mainSignals.slice(0, 3).map((s) => ({
         signal: s.signal,
         meaning: s.possibleMeaning,
-        date: new Date(s.lastSeenAt).toLocaleDateString('ru-RU', {
-          day: '2-digit',
-          month: '2-digit',
-        }),
+        date: formatDate(s.lastSeenAt, { day: '2-digit', month: '2-digit' }),
       }));
     }
     return [

@@ -11,6 +11,7 @@ import { EventTimelineIcon } from '@/components/icons';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { QoldauEvent } from '@/types/qoldau';
 import { eventTypeColors, toneToColor, type EventTone } from '@/styles/tokens';
+import { formatDate, formatTime } from '@/utils/dateFormat';
 
 type FilterType = 'all' | string;
 
@@ -30,18 +31,6 @@ const FILTERS: Array<{ key: FilterType; label: string; tone: EventTone }> = [
   { key: 'sos', label: 'SOS', tone: 'coral' },
   { key: 'tutor_note', label: 'Тьютор', tone: 'purple' },
 ];
-
-const formatTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
-const formatDay = (iso: string) =>
-  new Date(iso).toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-  });
 
 const SOURCE_LABEL: Record<string, string> = {
   parent: 'Родитель',
@@ -136,7 +125,7 @@ export const EventTimeline: React.FC = () => {
     [...filtered]
       .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
       .forEach((e) => {
-        const day = formatDay(e.timestamp);
+        const day = formatDate(e.timestamp);
         if (!map[day]) map[day] = [];
         map[day].push(e);
       });

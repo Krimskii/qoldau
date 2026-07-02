@@ -5,6 +5,7 @@ import { BackArrowIcon, Music2DIcon } from '@/components/icons/child2d';
 import { useRecordingsStore, type Recording } from '@/store/useRecordingsStore';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { formatTime as formatClock } from '@/utils/dateFormat';
 
 const MAX_RECORDING_SEC = 30;
 
@@ -369,7 +370,7 @@ export const ChildSpeak: React.FC = () => {
                     ) : scheduled ? (
                       <p className="text-[11px] text-coral mt-0.5 font-bold flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        Запланировано на {new Date(scheduled).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                        Запланировано на {formatClock(scheduled)}
                       </p>
                     ) : (
                       <p className="text-[11px] text-muted mt-0.5">

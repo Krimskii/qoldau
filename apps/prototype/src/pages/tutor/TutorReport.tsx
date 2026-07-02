@@ -6,6 +6,7 @@ import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { QoldauEvent } from '@/types/qoldau';
+import { formatDate, formatTime } from '@/utils/dateFormat';
 
 export const TutorReport: React.FC = () => {
   const { events } = useEventStore();
@@ -38,10 +39,7 @@ export const TutorReport: React.FC = () => {
   // Group by date
   const grouped: Record<string, QoldauEvent[]> = {};
   tutorEvents.slice(0, 8).forEach((e) => {
-    const day = new Date(e.timestamp).toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'long',
-    });
+    const day = formatDate(e.timestamp);
     if (!grouped[day]) grouped[day] = [];
     grouped[day].push(e);
   });
@@ -59,7 +57,7 @@ export const TutorReport: React.FC = () => {
   };
 
   const generateReportText = () => {
-    const today = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+    const today = formatDate(new Date(), { day: 'numeric', month: 'long', year: 'numeric' });
     let text = `📋 Отчёт тьютора за ${today}\n\n`;
     text += `Всего событий: ${summary.total}\n`;
     text += `Хороших моментов: ${summary.positive}\n`;
@@ -67,7 +65,7 @@ export const TutorReport: React.FC = () => {
     if (tutorEvents.length > 0) {
       text += `📅 События:\n`;
       tutorEvents.slice(0, 5).forEach((e) => {
-        const time = new Date(e.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        const time = formatTime(e.timestamp);
         text += `• ${time} — ${e.title}\n`;
       });
     }
@@ -122,10 +120,7 @@ export const TutorReport: React.FC = () => {
                       <p className="text-xs text-muted truncate">{e.description}</p>
                     </div>
                     <span className="text-xs text-muted tabular-nums">
-                      {new Date(e.timestamp).toLocaleTimeString('ru-RU', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatTime(e.timestamp)}
                     </span>
                   </div>
                 ))}

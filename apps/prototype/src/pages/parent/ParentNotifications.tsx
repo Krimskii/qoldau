@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import type { LucideIcon } from 'lucide-react';
+import { formatDate } from '@/utils/dateFormat';
 
 interface Notification {
   id: string;
@@ -56,12 +57,7 @@ export const ParentNotifications: React.FC = () => {
                 ? `Тьютор: ${e.title}`
                 : `Специалист: ${e.title}`,
           description: e.description,
-          time: new Date(e.timestamp).toLocaleString('ru-RU', {
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
+          time: formatDate(e.timestamp, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
           source: src,
           read: idx > 1,
           Icon: style.Icon,

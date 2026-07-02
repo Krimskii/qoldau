@@ -16,6 +16,7 @@ import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import { VoiceWaveIcon, EventTimelineIcon } from '@/components/icons';
 import { eventTypeColors, toneToColor, type EventTone } from '@/styles/tokens';
+import { formatDate, formatTime } from '@/utils/dateFormat';
 
 const SOURCE_LABEL: Record<string, string> = {
   parent: 'Записано родителем',
@@ -100,10 +101,7 @@ export const EventDetails: React.FC = () => {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Детали события"
-        subtitle={new Date(event.timestamp).toLocaleDateString('ru-RU', {
-          day: 'numeric',
-          month: 'long',
-        })}
+        subtitle={formatDate(event.timestamp)}
         showBack
       />
 
@@ -197,10 +195,7 @@ export const EventDetails: React.FC = () => {
                 className="w-full flex items-center gap-3 p-3 bg-bg rounded-2xl text-left hover:bg-teal-soft transition-colors"
               >
                 <span className="text-xs text-muted font-bold tabular-nums">
-                  {new Date(linked.timestamp).toLocaleTimeString('ru-RU', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatTime(linked.timestamp)}
                 </span>
                 <EventTypeBadge eventType={linked.type} size="sm" showIcon={false} />
                 <span className="text-sm font-bold text-ink flex-1 truncate">

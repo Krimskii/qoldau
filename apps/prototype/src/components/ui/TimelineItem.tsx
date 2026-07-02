@@ -1,6 +1,7 @@
 import React from 'react';
 import { QoldauEvent } from '@/types/qoldau';
 import { Utensils, Droplet, Moon, Smile, MessageCircle, Brain, ShoppingBag } from 'lucide-react';
+import { formatTime } from '@/utils/dateFormat';
 
 interface TimelineItemProps {
   event: QoldauEvent;
@@ -51,10 +52,7 @@ const getEventColor = (type: QoldauEvent['type']) => {
 };
 
 export const TimelineItem: React.FC<TimelineItemProps> = ({ event, onClick }) => {
-  const time = new Date(event.timestamp).toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const time = formatTime(event.timestamp);
 
   return (
     <div

@@ -7,6 +7,7 @@ import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { formatDate } from '@/utils/dateFormat';
 
 const TABS = [
   { key: 'triggers', label: 'Ситуации' },
@@ -105,10 +106,7 @@ export const BehaviorSensory: React.FC = () => {
                     <p className="text-xs text-muted truncate">{event.description}</p>
                   </div>
                   <span className="text-xs text-muted tabular-nums">
-                    {new Date(event.timestamp).toLocaleDateString('ru-RU', {
-                      day: 'numeric',
-                      month: 'short',
-                    })}
+                    {formatDate(event.timestamp, { day: 'numeric', month: 'short' })}
                   </span>
                 </div>
               ))
@@ -207,10 +205,7 @@ export const BehaviorSensory: React.FC = () => {
                     <p className="text-xs text-muted truncate">{event.description}</p>
                   </div>
                   <span className="text-xs text-muted tabular-nums">
-                    {new Date(event.timestamp).toLocaleDateString('ru-RU', {
-                      day: 'numeric',
-                      month: 'short',
-                    })}
+                    {formatDate(event.timestamp, { day: 'numeric', month: 'short' })}
                   </span>
                 </div>
               ))

@@ -13,6 +13,7 @@ import { QoldauCard } from '@/components/ui/QoldauCard';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useEventStore } from '@/store/useEventStore';
+import { formatTime } from '@/utils/dateFormat';
 import { DEMO_PRIMARY_CHILD, DEMO_TUTORS } from '@/data/demoDataset';
 
 const HINTS = [
@@ -109,10 +110,7 @@ export const TutorHome: React.FC = () => {
                 }`}
               >
                 <span className="text-xs text-muted font-bold tabular-nums min-w-[40px]">
-                  {new Date(event.timestamp).toLocaleTimeString('ru-RU', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatTime(event.timestamp)}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-ink truncate">{event.title}</p>

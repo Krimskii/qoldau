@@ -1,14 +1,12 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { DemoIndicator } from '@/components/layout/DemoIndicator';
 import { ToastContainer } from '@/components/ui/ToastContainer';
+import { PageLoader } from '@/components/ui/PageLoader';
 
-// Parent Pages
+// Parent Pages (eager — small, frequently visited)
 import { ParentHome } from '@/pages/parent/ParentHome';
-import { VoiceObservation } from '@/pages/parent/VoiceObservation';
-import { AIReview } from '@/pages/parent/AIReview';
-import { ClarifyingQuestions } from '@/pages/parent/ClarifyingQuestions';
 import { EventTimeline } from '@/pages/parent/EventTimeline';
 import { EventDetails } from '@/pages/parent/EventDetails';
 import { CareDiary } from '@/pages/parent/CareDiary';
@@ -17,13 +15,16 @@ import { ParentAIChat } from '@/pages/parent/ParentAIChat';
 import { ParentAnalytics } from '@/pages/parent/ParentAnalytics';
 import { ParentProfile } from '@/pages/parent/ParentProfile';
 import { ParentNotifications } from '@/pages/parent/ParentNotifications';
+import { ClarifyingQuestions } from '@/pages/parent/ClarifyingQuestions';
 
-// Child Pages
+// Parent Pages (lazy — large/heavy)
+const VoiceObservation = lazy(() => import('@/pages/parent/VoiceObservation').then((m) => ({ default: m.VoiceObservation })));
+const AIReview = lazy(() => import('@/pages/parent/AIReview').then((m) => ({ default: m.AIReview })));
+
+// Child Pages (eager)
 import { ChildHome } from '@/pages/child/ChildHome';
-import { ChildCards } from '@/pages/child/ChildCards';
 import { ChildFavorites } from '@/pages/child/ChildFavorites';
 import { ChildSpeak } from '@/pages/child/ChildSpeak';
-import { PhraseBuilderPage } from '@/pages/child/PhraseBuilderPage';
 import { CalmMode } from '@/pages/child/CalmMode';
 import { NowNext } from '@/pages/child/NowNext';
 import { ChildChoice } from '@/pages/child/ChildChoice';
@@ -34,6 +35,10 @@ import { ChildWater } from '@/pages/child/ChildWater';
 import { ChildFood } from '@/pages/child/ChildFood';
 import { ChildToilet } from '@/pages/child/ChildToilet';
 import { ChildCategoryPage } from '@/pages/child/ChildCategoryPage';
+
+// Child Pages (lazy — крупные)
+const ChildCards = lazy(() => import('@/pages/child/ChildCards').then((m) => ({ default: m.ChildCards })));
+const PhraseBuilderPage = lazy(() => import('@/pages/child/PhraseBuilderPage').then((m) => ({ default: m.PhraseBuilderPage })));
 
 // Tutor Pages
 import { TutorHome } from '@/pages/tutor/TutorHome';
@@ -51,7 +56,7 @@ import { CarePatterns } from '@/pages/specialist/CarePatterns';
 import { SupportPlan } from '@/pages/specialist/SupportPlan';
 import { Reports } from '@/pages/specialist/Reports';
 
-// Overview
+// Overview / Auth / Errors
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { VerifyPage } from '@/pages/auth/VerifyPage';
 import { Overview } from '@/pages/overview/Overview';
@@ -86,11 +91,11 @@ export const AppRoutes: React.FC = () => {
         />
         <Route
           path="/parent/voice"
-          element={<AppShell showNav={false}><VoiceObservation /></AppShell>}
+          element={<AppShell showNav={false}><Suspense fallback={<PageLoader />}><VoiceObservation /></Suspense></AppShell>}
         />
         <Route
           path="/parent/ai-review"
-          element={<AppShell showNav={false}><AIReview /></AppShell>}
+          element={<AppShell showNav={false}><Suspense fallback={<PageLoader />}><AIReview /></Suspense></AppShell>}
         />
         <Route
           path="/parent/clarify"
@@ -136,7 +141,7 @@ export const AppRoutes: React.FC = () => {
         />
         <Route
           path="/child/cards"
-          element={<AppShell><ChildCards /></AppShell>}
+          element={<AppShell><Suspense fallback={<PageLoader />}><ChildCards /></Suspense></AppShell>}
         />
         <Route
           path="/child/favorites"
@@ -148,7 +153,7 @@ export const AppRoutes: React.FC = () => {
         />
         <Route
           path="/child/phrase-builder"
-          element={<AppShell><PhraseBuilderPage /></AppShell>}
+          element={<AppShell><Suspense fallback={<PageLoader />}><PhraseBuilderPage /></Suspense></AppShell>}
         />
         <Route
           path="/child/calm"
