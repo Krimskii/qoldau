@@ -31,9 +31,13 @@ import { eventsRepo } from './repositories/events.js';
 import { recordingsRepo } from './repositories/recordings.js';
 import { llmService } from './services/llmService.js';
 import { realtimeService } from './services/realtimeService.js';
+import { sentry } from './services/sentry.js';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
+
+// v0.7.3: Sentry init ДО всех middleware (должен быть первым).
+sentry.init(app);
 
 // ===== Middleware =====
 // Helmet с CSP (v0.6.5). Frontend статический, разрешаем self + inline-style

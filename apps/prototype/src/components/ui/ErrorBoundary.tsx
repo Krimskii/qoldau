@@ -8,6 +8,7 @@ import React from 'react';
 import { AlertTriangle, RotateCw, Home } from 'lucide-react';
 import { QoldauCard } from './QoldauCard';
 import { AppIcon } from './AppIcon';
+import { sentry } from '@/utils/sentry';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -28,6 +29,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   override componentDidCatch(error: Error, info: React.ErrorInfo): void {
     // eslint-disable-next-line no-console
     console.error('[ErrorBoundary]', error, info);
+    sentry.captureException(error, { componentStack: info.componentStack });
   };
 
   private handleReset = () => {

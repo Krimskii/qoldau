@@ -18,7 +18,11 @@
       "Bash(sed -i 's/formatDuration\\(duration\\)/formatDuration\\(timer.seconds\\)/' /c/Users/user/qoldau/apps/prototype/src/pages/parent/VoiceObservation.tsx)",
       "Bash(grep -rl \"dark:\" src)",
       "Bash(grep -rl \"ThemeToggle\" src)",
-      "Bash(grep -rl \"DemoControlsCard\" src)"
+      "Bash(grep -rl \"DemoControlsCard\" src)",
+      "Bash(git diff *)",
+      "Read(//tmp/**)",
+      "Read(//c/Users/user/.claude/**)",
+      "Read(//c/Users/user/**)"
     ]
   }
 }
