@@ -2,6 +2,58 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.4] - 2026-07-02 (Skeleton + EmptyState + EventStore loading state)
+
+### Added
+- **`apps/prototype/src/components/ui/Skeleton.tsx`** — generic Skeleton с rounded variants (sm/md/lg/full/2xl/3xl) + EventCardSkeleton / EventListSkeleton / CardSkeleton готовые placeholder'ы.
+- **`EmptyState.tsx`** — гибкий: принимает Lucide-icon ИЛИ emoji-строку (для обратной совместимости). QoldauCard wrapper, опциональный CTA.
+- **`useEventStore`** — новые поля `isLoading: boolean`, `error: string | null` для skeleton/offline UX. `loadFromApi()` ставит isLoading=true → false.
+
+### Integration
+- **`EventTimeline.tsx`** — показывает `<EventListSkeleton count={4} />` пока `isLoading && events.length === 0`. EmptyState для пустого списка (уже был).
+- 4 файла обновлены под новый EmptyState API: `BehaviorSensory`, `CareDiary`, `EventTimeline`, `ParentNotifications`.
+
+### Verified
+- `npm run build` — 0 TS errors, 0 chunk warning.
+- 1695 modules transformed, 7.83s.
+
+## [0.6.3] - 2026-07-02 (Mobile, PWA, ErrorBoundary, 404, HealthCheck, rate-limit, Whisper)
+
+### Added — Mobile & PWA
+- **BottomNav safe-area** — `padding-bottom: max(env(safe-area-inset-bottom), 12px)` для iOS home indicator + horizontal safe-area на landscape.
+- **`public/manifest.webmanifest`** — PWA basics (standalone, theme-color #009688, scope /, lang=ru).
+- **`index.html`** — viewport-fit=cover, theme-color, apple-mobile-web-app-capable, OG tags, manifest link, apple-touch-icon.
+
+### Added — Quality
+- **`components/ui/ErrorBoundary.tsx`** — top-level React error boundary с reset/reload/home CTAs и details для технической ошибки.
+- **`pages/errors/NotFoundPage.tsx`** — 404 экран с CTA на landing + «Назад» (route `*` теперь не редирект).
+- **`components/ui/HealthCheckBanner.tsx`** — на landing poll `/api/health` каждые 30с, показывает API/DB/AI/STT статус с цветовой кодировкой.
+
+### Added — Backend hardening
+- **`express-rate-limit@^7.x`** — 10/15min на /api/auth/*, 30/min на /api/ai/*, 20/min на /api/stt/* (anti-bruteforce + cost control).
+- **`services/sttService.ts`** — opt-in OpenAI Whisper API через `WHISPER_API_KEY` (multipart upload, fetch без external SDK), mock fallback на фиксированный transcript.
+- **`routes/stt.ts`** — rewrite через sttService. `/api/stt/health` отдаёт `{enabled, mode, model}`.
+- **`routes/health.ts`** — добавлен AI/STT status (version 0.6.3, phase 3).
+
+### Added — Tests
+- **`vitest@^2.x` + `supertest`** — 16 smoke-тестов:
+  - `test/health.test.ts` — 5 тестов: /api/health status, db, ai, stt, cache
+  - `test/ai.test.ts` — 6 тестов: parse flow, mock fallback, empty transcript, clarification questions
+  - `test/auth.test.ts` — 7 тестов: magic-link issuance, JWT verify, double-use rejection, /me with/without JWT
+- `npm test` / `npm run test:watch`
+- 16/16 passed in 3.16s.
+
+### Changed — Code splitting
+- **`vite.config.ts`** — `manualChunks` разделяет react-vendor (179kB), icons-vendor, app-vendor (router/zustand), utils-vendor. Главный chunk: 524kB → 329kB (gzip 83kB). `chunkSizeWarningLimit: 700`.
+- **`useRoleStore`** — version 3, role values 'parent'/'child'/'tutor'/'specialist'/'overview' все валидны.
+- **`useEventStore`** — version 2, добавлен `isLoading`/`error` (но не персистятся).
+
+### Verified
+- `npm run build` (frontend) — 1694 modules, 0 TS errors, 7.93s. Main chunk 329.97kB, react-vendor 178.84kB.
+- `npm run typecheck` (backend) — 0 errors.
+- `npm test` (backend) — 16/16 passed.
+- Live `GET /api/health`: `{ok:true, version:"0.6.3", ai:{source:"mock"}, stt:{source:"mock"}}`.
+
 ## [0.6.0] - 2026-07-02 (Real integrations: Web Speech API + Anthropic Claude + magic-link auth)
 
 ### Added - Web Speech API (real STT in browser)
