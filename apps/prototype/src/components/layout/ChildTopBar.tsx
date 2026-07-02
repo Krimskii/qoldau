@@ -60,7 +60,7 @@ export const ChildTopBar: React.FC<ChildTopBarProps> = ({
   return (
     <>
       <header
-        className={clsx('flex items-center gap-3 px-5 pt-3 pb-1.5', className)}
+        className={clsx('flex items-center gap-3 px-5 pt-2 pb-1.5', className)}
       >
         {/* Avatar */}
         <div

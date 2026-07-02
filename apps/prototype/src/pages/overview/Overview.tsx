@@ -69,7 +69,7 @@ export const Overview: React.FC = () => {
   const handleLogin = () => navigate('/auth/login');
 
   const safeTopStyle: React.CSSProperties = {
-    paddingTop: 'max(env(safe-area-inset-top), 0px)',
+    paddingTop: 'max(env(safe-area-inset-top), 12px)',
   };
 
   const FLOW_STEPS = [
@@ -83,7 +83,7 @@ export const Overview: React.FC = () => {
   return (
     <div className="min-h-screen bg-bg" style={safeTopStyle}>
       {/* Top bar */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-line-soft sticky top-0 z-30">
+      <header className="bg-white/80 backdrop-blur-md border-b border-line-soft">
         <div className="max-w-[1100px] mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center shadow-card">

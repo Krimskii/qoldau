@@ -13,7 +13,9 @@
       "Bash(echo \"exit=$?\")",
       "Bash(npx tsc *)",
       "Bash(rm -rf node_modules/.tmp *.tsbuildinfo)",
-      "Bash(find . -name \"*.tsbuildinfo\")"
+      "Bash(find . -name \"*.tsbuildinfo\")",
+      "Bash(sed -i 's/\\\\bisRecording\\\\b/timer.isActive/g' /c/Users/user/qoldau/apps/prototype/src/pages/parent/VoiceObservation.tsx)",
+      "Bash(sed -i 's/formatDuration\\(duration\\)/formatDuration\\(timer.seconds\\)/' /c/Users/user/qoldau/apps/prototype/src/pages/parent/VoiceObservation.tsx)"
     ]
   }
 }

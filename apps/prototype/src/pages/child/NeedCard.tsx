@@ -5,6 +5,8 @@ import { BackArrowIcon } from '@/components/icons/child2d';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { layout } from '@/styles/tokens';
+import { useElapsedTimer } from '@/hooks/useElapsedTimer';
+import { formatDuration } from '@/utils/formatDuration';
 
 /** Грамматическая функция слова (определяет цвет плитки-иконки). */
 export type WordFunc = 'pron' | 'verb' | 'noun' | 'soc';
@@ -39,12 +41,6 @@ const FUNC_STYLES: Record<WordFunc, { bg: string; text: string; iconColor: strin
   verb: { bg: '#e9f4ee', text: '#2a6647', iconColor: '#3f9a6a' },
   noun: { bg: '#f4ede2', text: '#6f5228', iconColor: '#b0864a' },
   soc:  { bg: '#eeecf7', text: '#564a86', iconColor: '#8172bd' },
-};
-
-const formatTime = (s: number) => {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 };
 
 /**
@@ -84,10 +80,8 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
   const [removing, setRemoving] = useState<string | null>(null);
   const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Mic state
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const recordIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Mic state (no auto-stop — пользователь сам решает, когда сказать)
+  const mic = useElapsedTimer();
 
   // Success overlay
   const [showSuccess, setShowSuccess] = useState(false);
@@ -95,23 +89,8 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
   useEffect(() => {
     return () => {
       if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
-      if (recordIntervalRef.current) clearInterval(recordIntervalRef.current);
     };
   }, []);
-
-  // Recording timer (no auto-stop — пользователь сам решает, когда сказать)
-  useEffect(() => {
-    if (!isRecording) {
-      if (recordIntervalRef.current) clearInterval(recordIntervalRef.current);
-      return;
-    }
-    recordIntervalRef.current = setInterval(() => {
-      setRecordingTime((t) => t + 1);
-    }, 1000);
-    return () => {
-      if (recordIntervalRef.current) clearInterval(recordIntervalRef.current);
-    };
-  }, [isRecording]);
 
   /** Toggle: tap → add с speak-pulse, tap again → fade-out. */
   const toggleWord = (text: string) => {
@@ -141,15 +120,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
     setRemoving(null);
   };
 
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
-  };
-  const stopRecording = () => {
-    if (recordIntervalRef.current) clearInterval(recordIntervalRef.current);
-    setIsRecording(false);
-  };
-  const toggleMic = () => (isRecording ? stopRecording() : startRecording());
+  const toggleMic = () => (mic.isActive ? mic.stop() : mic.start());
 
   const handleYes = () => {
     const phraseText = phrase.length > 0 ? phrase.join(' ') : '';

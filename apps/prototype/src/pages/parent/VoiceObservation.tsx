@@ -141,21 +141,21 @@ export const VoiceObservation: React.FC = () => {
         {/* Большая кнопка-микрофон */}
         {!hasTranscript && (
           <button
-            onClick={isRecording ? handleStop : handleStart}
-            aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
+            onClick={timer.isActive ? handleStop : handleStart}
+            aria-label={timer.isActive ? 'Остановить запись' : 'Начать запись'}
             className={`w-48 h-48 rounded-full flex items-center justify-center transition-all active:scale-95 ${
-              isRecording
+              timer.isActive
                 ? 'bg-gradient-to-br from-coral to-[#cc251d] qoldau-rec-pulse'
                 : 'bg-gradient-to-br from-teal to-teal-dark'
             }`}
             style={{
-              boxShadow: isRecording
+              boxShadow: timer.isActive
                 ? '0 0 0 20px rgba(229,111,93,0.10), 0 0 0 40px rgba(229,111,93,0.05), 0 24px 40px rgba(229,111,93,0.30)'
                 : '0 0 0 20px rgba(0,150,136,0.08), 0 0 0 40px rgba(0,150,136,0.045), 0 24px 40px rgba(0,150,136,0.25)',
             }}
           >
             <AppIcon
-              component={isRecording ? MicOff : Mic}
+              component={timer.isActive ? MicOff : Mic}
               size={84}
               strokeWidth={2.5}
               colorClass="text-white"
@@ -164,11 +164,11 @@ export const VoiceObservation: React.FC = () => {
         )}
 
         {/* Волна + таймер */}
-        {isRecording && (
+        {timer.isActive && (
           <div className="flex flex-col items-center gap-3 w-full">
             <VoiceWave />
             <div className="text-4xl font-black text-ink tabular-nums">
-              {formatDuration(duration)}
+              {formatDuration(timer.seconds)}
             </div>
             <p className="text-sm text-muted">
               Идёт запись… нажмите кнопку ещё раз, чтобы остановить
@@ -177,7 +177,7 @@ export const VoiceObservation: React.FC = () => {
         )}
 
         {/* Idle — что будет записано */}
-        {!isRecording && !hasTranscript && (
+        {!timer.isActive && !hasTranscript && (
           <div className="text-center">
             <p className="text-sm text-ink-2 leading-relaxed max-w-xs">
               Нажмите на кнопку и расскажите, что произошло.
@@ -187,7 +187,7 @@ export const VoiceObservation: React.FC = () => {
         )}
 
         {/* Live transcript preview (пока запись идёт) */}
-        {isRecording && speech.transcript && (
+        {timer.isActive && speech.transcript && (
           <QoldauCard variant="tinted-teal" padding="md" className="w-full">
             <div className="flex items-start gap-2">
               <AppIcon component={Mic} size={18} colorClass="text-teal shrink-0 mt-0.5" />
@@ -199,7 +199,7 @@ export const VoiceObservation: React.FC = () => {
         )}
 
         {/* STT error */}
-        {speech.error && !isRecording && (
+        {speech.error && !timer.isActive && (
           <QoldauCard variant="tinted-warm" padding="sm" className="w-full">
             <div className="flex items-center gap-2">
               <AppIcon component={AlertCircle} size={16} colorClass="text-coral" />
@@ -258,7 +258,7 @@ export const VoiceObservation: React.FC = () => {
       </div>
 
       {/* Idle actions — выбор режима */}
-      {!isRecording && !hasTranscript && (
+      {!timer.isActive && !hasTranscript && (
         <div className="flex flex-col gap-2">
           <PrimaryAction
             label="Использовать demo-текст"
@@ -325,7 +325,7 @@ export const VoiceObservation: React.FC = () => {
       )}
 
       {/* Примеры */}
-      {!isRecording && !hasTranscript && (
+      {!timer.isActive && !hasTranscript && (
         <QoldauCard variant="tinted-warm" padding="md">
           <p className="text-xs font-bold text-muted mb-2">Примеры наблюдений</p>
           <div className="flex flex-col gap-1.5">

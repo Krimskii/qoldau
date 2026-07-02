@@ -48,8 +48,10 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
   const maxWidthClass = isSpecialist ? 'max-w-[1100px]' : 'max-w-[430px]';
 
   // safe-area: top padding под status bar (iOS notch, Android status bar).
+  // Минимум 12px — чтобы top bar не прилипал к верху на desktop/обычных браузерах,
+  // где env(safe-area-inset-top) = 0. На iOS PWA/Android — больше из safe-area.
   const safeTopStyle: React.CSSProperties = {
-    paddingTop: 'max(env(safe-area-inset-top), 0px)',
+    paddingTop: 'max(env(safe-area-inset-top), 12px)',
   };
 
   return (
@@ -59,13 +61,13 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
       >
         {/* Header — child role gets avatar+brand TopBar, others get standard */}
         {isChild ? (
-          <div style={safeTopStyle} className="bg-bg/85 backdrop-blur-md sticky top-0 z-30">
+          <div style={safeTopStyle} className="bg-bg/85 backdrop-blur-md">
             <ChildTopBar />
           </div>
         ) : (
           <header
             style={safeTopStyle}
-            className="sticky top-0 z-30 bg-bg/85 backdrop-blur-md px-5 pt-4 pb-3 flex items-center justify-between border-b border-line-soft"
+            className="bg-bg/85 backdrop-blur-md px-5 pt-4 pb-3 flex items-center justify-between border-b border-line-soft"
           >
             <div>
               <p className="text-xs text-muted leading-none mb-0.5">Qoldau AI</p>
