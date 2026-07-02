@@ -7,31 +7,14 @@
 import React, { useEffect, useState } from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { AppIcon } from './AppIcon';
-
-type Theme = 'light' | 'dark' | 'system';
-
-const STORAGE_KEY = 'qoldau-theme-v1';
-
-function applyTheme(theme: Theme) {
-  const root = document.documentElement;
-  const isDark =
-    theme === 'dark' ||
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  root.classList.toggle('dark', isDark);
-}
-
-function loadTheme(): Theme {
-  if (typeof window === 'undefined') return 'system';
-  const saved = localStorage.getItem(STORAGE_KEY) as Theme | null;
-  return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system';
-}
+import { applyTheme, loadTheme, saveTheme, type Theme } from '@/utils/theme';
 
 export const ThemeToggle: React.FC<{ className?: string }> = ({ className }) => {
   const [theme, setTheme] = useState<Theme>(() => loadTheme());
 
   useEffect(() => {
     applyTheme(theme);
-    localStorage.setItem(STORAGE_KEY, theme);
+    saveTheme(theme);
   }, [theme]);
 
   // Слушаем системные изменения

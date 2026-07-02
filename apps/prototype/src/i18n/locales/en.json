@@ -7,7 +7,18 @@
     "login": "Sign in",
     "logout": "Sign out",
     "loginTitle": "Sign in",
-    "loginSubtitle": "Sign in to Qoldau"
+    "loginSubtitle": "Sign in to Qoldau",
+    "loginEmail": "Email",
+    "loginEmailPlaceholder": "parent@example.com",
+    "loginError": "Backend unavailable. Auth requires connected API.",
+    "magicLinkSent": "Magic-link created",
+    "magicLinkHint": "In demo mode, the link is shown below. In production, it will be sent to {email}.",
+    "verifyTitle": "Verification",
+    "verifySubtitle": "Finishing sign-in",
+    "verifying": "Verifying token…",
+    "verifySuccess": "Done!",
+    "verifySuccessHint": "You're signed in to Qoldau.",
+    "verifyError": "Sign-in failed"
   },
   "landing": {
     "heroTitle1": "Child sent a signal —",
@@ -52,6 +63,87 @@
     "checking": "checking…",
     "backendDown": "Backend unavailable. App is running in demo mode."
   },
+  "demoControls": {
+    "title": "Demo data",
+    "description": "Reset restores 3 children, 13 events, parent role.",
+    "reset": "Reset",
+    "resetDone": "{count} events · {time}"
+  },
+  "demo": {
+    "exit": "Exit",
+    "closeAria": "Close demo",
+    "expand": "Expand demo panel",
+    "collapse": "Collapse demo panel",
+    "previous": "Back",
+    "next": "Next",
+    "finish": "Finish demo"
+  },
+  "parent": {
+    "home": {"title": "Home", "subtitle": "What's happening now"},
+    "voice": {"title": "Voice observation", "subtitle": "Record what happened — AI structures"},
+    "aiReview": {"title": "AI review", "subtitle": "Review and confirm"},
+    "clarify": {"title": "Clarifying", "subtitle": "Help AI understand better"},
+    "events": {"title": "Events", "subtitle": "All observations in one place"},
+    "care": {"title": "Care diary", "subtitle": "Food, water, sleep, toilet"},
+    "behavior": {"title": "Behavior & sensory", "subtitle": "Reactions, patterns"},
+    "assistant": {"title": "AI assistant", "subtitle": "Ask anything about your child"},
+    "analytics": {"title": "Analytics", "subtitle": "Trends and patterns"},
+    "profile": {"title": "Profile", "subtitle": "Settings and data"},
+    "notifications": {"title": "Notifications", "subtitle": "What's new"}
+  },
+  "child": {
+    "home": {"title": "Home", "greeting": "Hi!"},
+    "cards": {"title": "Cards", "subtitle": "Pick what you want"},
+    "favorites": {"title": "Favorites", "subtitle": "Things I like"},
+    "speak": {"title": "Speak", "subtitle": "Press and talk", "press": "Press and talk", "recording": "Recording… press again to stop", "noRecordings": "No recordings yet"},
+    "phraseBuilder": {"title": "Build a phrase"},
+    "calm": {"title": "Calm mode", "subtitle": "I'm safe"},
+    "nowNext": {"title": "Now and next"},
+    "choice": {"title": "Choose from options"},
+    "interfaceGuide": {"title": "What matters in the interface"},
+    "call": {"title": "Call"},
+    "progress": {"title": "My progress"},
+    "needWater": {"title": "Drink", "subtitle": "I want water"},
+    "needFood": {"title": "Eat", "subtitle": "I want food"},
+    "needToilet": {"title": "Toilet", "subtitle": "I need toilet"}
+  },
+  "tutor": {
+    "home": {"title": "Tutor home", "subtitle": "Quick observations"},
+    "voice": {"title": "Observation recording"},
+    "aiReview": {"title": "AI review"},
+    "report": {"title": "Tutor report", "subtitle": "Ready report for parent"},
+    "childProfile": {"title": "Child profile"}
+  },
+  "specialist": {
+    "dashboard": {"title": "Specialist dashboard", "subtitle": "KPI and patterns"},
+    "events": {"title": "Events"},
+    "abc": {"title": "ABC analysis"},
+    "communication": {"title": "Communication profile"},
+    "patterns": {"title": "Care patterns"},
+    "supportPlan": {"title": "Support plan"},
+    "reports": {"title": "Reports"}
+  },
+  "nav": {
+    "home": "Home",
+    "events": "Events",
+    "voice": "Voice",
+    "report": "Report",
+    "analytics": "Analytics",
+    "profile": "Profile",
+    "cards": "Cards",
+    "speak": "Speak",
+    "abc": "ABC",
+    "addObservation": "Add observation",
+    "exit": "Exit"
+  },
+  "exit": {
+    "parentTitle": "Exit to start screen?",
+    "parentHint": "Switching user. Local data is preserved.",
+    "childTitle": "Exit child mode?",
+    "childHint": "Returning to start screen to choose parent, tutor or specialist.",
+    "stay": "Stay",
+    "leave": "Exit"
+  },
   "common": {
     "back": "Back",
     "home": "Home",
@@ -61,6 +153,19 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
-    "close": "Close"
+    "close": "Close",
+    "confirm": "Confirm",
+    "loading": "Loading…",
+    "backToHome": "Home"
+  },
+  "errors": {
+    "notFoundTitle": "404",
+    "notFoundMessage": "Page not found",
+    "notFoundHint": "The link may be outdated or you followed an incorrect URL.",
+    "boundaryTitle": "Something broke",
+    "boundaryMessage": "An error occurred in the app. Try refreshing the page or returning home.",
+    "boundaryDetails": "Technical details",
+    "boundaryReload": "Refresh page",
+    "boundaryReset": "Reset"
   }
 }

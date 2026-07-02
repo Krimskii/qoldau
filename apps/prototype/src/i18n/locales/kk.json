@@ -7,7 +7,18 @@
     "login": "Кіру",
     "logout": "Шығу",
     "loginTitle": "Кіру",
-    "loginSubtitle": "Qoldau-ға кіру"
+    "loginSubtitle": "Qoldau-ға кіру",
+    "loginEmail": "Email",
+    "loginEmailPlaceholder": "parent@example.com",
+    "loginError": "Backend қолжетімсіз. Auth тек қосылған API-мен жұмыс істейді.",
+    "magicLinkSent": "Magic-link жасалды",
+    "magicLinkHint": "Demo-режимде сілтеме төменде. Production-да ол {email} поштасына келеді.",
+    "verifyTitle": "Растау",
+    "verifySubtitle": "Кіруді аяқтаймыз",
+    "verifying": "Токенді тексерудеміз…",
+    "verifySuccess": "Дайын!",
+    "verifySuccessHint": "Сіз Qoldau-ға кірдіңіз.",
+    "verifyError": "Кіру мүмкін болмады"
   },
   "landing": {
     "heroTitle1": "Бала белгі берді —",
@@ -52,6 +63,87 @@
     "checking": "тексеру…",
     "backendDown": "Backend қолжетімсіз. Қолданба demo-режимде жұмыс істейді."
   },
+  "demoControls": {
+    "title": "Demo-деректер",
+    "description": "Қалпына келтіру 3 баланы, 13 оқиғаны, ата-ана рөлін қайтарады.",
+    "reset": "Қалпына келтіру",
+    "resetDone": "{count} оқиға · {time}"
+  },
+  "demo": {
+    "exit": "Шығу",
+    "closeAria": "Демоны жабу",
+    "expand": "Демо-панельді жаю",
+    "collapse": "Демо-панельді жию",
+    "previous": "Артқа",
+    "next": "Әрі қарай",
+    "finish": "Демоны аяқтау"
+  },
+  "parent": {
+    "home": {"title": "Басты бет", "subtitle": "Қазір не болып жатыр"},
+    "voice": {"title": "Дауыстық бақылау", "subtitle": "Не болғанын жазыңыз — AI құрылымдайды"},
+    "aiReview": {"title": "AI-талдау", "subtitle": "Тексеріп, растаңыз"},
+    "clarify": {"title": "Нақтылаймыз", "subtitle": "AI-ға дәлірек түсінуге көмектесіңіз"},
+    "events": {"title": "Оқиғалар", "subtitle": "Барлық бақылаулар бір жерде"},
+    "care": {"title": "Күтім күнделігі", "subtitle": "Тамақ, су, ұйықтау, дәретхана"},
+    "behavior": {"title": "Мінез-құлық және сенсорика", "subtitle": "Реакциялар, үлгілер"},
+    "assistant": {"title": "AI-көмекші", "subtitle": "Балаңыз туралы кез-келген нәрсе сұраңыз"},
+    "analytics": {"title": "Аналитика", "subtitle": "Трендтер мен үлгілер"},
+    "profile": {"title": "Профиль", "subtitle": "Баптаулар мен деректер"},
+    "notifications": {"title": "Хабарламалар", "subtitle": "Жаңалықтар"}
+  },
+  "child": {
+    "home": {"title": "Басты бет", "greeting": "Сәлем!"},
+    "cards": {"title": "Карточкалар", "subtitle": "Не қалайтыныңды таңда"},
+    "favorites": {"title": "Таңдаулылар", "subtitle": "Мен жақсы көретін нәрселер"},
+    "speak": {"title": "Айту", "subtitle": "Басып, сөйле", "press": "Басып, сөйле", "recording": "Жазу жүріп жатыр… тоқтату үшін қайта басыңыз", "noRecordings": "Әзірше жазбалар жоқ"},
+    "phraseBuilder": {"title": "Сөйлем құрастыру"},
+    "calm": {"title": "Тыныш режим", "subtitle": "Мен қауіпсізбін"},
+    "nowNext": {"title": "Қазір және кейін"},
+    "choice": {"title": "Нұсқалардан таңдау"},
+    "interfaceGuide": {"title": "Интерфейсте не маңызды"},
+    "call": {"title": "Шақыру"},
+    "progress": {"title": "Менің прогрессім"},
+    "needWater": {"title": "Су ішу", "subtitle": "Су ішкім келеді"},
+    "needFood": {"title": "Тамақ ішу", "subtitle": "Тамақ ішкім келеді"},
+    "needToilet": {"title": "Дәретхана", "subtitle": "Дәретханаға барғым келеді"}
+  },
+  "tutor": {
+    "home": {"title": "Тьютор басты беті", "subtitle": "Жылдам бақылаулар"},
+    "voice": {"title": "Бақылау жазу"},
+    "aiReview": {"title": "AI-талдау"},
+    "report": {"title": "Тьютор есебі", "subtitle": "Ата-анаға дайын есеп"},
+    "childProfile": {"title": "Бала профилі"}
+  },
+  "specialist": {
+    "dashboard": {"title": "Маман панелі", "subtitle": "KPI және үлгілер"},
+    "events": {"title": "Оқиғалар"},
+    "abc": {"title": "ABC-талдау"},
+    "communication": {"title": "Коммуникация профилі"},
+    "patterns": {"title": "Күтім үлгілері"},
+    "supportPlan": {"title": "Қолдау жоспары"},
+    "reports": {"title": "Есептер"}
+  },
+  "nav": {
+    "home": "Басты бет",
+    "events": "Оқиғалар",
+    "voice": "Дауыс",
+    "report": "Есеп",
+    "analytics": "Аналитика",
+    "profile": "Профиль",
+    "cards": "Карточкалар",
+    "speak": "Айту",
+    "abc": "ABC",
+    "addObservation": "Бақылау қосу",
+    "exit": "Шығу"
+  },
+  "exit": {
+    "parentTitle": "Басты экранға шығу?",
+    "parentHint": "Пайдаланушыны ауыстырамыз. Деректер сақталады.",
+    "childTitle": "Бала режимінен шығу?",
+    "childHint": "Ата-ананы, тьюторды немесе маманды таңдау үшін басты бетке ораламыз.",
+    "stay": "Қалу",
+    "leave": "Шығу"
+  },
   "common": {
     "back": "Артқа",
     "home": "Басты бетке",
@@ -61,6 +153,19 @@
     "cancel": "Болдырмау",
     "delete": "Жою",
     "edit": "Өңдеу",
-    "close": "Жабу"
+    "close": "Жабу",
+    "confirm": "Растау",
+    "loading": "Жүктеу…",
+    "backToHome": "Басты бетке"
+  },
+  "errors": {
+    "notFoundTitle": "404",
+    "notFoundMessage": "Бет табылмады",
+    "notFoundHint": "Сілтеме ескірген болуы мүмкін немесе сіз қате мекенжайға өттіңіз.",
+    "boundaryTitle": "Бірдеңе бұзылды",
+    "boundaryMessage": "Қолданбада қателік орын алды. Бетті жаңартып көріңіз немесе басты бетке оралыңыз.",
+    "boundaryDetails": "Техникалық мәліметтер",
+    "boundaryReload": "Бетті жаңарту",
+    "boundaryReset": "Қалпына келтіру"
   }
 }

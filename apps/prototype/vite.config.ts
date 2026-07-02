@@ -15,7 +15,9 @@ export default defineConfig({
     // В dev отключён чтобы не мешать HMR.
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      // null instead of 'auto': registration is gated in src/main.tsx so the
+      // Capacitor/Android build (native WebView, no need for a browser SW) skips it.
+      injectRegister: null,
       includeAssets: ['qoldau-logo.svg', 'manifest.webmanifest'],
       manifest: false, // используем свой manifest.webmanifest
       workbox: {

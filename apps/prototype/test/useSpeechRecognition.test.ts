@@ -32,7 +32,7 @@ describe('useSpeechRecognition', () => {
       result.current.start();
     });
     // Дать mock'у выстрелить onstart через setTimeout(0)
-    await new Promise((r) => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 50));
     expect(result.current.isListening).toBe(true);
   });
 
@@ -41,11 +41,11 @@ describe('useSpeechRecognition', () => {
     act(() => {
       result.current.start();
     });
-    await new Promise((r) => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 50));
     act(() => {
       result.current.stop();
     });
-    await new Promise((r) => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 50));
     expect(result.current.isListening).toBe(false);
   });
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bell, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
@@ -7,6 +8,7 @@ import { useRoleStore } from '@/store/useRoleStore';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import type { UserRole } from '@/types/qoldau';
+import { applyTheme, loadTheme } from '@/utils/theme';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -14,20 +16,32 @@ interface AppShellProps {
 }
 
 /**
- * AppShell — phone-like layout (v0.6.2).
+ * AppShell — phone-like layout (v0.7.1).
  * - Mobile: full width, safe-area-inset-top padding для status bar.
  * - Desktop: max-width 430 (phone panel) для parent/child
  *           max-width 1100 (tablet) для specialist.
  * - Soft background, white cards, centered.
  *
- * v0.6.2: landing /overview восстановлен.
- * v0.6.11: кнопка выхода в header (parent/tutor) — аналогично ChildTopBar.
+ * v0.7.1: i18n через useTranslation.
  */
 export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) => {
+  const { t } = useTranslation();
   const { currentRole, setRole } = useRoleStore();
   const navigate = useNavigate();
   const { events } = useEventStore();
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+
+  // Тёмная тема не должна протекать в детский интерфейс (сенсорная безопасность,
+  // SENSORY_SAFE_DESIGN_GUIDE.md требует нейтральный/светлый фон) — html.dark
+  // персистентен между роутами, поэтому форсим светлую тему для child и
+  // восстанавливаем реальную настройку пользователя при выходе из этой роли.
+  useEffect(() => {
+    if (currentRole === 'child') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      applyTheme(loadTheme());
+    }
+  }, [currentRole]);
 
   // currentRole === 'overview' → пользователь на landing, не в роли.
   if (currentRole === 'overview') {
@@ -61,6 +75,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
     navigate('/overview');
   };
 
+  const roleLabel = normalizedRole === 'parent' ? t('landing.roleParent') : t('landing.roleTutor');
+
   return (
     <div className="min-h-screen bg-bg flex justify-center">
       <div
@@ -79,14 +95,14 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
             <div>
               <p className="text-xs text-muted leading-none mb-0.5">Qoldau AI</p>
               <p className="text-sm font-black text-ink leading-none">
-                {normalizedRole === 'parent' ? 'Родитель' : 'Тьютор'}
+                {roleLabel}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => navigate('/parent/notifications')}
                 className="relative w-11 h-11 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft"
-                aria-label="Уведомления"
+                aria-label={t('parent.notifications.title')}
               >
                 <Bell className="w-4 h-4 text-ink" />
                 {notifCount > 0 && (
@@ -99,8 +115,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
               <button
                 onClick={() => setExitConfirmOpen(true)}
                 className="w-11 h-11 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-coral-soft hover:text-coral transition-colors shadow-card-soft"
-                aria-label="Выйти на начальный экран"
-                title="Выйти на начальный экран"
+                aria-label={t('nav.exit')}
+                title={t('nav.exit')}
               >
                 <LogOut className="w-4 h-4 text-ink-soft" />
               </button>
@@ -121,7 +137,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
             className="fixed inset-0 z-[95] flex items-center justify-center px-5 bg-ink/50 backdrop-blur-sm"
             role="dialog"
             aria-modal="true"
-            aria-label="Выйти на начальный экран?"
+            aria-label={t('exit.parentTitle')}
             onClick={() => setExitConfirmOpen(false)}
           >
             <div
@@ -132,23 +148,23 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
                 <LogOut className="w-7 h-7 text-coral" />
               </div>
               <h3 className="text-lg font-black text-ink text-center mb-1">
-                Выйти на начальный экран?
+                {t('exit.parentTitle')}
               </h3>
               <p className="text-sm text-muted text-center mb-5 leading-relaxed">
-                Сменим пользователя. Локальные данные сохранятся.
+                {t('exit.parentHint')}
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setExitConfirmOpen(false)}
                   className="flex-1 py-3 rounded-2xl border-2 border-line text-ink font-bold text-sm hover:bg-bg transition-colors"
                 >
-                  Остаться
+                  {t('exit.stay')}
                 </button>
                 <button
                   onClick={handleExit}
                   className="flex-1 py-3 rounded-2xl text-white font-black text-sm transition-transform active:scale-[0.97] bg-gradient-to-br from-coral to-[#cc251d] shadow-card hover:shadow-card-hover"
                 >
-                  Выйти
+                  {t('exit.leave')}
                 </button>
               </div>
             </div>

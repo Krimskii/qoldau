@@ -7,7 +7,18 @@
     "login": "Войти",
     "logout": "Выйти",
     "loginTitle": "Вход",
-    "loginSubtitle": "Войти в Qoldau"
+    "loginSubtitle": "Войти в Qoldau",
+    "loginEmail": "Email",
+    "loginEmailPlaceholder": "parent@example.com",
+    "loginError": "Backend недоступен. Auth работает только при подключённом API.",
+    "magicLinkSent": "Magic-link создан",
+    "magicLinkHint": "В demo-режиме ссылка показана ниже. В production она придёт на {email}.",
+    "verifyTitle": "Подтверждение",
+    "verifySubtitle": "Завершаем вход",
+    "verifying": "Проверяем токен…",
+    "verifySuccess": "Готово!",
+    "verifySuccessHint": "Вы вошли в Qoldau.",
+    "verifyError": "Не удалось войти"
   },
   "landing": {
     "heroTitle1": "Ребёнок дал сигнал —",
@@ -52,6 +63,186 @@
     "checking": "проверка…",
     "backendDown": "Backend недоступен. Приложение работает в demo-режиме."
   },
+  "demoControls": {
+    "title": "Demo-данные",
+    "description": "Сброс восстанавливает 3 ребёнка, 13 событий, родительскую роль.",
+    "reset": "Сбросить",
+    "resetDone": "{count} событий · {time}"
+  },
+  "demo": {
+    "exit": "Выйти",
+    "closeAria": "Закрыть демо",
+    "expand": "Развернуть демо-панель",
+    "collapse": "Свернуть демо-панель",
+    "previous": "Назад",
+    "next": "Далее",
+    "finish": "Завершить демо"
+  },
+  "parent": {
+    "home": {
+      "title": "Главная",
+      "subtitle": "Что происходит сейчас"
+    },
+    "voice": {
+      "title": "Голосовое наблюдение",
+      "subtitle": "Запишите, что произошло — AI структурирует"
+    },
+    "aiReview": {
+      "title": "AI-разбор",
+      "subtitle": "Проверьте и подтвердите"
+    },
+    "clarify": {
+      "title": "Уточняем",
+      "subtitle": "Помогите AI точнее понять"
+    },
+    "events": {
+      "title": "События",
+      "subtitle": "Все наблюдения в одном месте"
+    },
+    "care": {
+      "title": "Дневник ухода",
+      "subtitle": "Питание, вода, сон, туалет"
+    },
+    "behavior": {
+      "title": "Поведение и сенсорика",
+      "subtitle": "Реакции, паттерны"
+    },
+    "assistant": {
+      "title": "AI-помощник",
+      "subtitle": "Спросите что угодно о вашем ребёнке"
+    },
+    "analytics": {
+      "title": "Аналитика",
+      "subtitle": "Тренды и паттерны"
+    },
+    "profile": {
+      "title": "Профиль",
+      "subtitle": "Настройки и данные"
+    },
+    "notifications": {
+      "title": "Уведомления",
+      "subtitle": "Что нового"
+    }
+  },
+  "child": {
+    "home": {
+      "title": "Главная",
+      "greeting": "Привет!"
+    },
+    "cards": {
+      "title": "Карточки",
+      "subtitle": "Выбери что хочешь"
+    },
+    "favorites": {
+      "title": "Любимые",
+      "subtitle": "Что я люблю"
+    },
+    "speak": {
+      "title": "Сказать",
+      "subtitle": "Нажми и говори",
+      "press": "Нажми и говори",
+      "recording": "Идёт запись… нажми ещё раз, чтобы остановить",
+      "noRecordings": "Пока нет записей"
+    },
+    "phraseBuilder": {
+      "title": "Собрать фразу"
+    },
+    "calm": {
+      "title": "Спокойный режим",
+      "subtitle": "Я в безопасности"
+    },
+    "nowNext": {
+      "title": "Сейчас и потом"
+    },
+    "choice": {
+      "title": "Выбрать из вариантов"
+    },
+    "interfaceGuide": {
+      "title": "Что важно в интерфейсе"
+    },
+    "call": {
+      "title": "Позвать"
+    },
+    "progress": {
+      "title": "Мой прогресс"
+    },
+    "needWater": {
+      "title": "Попить",
+      "subtitle": "Хочу водичку"
+    },
+    "needFood": {
+      "title": "Поесть",
+      "subtitle": "Хочу кушать"
+    },
+    "needToilet": {
+      "title": "Туалет",
+      "subtitle": "Хочу в туалет"
+    }
+  },
+  "tutor": {
+    "home": {
+      "title": "Главная тьютора",
+      "subtitle": "Быстрые наблюдения"
+    },
+    "voice": {
+      "title": "Запись наблюдения"
+    },
+    "aiReview": {
+      "title": "AI-разбор"
+    },
+    "report": {
+      "title": "Отчёт тьютора",
+      "subtitle": "Готовый отчёт для родителя"
+    },
+    "childProfile": {
+      "title": "Профиль ребёнка"
+    }
+  },
+  "specialist": {
+    "dashboard": {
+      "title": "Панель специалиста",
+      "subtitle": "KPI и паттерны"
+    },
+    "events": {
+      "title": "События"
+    },
+    "abc": {
+      "title": "ABC-анализ"
+    },
+    "communication": {
+      "title": "Профиль коммуникации"
+    },
+    "patterns": {
+      "title": "Паттерны ухода"
+    },
+    "supportPlan": {
+      "title": "План поддержки"
+    },
+    "reports": {
+      "title": "Отчёты"
+    }
+  },
+  "nav": {
+    "home": "Главная",
+    "events": "События",
+    "voice": "Голос",
+    "report": "Отчёт",
+    "analytics": "Аналитика",
+    "profile": "Профиль",
+    "cards": "Карточки",
+    "speak": "Сказать",
+    "abc": "ABC",
+    "addObservation": "Добавить наблюдение",
+    "exit": "Выйти"
+  },
+  "exit": {
+    "parentTitle": "Выйти на начальный экран?",
+    "parentHint": "Сменим пользователя. Локальные данные сохранятся.",
+    "childTitle": "Выйти из режима Ребёнок?",
+    "childHint": "Вернёмся на стартовую страницу, чтобы выбрать родителя, тьютора или специалиста.",
+    "stay": "Остаться",
+    "leave": "Выйти"
+  },
   "common": {
     "back": "Назад",
     "home": "На главную",
@@ -61,6 +252,19 @@
     "cancel": "Отмена",
     "delete": "Удалить",
     "edit": "Редактировать",
-    "close": "Закрыть"
+    "close": "Закрыть",
+    "confirm": "Подтвердить",
+    "loading": "Загружаем…",
+    "backToHome": "На главную"
+  },
+  "errors": {
+    "notFoundTitle": "404",
+    "notFoundMessage": "Страница не найдена",
+    "notFoundHint": "Возможно, ссылка устарела или вы перешли по неправильному адресу.",
+    "boundaryTitle": "Что-то сломалось",
+    "boundaryMessage": "Произошла ошибка в приложении. Попробуйте обновить страницу или вернуться на главную.",
+    "boundaryDetails": "Технические детали",
+    "boundaryReload": "Обновить страницу",
+    "boundaryReset": "Сброс"
   }
 }
