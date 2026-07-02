@@ -33,21 +33,10 @@ jobs:
   backend:
     name: Backend (apps/api)
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: qoldau
-          POSTGRES_PASSWORD: qoldau
-          POSTGRES_DB: qoldau_test
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U qoldau"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    # Phase 1: SQLite в dev/demo (см. apps/api/prisma/schema.prisma).
+    # Phase 2: переключить schema на postgresql + вернуть postgres service.
     env:
-      DATABASE_URL: postgresql://qoldau:qoldau@localhost:5432/qoldau_test
+      DATABASE_URL: file:./prisma/test.db
       JWT_SECRET: test-secret-ci
       NODE_ENV: test
     defaults:
