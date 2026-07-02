@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, MicOff, Edit3, Sparkles, Keyboard } from 'lucide-react';
+import { Mic, MicOff, Edit3, Sparkles, Keyboard, AlertCircle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AppIcon } from '@/components/ui/AppIcon';
@@ -9,6 +9,7 @@ import { VoiceWaveIcon } from '@/components/icons';
 import { VoiceWave } from '@/components/ui/VoiceWave';
 import { PrimaryAction } from '@/components/ui/Primitives';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { useSpeechRecognition } from '@/lib/stt/useSpeechRecognition';
 
 const DEMO_TRANSCRIPT =
   'Алихан поел кашу с сыром, потом начал нервничать и закрывал уши. Сказал «ту-ту» и сходил в туалет.';
@@ -44,6 +45,7 @@ export const VoiceObservation: React.FC = () => {
     sttSource,
     isProcessing,
     startRecording,
+    stopRecording,
     transcribeMock,
     transcribeManual,
     enterEditingTranscript,
@@ -52,6 +54,14 @@ export const VoiceObservation: React.FC = () => {
     processWithAI,
     reset,
   } = useVoiceObservationStore();
+
+  // Web Speech API (browser-native) с mock fallback
+  const speech = useSpeechRecognition({
+    lang: 'ru-RU',
+    interimResults: true,
+    continuous: false,
+    mockTranscript: DEMO_TRANSCRIPT,
+  });
 
   // Локальное состояние UI для таймера записи
   useEffect(() => {
@@ -69,12 +79,21 @@ export const VoiceObservation: React.FC = () => {
     startRecording({ speakerRole: 'parent', childId: DEMO_PRIMARY_CHILD.id });
     setIsRecording(true);
     setDuration(0);
-  }, [startRecording]);
+    speech.start();
+  }, [startRecording, speech]);
 
   const handleStop = useCallback(async () => {
     setIsRecording(false);
-    await transcribeMock();
-  }, [transcribeMock]);
+    stopRecording();
+    speech.stop();
+    // Web Speech API даёт реальный транскрипт; fallback на mock если пусто
+    const text = (speech.transcript || '').trim();
+    if (text) {
+      await transcribeManual(text);
+    } else {
+      await transcribeMock();
+    }
+  }, [speech, stopRecording, transcribeManual, transcribeMock]);
 
   const handleUseDemo = useCallback(async () => {
     await transcribeManual(DEMO_TRANSCRIPT);
@@ -122,11 +141,17 @@ export const VoiceObservation: React.FC = () => {
         showBack
       />
 
-      {/* Disclaimer — demo-режим */}
+      {/* Disclaimer — STT mode */}
       <QoldauCard variant="tinted-warm" padding="sm">
         <p className="text-xs text-ink-2 leading-relaxed">
-          <span className="font-bold">Demo-режим:</span> распознавание речи имитируется. Вы можете отредактировать текст перед сохранением.
-          Это наблюдение, не диагноз.
+          <span className="font-bold">
+            {speech.supported ? '🎙️ Распознавание речи' : 'Demo-режим'}
+            {speech.mode === 'mock' && ' · mock fallback'}
+          </span>
+          {speech.supported
+            ? ' Браузер распознаёт речь напрямую. Вы можете отредактировать текст перед сохранением.'
+            : ' Имитация записи (браузер не поддерживает Web Speech API).'}
+          {' '}Это наблюдение, не диагноз.
         </p>
       </QoldauCard>
 
@@ -178,6 +203,30 @@ export const VoiceObservation: React.FC = () => {
               AI предложит структуру наблюдения.
             </p>
           </div>
+        )}
+
+        {/* Live transcript preview (пока запись идёт) */}
+        {isRecording && speech.transcript && (
+          <QoldauCard variant="tinted-teal" padding="md" className="w-full">
+            <div className="flex items-start gap-2">
+              <AppIcon component={Mic} size={18} colorClass="text-teal shrink-0 mt-0.5" />
+              <p className="text-sm text-ink-2 italic leading-relaxed">
+                «{speech.transcript}»
+              </p>
+            </div>
+          </QoldauCard>
+        )}
+
+        {/* STT error */}
+        {speech.error && !isRecording && (
+          <QoldauCard variant="tinted-warm" padding="sm" className="w-full">
+            <div className="flex items-center gap-2">
+              <AppIcon component={AlertCircle} size={16} colorClass="text-coral" />
+              <p className="text-xs text-ink-2">
+                Не удалось распознать речь: {speech.error}. Можно ввести текст вручную.
+              </p>
+            </div>
+          </QoldauCard>
         )}
 
         {/* Transcript card — после транскрипта */}
