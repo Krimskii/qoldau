@@ -6,6 +6,7 @@ import { useRecordingsStore, type Recording } from '@/store/useRecordingsStore';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { formatTime as formatClock } from '@/utils/dateFormat';
+import { useSpeechRecognition } from '@/lib/stt/useSpeechRecognition';
 
 const MAX_RECORDING_SEC = 30;
 
@@ -79,6 +80,16 @@ export const ChildSpeak: React.FC = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // === Web Speech API (v0.6.9) — реальное распознавание голоса ребёнка.
+  // Если браузер поддерживает, transcript используется как label записи.
+  // Иначе fallback на случайный mock label из DEMO_LABELS.
+  const speech = useSpeechRecognition({
+    lang: 'ru-RU',
+    interimResults: true,
+    continuous: false,
+    mockTranscript: DEMO_LABELS[0],
+  });
+
   // === Playback state ===
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [playbackProgress, setPlaybackProgress] = useState<Record<string, number>>({});
@@ -151,15 +162,20 @@ export const ChildSpeak: React.FC = () => {
   const startRecording = () => {
     setIsRecording(true);
     setRecordingTime(0);
+    speech.start();
   };
 
   const stopRecording = () => {
     if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
+    speech.stop();
     if (!isRecording) return;
     setIsRecording(false);
 
     const duration = Math.max(2, recordingTime); // минимум 2 сек для осмысленной записи
-    const label = DEMO_LABELS[Math.floor(Math.random() * DEMO_LABELS.length)];
+    // Если Web Speech API распознал что-то — используем transcript.
+    // Иначе fallback на случайный mock label.
+    const recognized = speech.transcript.trim();
+    const label = recognized || DEMO_LABELS[Math.floor(Math.random() * DEMO_LABELS.length)];
 
     // Сохранить в recordings store
     const newRec = addRecording({
@@ -286,9 +302,15 @@ export const ChildSpeak: React.FC = () => {
             <div className="text-4xl font-black text-ink tabular-nums">
               {formatTime(recordingTime)}
             </div>
-            <p className="text-sm text-muted mt-1">
-              Идёт запись… нажми ещё раз, чтобы остановить
-            </p>
+            {speech.supported && speech.transcript ? (
+              <p className="text-sm text-ink-2 mt-2 italic leading-relaxed max-w-xs mx-auto">
+                «{speech.transcript}»
+              </p>
+            ) : (
+              <p className="text-sm text-muted mt-1">
+                Идёт запись… нажми ещё раз, чтобы остановить
+              </p>
+            )}
             <p className="text-[11px] text-muted mt-0.5 italic">
               Максимум {MAX_RECORDING_SEC} сек
             </p>

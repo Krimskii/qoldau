@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, MicOff, Edit3, Sparkles, Keyboard, AlertCircle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -10,15 +10,11 @@ import { VoiceWave } from '@/components/ui/VoiceWave';
 import { PrimaryAction } from '@/components/ui/Primitives';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { useSpeechRecognition } from '@/lib/stt/useSpeechRecognition';
+import { useElapsedTimer } from '@/hooks/useElapsedTimer';
+import { formatDuration } from '@/utils/formatDuration';
 
 const DEMO_TRANSCRIPT =
   'Алихан поел кашу с сыром, потом начал нервничать и закрывал уши. Сказал «ту-ту» и сходил в туалет.';
-
-const formatDuration = (s: number) => {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-};
 
 /**
  * Parent VoiceObservation — state machine UI.
@@ -34,9 +30,7 @@ const formatDuration = (s: number) => {
  */
 export const VoiceObservation: React.FC = () => {
   const navigate = useNavigate();
-  const [isRecording, setIsRecording] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timer = useElapsedTimer();
 
   const {
     recordingState,
@@ -63,27 +57,14 @@ export const VoiceObservation: React.FC = () => {
     mockTranscript: DEMO_TRANSCRIPT,
   });
 
-  // Локальное состояние UI для таймера записи
-  useEffect(() => {
-    if (isRecording) {
-      intervalRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isRecording]);
-
   const handleStart = useCallback(() => {
     startRecording({ speakerRole: 'parent', childId: DEMO_PRIMARY_CHILD.id });
-    setIsRecording(true);
-    setDuration(0);
+    timer.start();
     speech.start();
-  }, [startRecording, speech]);
+  }, [startRecording, speech, timer]);
 
   const handleStop = useCallback(async () => {
-    setIsRecording(false);
+    timer.stop();
     stopRecording();
     speech.stop();
     // Web Speech API даёт реальный транскрипт; fallback на mock если пусто
@@ -93,7 +74,7 @@ export const VoiceObservation: React.FC = () => {
     } else {
       await transcribeMock();
     }
-  }, [speech, stopRecording, transcribeManual, transcribeMock]);
+  }, [speech, stopRecording, timer, transcribeManual, transcribeMock]);
 
   const handleUseDemo = useCallback(async () => {
     await transcribeManual(DEMO_TRANSCRIPT);
@@ -126,8 +107,8 @@ export const VoiceObservation: React.FC = () => {
 
   const handleNew = useCallback(() => {
     reset();
-    setDuration(0);
-  }, [reset]);
+    timer.reset();
+  }, [reset, timer]);
 
   const hasTranscript = recordingState === 'transcript_ready'
     || recordingState === 'editing_transcript'

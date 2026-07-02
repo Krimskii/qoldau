@@ -1,44 +1,29 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, MicOff } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { VoiceWave } from '@/components/ui/VoiceWave';
 import { useVoiceObservationStore } from '@/store/useVoiceObservationStore';
+import { useElapsedTimer } from '@/hooks/useElapsedTimer';
+import { formatDuration } from '@/utils/formatDuration';
 
 export const TutorVoice: React.FC = () => {
   const navigate = useNavigate();
-  const [isRecording, setIsRecording] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { startRecording, stopRecording } = useVoiceObservationStore();
+  const timer = useElapsedTimer();
 
   const startRec = useCallback(() => {
-    setIsRecording(true);
-    setDuration(0);
     startRecording();
-    intervalRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
-  }, [startRecording]);
+    timer.start();
+  }, [startRecording, timer]);
 
   const stopRec = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setIsRecording(false);
+    timer.stop();
     stopRecording();
     navigate('/tutor/ai-review');
-  }, [navigate, stopRecording]);
+  }, [navigate, stopRecording, timer]);
 
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, []);
-
-  const handleRecord = () => (isRecording ? stopRec() : startRec());
-
-  const formatDuration = (s: number) =>
-    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  const handleRecord = () => (timer.isActive ? stopRec() : startRec());
 
   const examples = [
     'Использовал визуальное расписание, переходы прошли спокойнее',
@@ -57,37 +42,37 @@ export const TutorVoice: React.FC = () => {
       <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
         <button
           onClick={handleRecord}
-          aria-label={isRecording ? 'Остановить запись' : 'Начать запись'}
+          aria-label={timer.isActive ? 'Остановить запись' : 'Начать запись'}
           className={`w-48 h-48 rounded-full flex items-center justify-center transition-all active:scale-95 ${
-            isRecording
+            timer.isActive
               ? 'bg-gradient-to-br from-coral to-[#cc251d]'
               : 'bg-gradient-to-br from-teal to-teal-dark'
           }`}
           style={{
-            boxShadow: isRecording
+            boxShadow: timer.isActive
               ? '0 0 0 20px rgba(229,111,93,0.10), 0 0 0 40px rgba(229,111,93,0.05), 0 24px 40px rgba(229,111,93,0.30)'
               : '0 0 0 20px rgba(0,150,136,0.08), 0 0 0 40px rgba(0,150,136,0.045), 0 24px 40px rgba(0,150,136,0.25)',
           }}
         >
-          {isRecording ? (
+          {timer.isActive ? (
             <MicOff className="w-24 h-24 text-white" strokeWidth={2.5} />
           ) : (
             <Mic className="w-24 h-24 text-white" strokeWidth={2.5} />
           )}
         </button>
 
-        {isRecording && (
+        {timer.isActive && (
           <>
             <div className="w-full max-w-xs">
               <VoiceWave />
             </div>
             <div className="text-3xl font-black text-ink tabular-nums">
-              {formatDuration(duration)}
+              {formatDuration(timer.seconds)}
             </div>
           </>
         )}
 
-        {!isRecording && (
+        {!timer.isActive && (
           <p className="text-sm text-muted text-center max-w-xs">
             Опишите, что произошло на занятии. AI предложит структуру.
           </p>
@@ -108,7 +93,7 @@ export const TutorVoice: React.FC = () => {
         </div>
       </div>
 
-      {isRecording && (
+      {timer.isActive && (
         <button
           onClick={handleRecord}
           className="w-full h-13 rounded-2xl bg-coral text-white font-bold text-base shadow-card active:scale-[0.98] transition-all"
