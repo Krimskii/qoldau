@@ -55,6 +55,7 @@ import { Reports } from '@/pages/specialist/Reports';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { VerifyPage } from '@/pages/auth/VerifyPage';
 import { Overview } from '@/pages/overview/Overview';
+import { NotFoundPage } from '@/pages/errors/NotFoundPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -74,6 +75,9 @@ export const AppRoutes: React.FC = () => {
           path="/auth/verify"
           element={<AppShell showNav={false}><VerifyPage /></AppShell>}
         />
+
+        {/* 404 (v0.6.3) */}
+        <Route path="/404" element={<NotFoundPage />} />
 
         {/* Parent Routes */}
         <Route
@@ -249,9 +253,9 @@ export const AppRoutes: React.FC = () => {
           element={<AppShell><Reports /></AppShell>}
         />
 
-        {/* Default redirect (v0.6.2: корень → landing /overview) */}
+        {/* Default redirect (v0.6.3: '/' → landing, '*' → 404 page) */}
         <Route path="/" element={<Navigate to="/overview" replace />} />
-        <Route path="*" element={<Navigate to="/overview" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </HashRouter>
   );

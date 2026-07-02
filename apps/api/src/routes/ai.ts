@@ -9,10 +9,11 @@
  */
 import { Router } from 'express';
 import { llmService } from '../services/llmService';
+import { aiRateLimit } from '../middleware/rateLimit';
 
 export const aiRouter = Router();
 
-aiRouter.post('/parse', async (req, res) => {
+aiRouter.post('/parse', aiRateLimit, async (req, res) => {
   const { transcript } = req.body as { transcript?: string };
   if (!transcript || typeof transcript !== 'string') {
     return res.status(400).json({

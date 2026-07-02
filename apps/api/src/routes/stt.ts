@@ -1,41 +1,41 @@
 /**
- * POST /api/stt/transcribe — mock Speech-to-Text (v0.4.0).
+ * POST /api/stt/transcribe — Speech-to-Text (v0.6.3).
  *
- * Phase 1: возвращает фиксированный демо-транскрипт после задержки 1.5с.
- * Phase 2: заменяется на Whisper API / Web Speech API.
+ * Phase 1: mock (фиксированный transcript после 1.5с задержки).
+ * Phase 2: opt-in Whisper API через WHISPER_API_KEY env.
  *
- * Body: { audio: base64? } — в текущей реализации игнорируется.
- * Response: { ok, transcript, confidence, durationSec }
+ * Body: { audio: base64-encoded file, language?: string }
+ * Response: { ok, transcript, confidence, durationSec, sttSource }
  */
 import { Router } from 'express';
+import { sttService } from '../services/sttService';
+import { sttRateLimit } from '../middleware/rateLimit';
 
 export const sttRouter = Router();
 
-const DEMO_TRANSCRIPT =
-  'Алихан поел кашу с сыром, потом начал нервничать и закрывал уши. Сказал «ту-ту» и сходил в туалет.';
-
-sttRouter.post('/transcribe', async (req, res) => {
-  // Имитация работы STT-движка
-  await new Promise((r) => setTimeout(r, 1500));
-
-  res.json({
-    ok: true,
-    transcript: DEMO_TRANSCRIPT,
-    confidence: 0.87,
-    durationSec: 18,
-    sttSource: 'mock',
-  });
+sttRouter.post('/transcribe', sttRateLimit, async (req, res, next) => {
+  try {
+    const { audio = '', language } = req.body as { audio?: string; language?: string };
+    // Минимальная задержка 400мс для UX-консистентности.
+    const t0 = Date.now();
+    const result = await sttService.transcribe({ audio, language });
+    const elapsed = Date.now() - t0;
+    if (elapsed < 400) {
+      await new Promise((r) => setTimeout(r, 400 - elapsed));
+    }
+    res.json({ ok: true, ...result, sttSource: result.source });
+  } catch (err) {
+    next(err);
+  }
 });
 
-/**
- * GET /api/stt/health — для проверки доступности STT-эндпоинта.
- */
 sttRouter.get('/health', (_req, res) => {
+  const status = sttService.status();
   res.json({
     ok: true,
     service: 'stt',
-    mode: 'mock',
-    model: 'demo-transcript-v1',
-    phase: 1,
+    enabled: status.enabled,
+    mode: status.source,
+    model: status.model,
   });
 });

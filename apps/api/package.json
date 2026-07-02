@@ -1,8 +1,8 @@
 {
   "name": "@qoldau/api",
-  "version": "0.6.0",
+  "version": "0.6.3",
   "private": true,
-  "description": "Qoldau AI backend API — events, recordings, STT, AI (Claude/mock), auth.",
+  "description": "Qoldau AI backend API — events, recordings, STT (Whisper/mock), AI (Claude/mock), auth, rate-limit.",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -21,6 +21,7 @@
     "@prisma/client": "^5.22.0",
     "cors": "^2.8.5",
     "express": "^4.21.1",
+    "express-rate-limit": "^8.5.2",
     "helmet": "^7.1.0",
     "ioredis": "^5.4.1",
     "morgan": "^1.10.0",

@@ -1,11 +1,13 @@
 /**
- * Health routes (v0.5.0) — добавлен DB health-check.
+ * Health routes (v0.6.3) — DB health-check + AI mode + auth info.
  */
 import { Router } from 'express';
 import { prisma } from '../db/prisma.js';
 import { eventsRepo } from '../repositories/events.js';
 import { recordingsRepo } from '../repositories/recordings.js';
 import { getCache } from '../db/cache.js';
+import { llmService } from '../services/llmService.js';
+import { sttService } from '../services/sttService.js';
 
 export const healthRouter = Router();
 
@@ -22,8 +24,8 @@ healthRouter.get('/', async (_req, res) => {
   res.json({
     ok: dbStatus === 'ok',
     service: 'qoldau-api',
-    version: '0.5.0',
-    phase: 2,
+    version: '0.6.3',
+    phase: 3,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     db: {
@@ -33,6 +35,8 @@ healthRouter.get('/', async (_req, res) => {
     cache: {
       type: getCache().type,
     },
+    ai: llmService.status(),
+    stt: sttService.status(),
   });
 });
 

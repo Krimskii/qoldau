@@ -26,6 +26,7 @@ import {
 import { useRoleStore } from '@/store/useRoleStore';
 import { useDemoStore } from '@/store/useDemoStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { HealthCheckBanner } from '@/components/ui/HealthCheckBanner';
 import type { UserRole } from '@/types/qoldau';
 
 interface RoleDef {
@@ -172,6 +173,11 @@ export const Overview: React.FC = () => {
             Пошаговый гид по 18 экранам
           </p>
         </div>
+      </section>
+
+      {/* System health (v0.6.3) */}
+      <section className="max-w-[1100px] mx-auto px-6 pb-8">
+        <HealthCheckBanner />
       </section>
 
       {/* Main flow */}

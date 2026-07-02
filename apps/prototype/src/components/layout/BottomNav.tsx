@@ -56,9 +56,17 @@ export const BottomNav: React.FC<{ role: UserRole }> = ({ role }) => {
   const items = NAV_BY_ROLE[role] ?? [];
   if (items.length === 0) return null;
 
+  // safe-area: padding-bottom под iOS home indicator + horizontal на landscape.
+  const safeBottomStyle: React.CSSProperties = {
+    paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
+    paddingLeft: 'max(env(safe-area-inset-left), 12px)',
+    paddingRight: 'max(env(safe-area-inset-right), 12px)',
+  };
+
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-40 px-3 pb-3 pt-2 pointer-events-none"
+      style={safeBottomStyle}
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-40 pt-2 pointer-events-none"
       aria-label="Нижняя навигация"
     >
       <div className="bg-white border border-line rounded-3xl shadow-card pointer-events-auto flex items-stretch justify-around px-2 py-2">

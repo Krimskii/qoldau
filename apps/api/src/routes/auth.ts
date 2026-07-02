@@ -10,10 +10,11 @@
  */
 import { Router } from 'express';
 import { authService } from '../services/authService';
+import { authRateLimit } from '../middleware/rateLimit';
 
 export const authRouter = Router();
 
-authRouter.post('/request-magic-link', async (req, res) => {
+authRouter.post('/request-magic-link', authRateLimit, async (req, res) => {
   const { email } = req.body as { email?: string };
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ ok: false, error: 'email required' });
@@ -29,7 +30,7 @@ authRouter.post('/request-magic-link', async (req, res) => {
   }
 });
 
-authRouter.post('/verify', async (req, res) => {
+authRouter.post('/verify', authRateLimit, async (req, res) => {
   const { token } = req.body as { token?: string };
   if (!token || typeof token !== 'string') {
     return res.status(400).json({ ok: false, error: 'token required' });

@@ -1,0 +1,20 @@
+{
+  "name": "Qoldau AI",
+  "short_name": "Qoldau",
+  "description": "Voice-first платформа сопровождения детей с РАС",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#009688",
+  "lang": "ru",
+  "scope": "/",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/qoldau-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
