@@ -1,4 +1,4 @@
-# Deployment Guide (v0.4.0)
+# Deployment Guide (v0.6.0)
 
 Полный гайд по деплою Qoldau AI в production. Три варианта на выбор.
 

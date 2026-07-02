@@ -53,6 +53,8 @@ import { Reports } from '@/pages/specialist/Reports';
 
 // Overview
 import { Overview } from '@/pages/overview/Overview';
+import { LoginPage } from '@/pages/auth/LoginPage';
+import { VerifyPage } from '@/pages/auth/VerifyPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -62,6 +64,16 @@ export const AppRoutes: React.FC = () => {
       <Routes>
         {/* Overview */}
         <Route path="/overview" element={<Overview />} />
+
+        {/* Auth (v0.6.0) */}
+        <Route
+          path="/auth/login"
+          element={<AppShell showNav={false}><LoginPage /></AppShell>}
+        />
+        <Route
+          path="/auth/verify"
+          element={<AppShell showNav={false}><VerifyPage /></AppShell>}
+        />
 
         {/* Parent Routes */}
         <Route

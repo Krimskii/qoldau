@@ -68,3 +68,33 @@ model Recording {
   @@index([timestamp])
   @@map("recordings")
 }
+
+// Auth (v0.6.0) — magic-link flow.
+//
+// MagicToken: одноразовый токен с TTL. Создаётся через /api/auth/request-magic-link,
+// используется в /api/auth/verify. Без email-отправки (пока не подключён SMTP/Resend).
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      String   @default("parent")
+  createdAt DateTime @default(now())
+
+  magicTokens MagicToken[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model MagicToken {
+  token     String   @id
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("magic_tokens")
+}

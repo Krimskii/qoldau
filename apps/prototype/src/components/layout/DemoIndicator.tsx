@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useDemoStore, DEMO_STEPS } from '@/store/useDemoStore';
+import { layout } from '@/styles/tokens';
 
 /**
  * DemoIndicator — collapsible bottom bar with guided-tour controls.
@@ -63,7 +64,7 @@ export const DemoIndicator: React.FC = () => {
   };
 
   return (
-    <div className="fixed left-0 right-0 z-50 pointer-events-none" style={{ bottom: '80px' }}>
+    <div className="fixed left-0 right-0 z-50 pointer-events-none" style={{ bottom: layout.bottomNavClearance }}>
       <div className="max-w-[430px] mx-auto pointer-events-auto">
         <div className="bg-gradient-to-br from-teal to-teal-dark text-white shadow-card-hover" style={{ borderRadius: '16px 16px 0 0' }}>
           {/* Handle — always visible */}

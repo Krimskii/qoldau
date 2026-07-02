@@ -225,6 +225,8 @@ export const layout = {
   desktopMaxWidth: 1100,
   mobileFrameWidth: 390,
   mobileFrameHeight: 844,
+  /** Clearance to keep fixed elements above BottomNav — update together if BottomNav's height changes. */
+  bottomNavClearance: 80,
 } as const;
 
 // =============================================================================

@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-07-02 (Real integrations: Web Speech API + Anthropic Claude + magic-link auth)
+
+### Added - Web Speech API (real STT in browser)
+- **`apps/prototype/src/lib/stt/useSpeechRecognition.ts`** — обёртка над `window.SpeechRecognition` / `webkitSpeechRecognition`. Опции: `lang` (default `ru-RU`), `interimResults`, `continuous`, `silenceTimeoutMs`, `mockTranscript`. Авто-fallback на побуквенный mock если браузер не поддерживает.
+- **`VoiceObservation.tsx`** — подключён hook. Live preview transcript во время записи, error card если STT упал, disclaimer адаптируется (`speech.supported`).
+- Frontend теперь умеет real STT без backend — распознавание идёт прямо в браузере (Chrome/Edge/Safari).
+
+### Added - Anthropic Claude (real LLM, opt-in)
+- **`apps/api/src/services/llmService.ts`** — `llmService.parseTranscript()` через `@anthropic-ai/sdk`. Structured output через `tool_use` (parse_observation tool). Модель: `claude-3-5-haiku-20241022` (дешёвая, быстрая). Opt-in через `ANTHROPIC_API_KEY` env. Mock fallback на keyword-matcher при отсутствии ключа или ошибке API.
+- **`routes/ai.ts`** — переписан. `/api/ai/health` отдаёт `{ enabled, mode: 'claude' | 'mock', model }`. POST `/api/ai/parse` возвращает `aiSource` поле.
+- **`@anthropic-ai/sdk@^0.32.1`** — добавлен в `apps/api/package.json`.
+- System prompt настроен на осторожные формулировки («похоже», «возможно»), отказ от диагнозов, типы событий ограничены whitelist (food/water/toilet/sleep/sensory/behavior/communication/state).
+
+### Added - Magic-link auth (v0.6.0 stub)
+- **Prisma migration** `20260702001812_add_auth_user_magic_token` — `User` (id, email, role) + `MagicToken` (token, userId, expiresAt, usedAt).
+- **`services/authService.ts`** — magic-link flow + HS256 JWT (без external deps, 8-часовой TTL). `JWT_SECRET` обязателен в production.
+- **`routes/auth.ts`** — `POST /api/auth/request-magic-link`, `POST /api/auth/verify`, `GET /api/auth/me` (требует `Authorization: Bearer ...`).
+- **Dev-mode**: токен возвращается в ответе (`devMagicUrl`) — без SMTP. В production нужно подключить email-провайдер (Resend/SES).
+- **`apps/prototype/src/api/auth.ts`** + **`store/useAuthStore.ts`** — frontend JWT store (localStorage `qoldau-auth-v1`, auto-attach `Authorization` header).
+- **`pages/auth/LoginPage.tsx`** + **`VerifyPage.tsx`** — magic-link request/verify экраны.
+- **`Overview.tsx`** — кнопка «Войти» / «Выйти» в top bar.
+- **`main.tsx`** — `useAuthStore.getState().init()` при старте (загружает JWT из localStorage).
+
+### Documentation
+- **`docs/API.md`** — обновлён до v0.6.0: добавлены Auth endpoints, AI health, env vars, новый phase plan.
+- **`docs/DEPLOYMENT.md`** — обновлён до v0.6.0.
+- **`apps/api/.env.example`** — `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `JWT_SECRET`.
+
+### Verified
+- `npm run build` (frontend) — 1694 modules, 0 TS errors.
+- `npm run typecheck` (backend) — 0 errors.
+- Live tests:
+  - `GET /` → `{"ok":true,"service":"qoldau-api","version":"0.6.0","ai":{"enabled":false,"model":"claude-3-5-haiku-20241022","source":"mock"}}`
+  - `GET /api/ai/health` → `{"ok":true,"service":"ai","enabled":false,"mode":"mock","model":"claude-3-5-haiku-20241022"}`
+  - `POST /api/ai/parse` с реальным транскриптом → 4 события + insight с safety-wording.
+  - `POST /api/auth/request-magic-link` → `{ok, token, expiresAt, devMagicUrl}`.
+  - `POST /api/auth/verify` → `{ok, jwt, user}`. `GET /api/auth/me` с Bearer → `{ok, user}`.
+- Version bumps: `apps/prototype/package.json` 0.5.1 → 0.6.0, `apps/api/package.json` 0.5.0 → 0.6.0.
+
 ## [0.5.1] — 2026-07-02 (Child exit + DemoIndicator alignment + visual polish)
 
 ### Added — Выход из режима Ребёнок (v0.5.1)

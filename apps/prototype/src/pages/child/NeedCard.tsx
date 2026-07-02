@@ -4,6 +4,7 @@ import { Mic, MicOff, Check, X, Volume2, Trash2 } from 'lucide-react';
 import { BackArrowIcon } from '@/components/icons/child2d';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { layout } from '@/styles/tokens';
 
 /** Грамматическая функция слова (определяет цвет плитки-иконки). */
 export type WordFunc = 'pron' | 'verb' | 'noun' | 'soc';
@@ -194,7 +195,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
       {/* Main scrollable content — pb-[112px] reserves space for fixed Да/Нет */}
       <div className="flex flex-col min-h-[calc(100vh-80px)] pb-[112px]">
         {/* Header */}
-        <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-1">
+        <div className="flex items-center gap-2.5 px-5 pt-3.5 pb-1">
           <button
             onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-[13px] border border-line bg-white flex items-center justify-center hover:bg-bg transition-colors"
@@ -252,7 +253,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
         </div>
 
         {/* Two paths: mic card (top) + words card (bottom) */}
-        <div className="flex flex-col gap-2.5 px-4 pt-1.5 pb-1.5">
+        <div className="flex flex-col gap-2.5 px-5 pt-1.5 pb-1.5">
           {/* Mic card — large teal круг с подписью */}
           <button
             onClick={toggleMic}
@@ -330,7 +331,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
         </div>
 
         {/* Speak + clear row */}
-        <div className="flex gap-2 px-4 pt-1.5 pb-1.5">
+        <div className="flex gap-2 px-5 pt-1.5 pb-1.5">
           <button
             onClick={handleSpeak}
             disabled={phrase.length === 0}
@@ -357,12 +358,13 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
         </div>
 
         {/* Optional extra (timer for toilet) */}
-        {config.extra && <div className="px-4 pt-1.5 pb-1.5">{config.extra}</div>}
+        {config.extra && <div className="px-5 pt-1.5 pb-1.5">{config.extra}</div>}
       </div>
 
       {/* FIXED ✓ / ✗ — ВСЕГДА в поле зрения, над bottom nav (v0.3.25) */}
       <div
-        className="fixed left-1/2 -translate-x-1/2 bottom-[80px] w-full max-w-[430px] z-30 px-4 pointer-events-none"
+        className="fixed left-1/2 -translate-x-1/2 w-full max-w-[430px] z-30 px-5 pointer-events-none"
+        style={{ bottom: layout.bottomNavClearance }}
       >
         <div
           className="pointer-events-auto pt-3 pb-2"

@@ -1,7 +1,7 @@
 /**
- * Qoldau AI backend API (v0.5.0) — Prisma + cache layer.
+ * Qoldau AI backend API (v0.6.0) — Prisma + cache + Anthropic Claude + auth.
  *
- * Endpoints (15):
+ * Endpoints (18):
  *   GET  /api/health
  *   GET  /api/stats
  *   POST /api/reset
@@ -10,7 +10,8 @@
  *   POST /api/events, PATCH /api/events/:id, DELETE /api/events/:id
  *   GET  /api/recordings, POST /api/recordings, DELETE /api/recordings/:id
  *   POST /api/stt/transcribe (mock)
- *   POST /api/ai/parse (mock)
+ *   POST /api/ai/parse (Claude / mock)
+ *   POST /api/auth/request-magic-link, POST /api/auth/verify, GET /api/auth/me
  */
 import express from 'express';
 import cors from 'cors';
@@ -21,12 +22,14 @@ import { eventsRouter } from './routes/events.js';
 import { recordingsRouter } from './routes/recordings.js';
 import { sttRouter } from './routes/stt.js';
 import { aiRouter } from './routes/ai.js';
+import { authRouter } from './routes/auth.js';
 import { childrenRouter } from './routes/children.js';
 import { prisma, disconnectPrisma } from './db/prisma.js';
 import { getCache } from './db/cache.js';
 import { runSeed } from './db/seed-runner.js';
 import { eventsRepo } from './repositories/events.js';
 import { recordingsRepo } from './repositories/recordings.js';
+import { llmService } from './services/llmService.js';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
@@ -47,8 +50,9 @@ app.get('/', (_req, res) => {
   res.json({
     ok: true,
     service: 'qoldau-api',
-    version: '0.5.0',
+    version: '0.6.0',
     docs: '/api/health',
+    ai: llmService.status(),
   });
 });
 
@@ -59,6 +63,7 @@ app.use('/api/events', eventsRouter);
 app.use('/api/recordings', recordingsRouter);
 app.use('/api/stt', sttRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/auth', authRouter);
 
 // Reset endpoint на /api/reset
 import { Router as ResetRouter } from 'express';
@@ -113,11 +118,13 @@ async function start() {
 
   // 4. Запускаем HTTP сервер
   app.listen(PORT, () => {
-    console.log(`\n🟢  Qoldau API v0.5.0`);
+    console.log(`\n🟢  Qoldau API v0.6.0`);
     console.log(`   listening on http://localhost:${PORT}`);
     console.log(`   health: http://localhost:${PORT}/api/health`);
     console.log(`   CORS:   ${process.env.CORS_ORIGIN ?? 'http://localhost:5173'}`);
-    console.log(`   DB:     ${process.env.DATABASE_URL ?? 'sqlite'}\n`);
+    console.log(`   DB:     ${process.env.DATABASE_URL ?? 'sqlite'}`);
+    const llm = llmService.status();
+    console.log(`   AI:     ${llm.source}${llm.enabled ? ` (model: ${llm.model})` : ' (mock fallback — set ANTHROPIC_API_KEY)'}\n`);
   });
 }
 

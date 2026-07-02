@@ -1,8 +1,8 @@
 {
   "name": "@qoldau/api",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
-  "description": "Qoldau AI backend API — events, recordings, mock STT/AI.",
+  "description": "Qoldau AI backend API — events, recordings, STT, AI (Claude/mock), auth.",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -17,6 +17,7 @@
     "seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.109.1",
     "@prisma/client": "^5.22.0",
     "cors": "^2.8.5",
     "express": "^4.21.1",

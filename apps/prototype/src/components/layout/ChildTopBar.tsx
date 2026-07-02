@@ -64,10 +64,7 @@ export const ChildTopBar: React.FC<ChildTopBarProps> = ({
       >
         {/* Avatar */}
         <div
-          className="w-[46px] h-[46px] rounded-2xl flex-none flex items-center justify-center text-white font-black text-lg shadow-card"
-          style={{
-            background: 'linear-gradient(140deg, #7fd1c9 0%, #1ba39a 100%)',
-          }}
+          className="w-[46px] h-[46px] rounded-2xl flex-none flex items-center justify-center text-white font-black text-lg shadow-card bg-gradient-to-br from-teal to-teal-dark"
           aria-hidden="true"
         >
           {firstLetter}
@@ -148,21 +145,18 @@ export const ChildTopBar: React.FC<ChildTopBarProps> = ({
       {/* Exit confirm dialog */}
       {exitConfirmOpen && (
         <div
-          className="fixed inset-0 z-[95] flex items-center justify-center px-5"
+          className="fixed inset-0 z-[95] flex items-center justify-center px-5 bg-ink/50 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-label="Выйти из режима?"
-          style={{ background: 'rgba(7,27,58,0.5)', backdropFilter: 'blur(4px)' }}
           onClick={() => setExitConfirmOpen(false)}
         >
           <div
             className="w-full max-w-[360px] bg-white rounded-3xl p-6 shadow-card-hover"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center"
-              style={{ background: '#FFEDEA' }}
-            >
-              <LogOut className="w-7 h-7" style={{ color: '#E56F5D' }} />
+            <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center bg-coral-soft">
+              <LogOut className="w-7 h-7 text-coral" />
             </div>
             <h3 className="text-lg font-black text-ink text-center mb-1">
               Выйти из режима Ребёнок?
@@ -179,11 +173,7 @@ export const ChildTopBar: React.FC<ChildTopBarProps> = ({
               </button>
               <button
                 onClick={handleExit}
-                className="flex-1 py-3 rounded-2xl text-white font-black text-sm transition-transform active:scale-[0.97]"
-                style={{
-                  background: 'linear-gradient(135deg, #E56F5D 0%, #cc251d 100%)',
-                  boxShadow: '0 4px 12px rgba(229,111,93,0.28)',
-                }}
+                className="flex-1 py-3 rounded-2xl text-white font-black text-sm transition-transform active:scale-[0.97] bg-gradient-to-br from-coral to-[#cc251d] shadow-card hover:shadow-card-hover"
               >
                 Выйти
               </button>

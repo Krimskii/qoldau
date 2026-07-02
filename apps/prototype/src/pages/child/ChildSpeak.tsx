@@ -389,7 +389,7 @@ export const ChildSpeak: React.FC = () => {
 
                   <button
                     onClick={() => handleRemove(rec.id)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:bg-coral-soft hover:text-coral transition-colors flex-shrink-0"
+                    className="w-11 h-11 rounded-lg flex items-center justify-center text-muted hover:bg-coral-soft hover:text-coral transition-colors flex-shrink-0"
                     aria-label="Удалить запись"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -435,7 +435,7 @@ const ScheduleButton: React.FC<{
     return (
       <button
         onClick={onCancel}
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-coral bg-coral-soft transition-colors flex-shrink-0"
+        className="w-11 h-11 rounded-lg flex items-center justify-center text-coral bg-coral-soft transition-colors flex-shrink-0"
         aria-label="Отменить воспроизведение"
         title="Отменить"
       >
@@ -448,7 +448,7 @@ const ScheduleButton: React.FC<{
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-soft hover:bg-teal-soft hover:text-teal-dark transition-colors flex-shrink-0"
+        className="w-11 h-11 rounded-lg flex items-center justify-center text-ink-soft hover:bg-teal-soft hover:text-teal-dark transition-colors flex-shrink-0"
         aria-label="Поставить на воспроизведение"
         title="Поставить на воспроизведение"
       >

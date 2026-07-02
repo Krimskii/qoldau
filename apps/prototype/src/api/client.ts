@@ -8,7 +8,7 @@
  * Если запрос упал — store использует локальный кеш (localStorage или в памяти).
  */
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '';
+export const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '';
 
 export interface ApiOk<T> { ok: true; data?: T; [k: string]: unknown }
 export interface ApiErr { ok: false; error: string; status?: number }
@@ -22,7 +22,7 @@ class ApiError extends Error {
   }
 }
 
-async function request<T>(
+export async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {

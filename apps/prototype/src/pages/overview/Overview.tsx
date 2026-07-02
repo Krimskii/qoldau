@@ -6,11 +6,13 @@ import {
   MessageSquare,
   FileText,
   Sparkles,
+  LogIn,
 } from 'lucide-react';
 import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
 import { DemoControls } from '@/components/layout/DemoControls';
 import { useRoleStore } from '@/store/useRoleStore';
 import { useDemoStore } from '@/store/useDemoStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { UserRole } from '@/types/qoldau';
 
 const ROLES: Array<{
@@ -30,6 +32,9 @@ export const Overview: React.FC = () => {
   const navigate = useNavigate();
   const { setRole } = useRoleStore();
   const { startDemo } = useDemoStore();
+  const authStatus = useAuthStore((s) => s.status);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
 
   const handleStartDemo = () => {
     startDemo();
@@ -40,6 +45,8 @@ export const Overview: React.FC = () => {
     setRole(role);
     navigate(path);
   };
+
+  const handleLogin = () => navigate('/auth/login');
 
   return (
     <div className="min-h-screen bg-bg">
@@ -60,7 +67,30 @@ export const Overview: React.FC = () => {
               <p className="text-xs text-muted leading-none mt-0.5">Voice-first сопровождение</p>
             </div>
           </div>
-          <RoleSwitcher />
+          <div className="flex items-center gap-2">
+            {authStatus === 'authenticated' && user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted hidden sm:inline">
+                  {user.email}
+                </span>
+                <button
+                  onClick={logout}
+                  className="px-3 py-1.5 rounded-full bg-coral/8 border border-coral/20 text-xs font-bold text-coral hover:bg-coral/15 transition-all"
+                >
+                  Выйти
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleLogin}
+                className="px-3 py-1.5 rounded-full bg-teal-soft border border-teal/20 text-xs font-bold text-teal-dark hover:bg-teal/15 transition-all flex items-center gap-1.5"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Войти
+              </button>
+            )}
+            <RoleSwitcher />
+          </div>
         </div>
       </header>
 
