@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.4] - 2026-07-02 (Privacy hardening + Stage 1 demo-ready)
+
+### Privacy
+- **Synthetic demo profiles** — заменены все реальные имена "Алихан/Мира/Тимур"
+  на "Демо-профиль 1/2/3" в:
+  - `apps/api/src/db/seed.ts` (child records + privacy migration)
+  - `apps/api/prisma/schema.prisma` (комментарий)
+  - `apps/prototype/src/data/demoDataset.ts`
+  - `apps/prototype/src/data/mockChild.ts`
+  - `apps/prototype/src/data/mockEvents.ts` (транскрипт)
+  - `apps/prototype/src/components/ui/Primitives.tsx` (ROLE_LABELS)
+  - `apps/api/src/services/sttService.ts` (mock transcript)
+  - `apps/api/test/ai.test.ts` (test transcripts)
+- **Avatars** "А/М/Т" → "1/2/3"
+- **DB migration** в seed: автоматически обновляет старые имена при первом запуске
+  v0.7.4+ (Алихан/Мира/Тимур/Ребёнок 1/2/3 → Демо-профиль 1/2/3)
+- **Документация** (CHANGELOG, README, docs/*) — имена оставлены как исторический контекст
+
+### Demo-Ready Polish
+- **Health endpoint** — version читается из `package.json` через `fs.readFileSync`
+  (centralized source of truth). Backend `package.json` bumped 0.7.2 → 0.7.4.
+- **DemoIndicator position** — bottom: `calc(80px + env(safe-area-inset-bottom))`
+  чтобы быть НАД BottomNav когда оба видны. Cleanup unused `layout` import.
+
+### Documentation
+- **`docs/DEMO_FLOW_QA.md`** — 16 экранов проверены, чек-лист 12 критериев,
+  safety wording audit, privacy audit, demo scenario рекомендации
+- **`docs/PHASE_2_BACKLOG.md`** — production roadmap (multi-tenant auth, GDPR,
+  payment, push, wearable, GPS, Capacitor APK, i18n expansion, etc.) с приоритизацией
+- **`docs/CURRENT_ARCHITECTURE.md`** — обновлён до v0.7.4, добавлен раздел
+  Stage 1 vs Phase 2
+
+### Verified
+- Frontend: 20/20 tests passed (4.74s)
+- Backend: 16/16 tests passed (2.81s)
+- Build clean (frontend 1694 modules, PWA SW regenerated)
+- API typecheck clean
+- API health: `{"version":"0.7.4","ai":"mock","stt":"mock","db":"ok"}`
+- Privacy audit: 0 real names в коде
+- Safety wording audit: 0 medical claims
+
+### Stage 1 Status
+**Готов к демонстрации инвестору, родителям, тьюторам, коррекционным центрам,
+специалистам.** Production-ready features (multi-tenant, GDPR, payment) перенесены
+в `docs/PHASE_2_BACKLOG.md`.
+
 ## [0.6.9] - 2026-07-02 (Real STT в ChildSpeak)
 
 ### Added

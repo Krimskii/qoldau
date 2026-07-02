@@ -37,11 +37,11 @@ export const ThemeToggle: React.FC<{ className?: string }> = ({ className }) => 
   return (
     <button
       onClick={cycle}
-      className={`w-9 h-9 rounded-full bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft ${className ?? ''}`}
+      className={`w-11 h-11 rounded-full bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft ${className ?? ''}`}
       aria-label={`Тема: ${label}`}
       title={`Тема: ${label}`}
     >
-      <AppIcon component={icon} size={16} colorClass="text-ink-2" />
+      <AppIcon component={icon} size={18} colorClass="text-ink-2" />
     </button>
   );
 };

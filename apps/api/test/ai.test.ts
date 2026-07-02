@@ -25,7 +25,7 @@ describe('POST /api/ai/parse', () => {
   it('parses Russian transcript and returns events', async () => {
     const res = await request(app)
       .post('/api/ai/parse')
-      .send({ transcript: 'Алихан поел кашу с сыром, потом выпил воду, пошёл в туалет и закрывал уши' });
+      .send({ transcript: 'Ребёнок поел кашу с сыром, потом выпил воду, пошёл в туалет и закрывал уши' });
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
     expect(Array.isArray(res.body.events)).toBe(true);
@@ -37,7 +37,7 @@ describe('POST /api/ai/parse', () => {
   it('returns clarification questions', async () => {
     const res = await request(app)
       .post('/api/ai/parse')
-      .send({ transcript: 'Алихан поел кашу' });
+      .send({ transcript: 'Ребёнок поел кашу' });
     expect(res.body.clarificationQuestions).toBeDefined();
     expect(Array.isArray(res.body.clarificationQuestions)).toBe(true);
   });

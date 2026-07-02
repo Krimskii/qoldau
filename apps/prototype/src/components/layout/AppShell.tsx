@@ -4,6 +4,7 @@ import { Bell, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { ChildTopBar } from './ChildTopBar';
+import { ExitConfirmDialog } from './ExitConfirmDialog';
 import { useRoleStore } from '@/store/useRoleStore';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
@@ -131,44 +132,16 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
 
         {showNav && <BottomNav role={normalizedRole} />}
 
-        {/* Exit confirm dialog (parent/tutor) — аналог ChildTopBar */}
+        {/* Exit confirm dialog (parent/tutor) */}
         {exitConfirmOpen && (
-          <div
-            className="fixed inset-0 z-[95] flex items-center justify-center px-5 bg-ink/50 backdrop-blur-sm"
-            role="dialog"
-            aria-modal="true"
-            aria-label={t('exit.parentTitle')}
-            onClick={() => setExitConfirmOpen(false)}
-          >
-            <div
-              className="w-full max-w-[360px] bg-white rounded-3xl p-6 shadow-card-hover"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center bg-coral-soft">
-                <LogOut className="w-7 h-7 text-coral" />
-              </div>
-              <h3 className="text-lg font-black text-ink text-center mb-1">
-                {t('exit.parentTitle')}
-              </h3>
-              <p className="text-sm text-muted text-center mb-5 leading-relaxed">
-                {t('exit.parentHint')}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setExitConfirmOpen(false)}
-                  className="flex-1 py-3 rounded-2xl border-2 border-line text-ink font-bold text-sm hover:bg-bg transition-colors"
-                >
-                  {t('exit.stay')}
-                </button>
-                <button
-                  onClick={handleExit}
-                  className="flex-1 py-3 rounded-2xl text-white font-black text-sm transition-transform active:scale-[0.97] bg-gradient-to-br from-coral to-[#cc251d] shadow-card hover:shadow-card-hover"
-                >
-                  {t('exit.leave')}
-                </button>
-              </div>
-            </div>
-          </div>
+          <ExitConfirmDialog
+            title={t('exit.parentTitle')}
+            hint={t('exit.parentHint')}
+            stayLabel={t('exit.stay')}
+            leaveLabel={t('exit.leave')}
+            onStay={() => setExitConfirmOpen(false)}
+            onLeave={handleExit}
+          />
         )}
       </div>
     </div>

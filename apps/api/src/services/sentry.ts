@@ -48,11 +48,8 @@ export const sentry = {
       },
     });
 
-    // Request handler — ДО routes, ПОСЛЕ CORS
-    app.use(Sentry.expressRequestHandler());
-
-    // Error handler — ПОСЛЕ всех routes
-    app.use(Sentry.expressErrorHandler());
+    // Request + Error handlers — Sentry v8+ API
+    Sentry.setupExpressErrorHandler(app);
 
     initialized = true;
     console.log(`[sentry] initialized: env=${environment}, sampleRate=${tracesSampleRate}`);

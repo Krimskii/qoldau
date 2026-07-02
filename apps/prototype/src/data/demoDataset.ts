@@ -4,7 +4,7 @@ import { ChildProfile, QoldauEvent, Signal, EventType, EventStatus } from '@/typ
  * Demo dataset — все mock-данные для полноценной презентации v0.3.0.
  *
  * Структура:
- *   - 3 ребёнка (Алихан, Мира, Тимур)
+  *   - 3 ребёнка (Демо-профиль 1, Демо-профиль 2, Демо-профиль 3) — synthetic имена (v0.7.4)
  *   - Родители, тьюторы, специалисты
  *   - 60+ событий за 7 дней для Алихана
  *   - События логически связаны через linkedEventIds
@@ -21,11 +21,11 @@ import { ChildProfile, QoldauEvent, Signal, EventType, EventStatus } from '@/typ
 export const DEMO_CHILDREN: ChildProfile[] = [
   {
     id: 'child-alikhan',
-    name: 'Алихан',
+    name: 'Демо-профиль 1',
     age: 7,
     diagnosisLabel: 'РАС',
     currentState: 'спокойный',
-    avatar: 'А',
+    avatar: '1',
     mainSignals: [
       { id: 'sig-1', signal: '«ту-ту»', kind: 'sound', possibleMeaning: 'возможно — туалет', confidence: 0.82, confirmedCount: 14, lastSeenAt: '2026-07-01T10:38:00' },
       { id: 'sig-2', signal: '«ва»', kind: 'sound', possibleMeaning: 'возможно — пить', confidence: 0.88, confirmedCount: 18, lastSeenAt: '2026-07-01T11:15:00' },
@@ -36,11 +36,11 @@ export const DEMO_CHILDREN: ChildProfile[] = [
   },
   {
     id: 'child-mira',
-    name: 'Мира',
+    name: 'Демо-профиль 2',
     age: 5,
     diagnosisLabel: 'РАС',
     currentState: 'активная',
-    avatar: 'М',
+    avatar: '2',
     mainSignals: [
       { id: 'sig-m1', signal: 'хлопает в ладоши', kind: 'behavior', possibleMeaning: 'радость / волнение', confidence: 0.75, confirmedCount: 6, lastSeenAt: '2026-06-30T15:00:00' },
       { id: 'sig-m2', signal: 'указывает пальцем', kind: 'gesture', possibleMeaning: 'хочет предмет', confidence: 0.88, confirmedCount: 11, lastSeenAt: '2026-07-01T10:00:00' },
@@ -49,11 +49,11 @@ export const DEMO_CHILDREN: ChildProfile[] = [
   },
   {
     id: 'child-timur',
-    name: 'Тимур',
+    name: 'Демо-профиль 3',
     age: 9,
     diagnosisLabel: 'РАС',
     currentState: 'сфокусирован',
-    avatar: 'Т',
+    avatar: '3',
     mainSignals: [
       { id: 'sig-t1', signal: 'стереотипные движения', kind: 'behavior', possibleMeaning: 'саморегуляция', confidence: 0.70, confirmedCount: 5, lastSeenAt: '2026-06-28T16:00:00' },
       { id: 'sig-t2', signal: 'использует планшет', kind: 'aac', possibleMeaning: 'коммуникация через AAC', confidence: 0.92, confirmedCount: 15, lastSeenAt: '2026-07-01T11:00:00' },

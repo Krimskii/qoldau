@@ -13,6 +13,7 @@ import { AppIcon } from '@/components/ui/AppIcon';
 import { QoldauEvent } from '@/types/qoldau';
 import { eventTypeColors, toneToColor, type EventTone } from '@/styles/tokens';
 import { formatDate, formatTime } from '@/utils/dateFormat';
+import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 
 type FilterType = 'all' | string;
 
@@ -117,7 +118,7 @@ export const EventTimeline: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   // v0.7.2: realtime подписка на новые события (effect-only)
-  useRealtimeEvents('child-alikhan');
+  useRealtimeEvents(DEMO_PRIMARY_CHILD.id);
 
   const filtered = useMemo(() => {
     if (activeFilter === 'all') return events;

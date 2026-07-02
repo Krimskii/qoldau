@@ -2,11 +2,11 @@ import { ChildProfile, QoldauEvent } from '@/types/qoldau';
 
 export const mockChild: ChildProfile = {
   id: 'child-1',
-  name: 'Алихан',
+  name: 'Демо-профиль 1',
   age: 7,
   diagnosisLabel: 'РАС',
   currentState: 'спокойный',
-  avatar: 'А',
+  avatar: '1',
   mainSignals: [
     {
       id: 'sig-1',

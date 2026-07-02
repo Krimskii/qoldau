@@ -32,11 +32,11 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className }
     <div className={`relative ${className ?? ''}`} ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-9 h-9 rounded-full bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft"
+        className="w-11 h-11 rounded-full bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft"
         aria-label="Язык"
         aria-expanded={open}
       >
-        <AppIcon component={Globe} size={16} colorClass="text-ink-2" />
+        <AppIcon component={Globe} size={18} colorClass="text-ink-2" />
       </button>
 
       {open && (

@@ -79,6 +79,11 @@ export const ChildSpeak: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Кроме state — держим актуальное значение в ref: setInterval создаётся один
+  // раз за сессию записи (deps=[isRecording]), поэтому stopRecording(), вызванный
+  // из его замыкания (авто-стоп на MAX_RECORDING_SEC), видел бы протухшее
+  // recordingTime из рендера, когда запись только началась (т.е. 0).
+  const recordingTimeRef = useRef(0);
 
   // === Web Speech API (v0.6.9) — реальное распознавание голоса ребёнка.
   // Если браузер поддерживает, transcript используется как label записи.
@@ -120,9 +125,11 @@ export const ChildSpeak: React.FC = () => {
       setRecordingTime((t) => {
         if (t >= MAX_RECORDING_SEC - 1) {
           // Авто-стоп через 30 сек
+          recordingTimeRef.current = MAX_RECORDING_SEC;
           setTimeout(() => stopRecording(), 0);
           return MAX_RECORDING_SEC;
         }
+        recordingTimeRef.current = t + 1;
         return t + 1;
       });
     }, 1000);
@@ -162,6 +169,7 @@ export const ChildSpeak: React.FC = () => {
   const startRecording = () => {
     setIsRecording(true);
     setRecordingTime(0);
+    recordingTimeRef.current = 0;
     speech.start();
   };
 
@@ -171,7 +179,7 @@ export const ChildSpeak: React.FC = () => {
     if (!isRecording) return;
     setIsRecording(false);
 
-    const duration = Math.max(2, recordingTime); // минимум 2 сек для осмысленной записи
+    const duration = Math.max(2, recordingTimeRef.current); // минимум 2 сек для осмысленной записи
     // Если Web Speech API распознал что-то — используем transcript.
     // Иначе fallback на случайный mock label.
     const recognized = speech.transcript.trim();
@@ -197,6 +205,7 @@ export const ChildSpeak: React.FC = () => {
     });
 
     setRecordingTime(0);
+    recordingTimeRef.current = 0;
   };
 
   const toggleRecord = () => {

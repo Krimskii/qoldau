@@ -29,7 +29,7 @@ interface WhisperClient {
 function createMockClient(): WhisperClient {
   return {
     async transcribe() {
-      return { text: 'Алихан поел кашу с сыром, потом начал нервничать и закрывал уши. Сказал «ту-ту» и сходил в туалет.' };
+      return { text: 'Ребёнок поел кашу с сыром, потом начал нервничать и закрывал уши. Сказал «ту-ту» и сходил в туалет.' };
     },
   };
 }

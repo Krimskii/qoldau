@@ -242,23 +242,23 @@ export const Overview: React.FC = () => {
           <div className="bg-white border border-line rounded-3xl p-6 shadow-card-soft">
             <h3 className="font-black text-ink mb-3">{t('landing.mvpTitle')}</h3>
             <ul className="text-sm text-ink-2 space-y-2">
-              <li>✓ Voice-first ввод</li>
-              <li>✓ Event Timeline</li>
-              <li>✓ AAC карточки</li>
-              <li>✓ Питание / вода / туалет / сон</li>
-              <li>✓ AI-наблюдения (Claude / mock)</li>
-              <li>✓ Подтверждение человеком</li>
+              <li>✓ {t('landing.mvpItem1')}</li>
+              <li>✓ {t('landing.mvpItem2')}</li>
+              <li>✓ {t('landing.mvpItem3')}</li>
+              <li>✓ {t('landing.mvpItem4')}</li>
+              <li>✓ {t('landing.mvpItem5')}</li>
+              <li>✓ {t('landing.mvpItem6')}</li>
             </ul>
           </div>
           <div className="bg-white border border-line rounded-3xl p-6 shadow-card-soft">
             <h3 className="font-black text-ink mb-3">{t('landing.phase2Title')}</h3>
             <ul className="text-sm text-muted space-y-2">
-              <li>○ Распознавание звуков ребёнка</li>
-              <li>○ Wearable</li>
-              <li>○ Геозоны</li>
-              <li>○ Домашний хаб</li>
-              <li>○ Персональные AI-модели</li>
-              <li>○ Email-уведомления (magic-link)</li>
+              <li>○ {t('landing.phase2Item1')}</li>
+              <li>○ {t('landing.phase2Item2')}</li>
+              <li>○ {t('landing.phase2Item3')}</li>
+              <li>○ {t('landing.phase2Item4')}</li>
+              <li>○ {t('landing.phase2Item5')}</li>
+              <li>○ {t('landing.phase2Item6')}</li>
             </ul>
           </div>
         </div>
@@ -267,7 +267,7 @@ export const Overview: React.FC = () => {
       {/* Disclaimer */}
       <section className="max-w-[1100px] mx-auto px-6 pb-16">
         <div className="bg-yellow-soft border border-yellow/30 rounded-3xl p-5 text-sm text-ink-2 leading-relaxed">
-          <strong className="text-ink">Важно.</strong> {t('landing.disclaimer')}
+          <strong className="text-ink">{t('landing.importantLabel')}</strong> {t('landing.disclaimer')}
         </div>
       </section>
     </div>

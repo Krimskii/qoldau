@@ -1,7 +1,8 @@
 /**
  * Seed logic for Qoldau AI API (v0.5.0).
  *
- * Создаёт 3 детей + 13 demo событий для Алихана при первом запуске.
+ * Создаёт 3 детей + 13 demo событий для Демо-профиль 1 при первом запуске.
+ * v0.7.4: synthetic имена (Демо-профиль 1/2/3) вместо реальных.
  * Идемпотентно — если данные уже есть, не дублирует.
  *
  * Запуск:
@@ -20,7 +21,7 @@ export async function seed(): Promise<void> {
   console.log('[seed] Inserting children...');
   await childrenRepo.upsert({
     id: 'child-alikhan',
-    name: 'Алихан',
+    name: 'Демо-профиль 1',
     age: 7,
     diagnosisLabel: 'РАС',
     currentState: 'спокойный',
@@ -28,7 +29,7 @@ export async function seed(): Promise<void> {
   });
   await childrenRepo.upsert({
     id: 'child-mira',
-    name: 'Мира',
+    name: 'Демо-профиль 2',
     age: 5,
     diagnosisLabel: 'РАС',
     currentState: 'активная',
@@ -36,19 +37,38 @@ export async function seed(): Promise<void> {
   });
   await childrenRepo.upsert({
     id: 'child-timur',
-    name: 'Тимур',
+    name: 'Демо-профиль 3',
     age: 9,
     diagnosisLabel: 'РАС',
     currentState: 'сфокусирован',
     avatar: 'Т',
   });
 
-  // === Events (Алихан, последние 4 дня) ===
+  // === Privacy migration (v0.7.4) — synthetic имена в существующих данных ===
+  // Если БД содержит старые имена (Алихан/Мира/Тимур, или "Ребёнок 1/2/3" из v0.7.3-v0.7.4 dev),
+  // UPDATE на финальные "Демо-профиль 1/2/3".
+  const nameMigrations: Array<{ from: string; to: string; id: string }> = [
+    { id: 'child-alikhan', from: 'Алихан', to: 'Демо-профиль 1' },
+    { id: 'child-mira', from: 'Мира', to: 'Демо-профиль 2' },
+    { id: 'child-timur', from: 'Тимур', to: 'Демо-профиль 3' },
+    { id: 'child-alikhan', from: 'Ребёнок 1', to: 'Демо-профиль 1' },
+    { id: 'child-mira', from: 'Ребёнок 2', to: 'Демо-профиль 2' },
+    { id: 'child-timur', from: 'Ребёнок 3', to: 'Демо-профиль 3' },
+  ];
+  for (const m of nameMigrations) {
+    const existing = await prisma.child.findUnique({ where: { id: m.id } });
+    if (existing && existing.name === m.from) {
+      await prisma.child.update({ where: { id: m.id }, data: { name: m.to, avatar: m.to.replace('Демо-профиль ', '') } });
+      console.log(`[seed] Migrated child ${m.id}: "${m.from}" → "${m.to}"`);
+    }
+  }
+
+  // === Events (Демо-профиль 1, последние 4 дня) ===
   const eventCount = await eventsRepo.count();
   if (eventCount > 0) {
     console.log(`[seed] Events already exist (${eventCount}), skipping events seed`);
   } else {
-    console.log('[seed] Inserting demo events for Алихан...');
+        console.log('[seed] Inserting demo events for Демо-профиль 1...');
     const now = Date.now();
     const day = 24 * 60 * 60 * 1000;
     const at = (offsetDays: number, hour: number, minute: number): Date => {

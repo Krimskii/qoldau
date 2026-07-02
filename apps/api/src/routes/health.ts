@@ -1,13 +1,34 @@
 /**
- * Health routes (v0.6.3) — DB health-check + AI mode + auth info.
+ * Health routes (v0.7.4) — DB health-check + AI/STT mode + auth info.
+ * Version читается из package.json (централизованно).
  */
 import { Router } from 'express';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { prisma } from '../db/prisma.js';
 import { eventsRepo } from '../repositories/events.js';
 import { recordingsRepo } from '../repositories/recordings.js';
 import { getCache } from '../db/cache.js';
 import { llmService } from '../services/llmService.js';
 import { sttService } from '../services/sttService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+// apps/api/src/routes/health.ts → ../../package.json (apps/api/package.json)
+const PACKAGE_JSON = join(__dirname, '..', '..', 'package.json');
+
+let cachedVersion: string | null = null;
+function getAppVersion(): string {
+  if (cachedVersion) return cachedVersion;
+  try {
+    const pkg = JSON.parse(readFileSync(PACKAGE_JSON, 'utf-8')) as { version?: string };
+    cachedVersion = pkg.version ?? '0.0.0';
+    return cachedVersion;
+  } catch {
+    return '0.0.0';
+  }
+}
 
 export const healthRouter = Router();
 
@@ -24,7 +45,7 @@ healthRouter.get('/', async (_req, res) => {
   res.json({
     ok: dbStatus === 'ok',
     service: 'qoldau-api',
-    version: '0.6.3',
+    version: getAppVersion(),
     phase: 3,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),

@@ -1,6 +1,6 @@
 {
   "name": "@qoldau/api",
-  "version": "0.7.2",
+  "version": "0.7.4",
   "private": true,
   "description": "Qoldau AI backend API — events, recordings, STT (Whisper/mock), AI (Claude/mock), auth, rate-limit, WebSocket.",
   "type": "module",

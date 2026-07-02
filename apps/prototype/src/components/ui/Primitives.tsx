@@ -81,9 +81,9 @@ export interface RoleBadgeProps {
 }
 
 const ROLE_LABELS: Record<RoleKey, string> = {
-  overview: 'Overview',
+  overview: 'Обзор',
   parent: 'Родитель',
-  child: 'Алихан',
+  child: 'Ребёнок',
   tutor: 'Тьютор',
   specialist: 'Специалист',
 };
