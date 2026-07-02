@@ -29,6 +29,8 @@ import { useDemoStore } from '@/store/useDemoStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { HealthCheckBanner } from '@/components/ui/HealthCheckBanner';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { DemoControlsCard } from '@/components/ui/DemoControlsCard';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import type { UserRole } from '@/types/qoldau';
 
 interface RoleDef {
@@ -120,6 +122,7 @@ export const Overview: React.FC = () => {
               </button>
             )}
             <LanguageSwitcher />
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -152,9 +155,12 @@ export const Overview: React.FC = () => {
         </div>
       </section>
 
-      {/* System health */}
+      {/* System health + demo controls */}
       <section className="max-w-[1100px] mx-auto px-6 pb-8">
-        <HealthCheckBanner />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <HealthCheckBanner />
+          <DemoControlsCard />
+        </div>
       </section>
 
       {/* Main flow */}
