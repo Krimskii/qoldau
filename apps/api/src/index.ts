@@ -30,6 +30,7 @@ import { runSeed } from './db/seed-runner.js';
 import { eventsRepo } from './repositories/events.js';
 import { recordingsRepo } from './repositories/recordings.js';
 import { llmService } from './services/llmService.js';
+import { realtimeService } from './services/realtimeService.js';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
@@ -135,16 +136,18 @@ async function start() {
     // Не фатально — продолжаем
   }
 
-  // 4. Запускаем HTTP сервер
-  app.listen(PORT, () => {
-    console.log(`\n🟢  Qoldau API v0.6.0`);
+  // 4. Запускаем HTTP сервер + socket.io (v0.7.2)
+  const httpServer = app.listen(PORT, () => {
+    console.log(`\n🟢  Qoldau API v0.7.2`);
     console.log(`   listening on http://localhost:${PORT}`);
-    console.log(`   health: http://localhost:${PORT}/api/health`);
-    console.log(`   CORS:   ${process.env.CORS_ORIGIN ?? 'http://localhost:5173'}`);
-    console.log(`   DB:     ${process.env.DATABASE_URL ?? 'sqlite'}`);
+    console.log(`   health:  http://localhost:${PORT}/api/health`);
+    console.log(`   CORS:    ${process.env.CORS_ORIGIN ?? 'http://localhost:5173'}`);
+    console.log(`   DB:      ${process.env.DATABASE_URL ?? 'sqlite'}`);
     const llm = llmService.status();
-    console.log(`   AI:     ${llm.source}${llm.enabled ? ` (model: ${llm.model})` : ' (mock fallback — set ANTHROPIC_API_KEY)'}\n`);
+    console.log(`   AI:      ${llm.source}${llm.enabled ? ` (model: ${llm.model})` : ' (mock fallback — set ANTHROPIC_API_KEY)'}`);
+    console.log(`   WS:      socket.io ready (path: /socket.io)\n`);
   });
+  realtimeService.init(httpServer);
 }
 
 // ===== Graceful shutdown =====

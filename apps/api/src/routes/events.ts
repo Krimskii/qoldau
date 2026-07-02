@@ -1,8 +1,9 @@
 /**
- * Events routes (v0.5.0) — uses Prisma repository.
+ * Events routes (v0.7.2) — Prisma + realtime broadcast.
  */
 import { Router } from 'express';
 import { eventsRepo, type EventInput } from '../repositories/events.js';
+import { realtimeService } from '../services/realtimeService.js';
 
 export const eventsRouter = Router();
 
@@ -47,6 +48,8 @@ eventsRouter.post('/', async (req, res, next) => {
       });
     }
     const event = await eventsRepo.create(body as EventInput);
+    // Broadcast (v0.7.2) — уведомляем всех подключённых клиентов
+    realtimeService.broadcastEvent({ childId: event.childId, id: event.id });
     res.status(201).json({ ok: true, event });
   } catch (err) {
     next(err);
@@ -62,6 +65,7 @@ eventsRouter.patch('/:id', async (req, res, next) => {
     if (!updated) {
       return res.status(404).json({ ok: false, error: 'Event not found' });
     }
+    realtimeService.broadcastEventUpdate({ childId: updated.childId, id: updated.id });
     res.json({ ok: true, event: updated });
   } catch (err) {
     next(err);
@@ -76,6 +80,11 @@ eventsRouter.delete('/:id', async (req, res, next) => {
     const ok = await eventsRepo.delete(req.params.id);
     if (!ok) {
       return res.status(404).json({ ok: false, error: 'Event not found' });
+    }
+    // broadcast: нужен childId, ищем перед удалением
+    const event = await eventsRepo.get(req.params.id);
+    if (event) {
+      realtimeService.broadcastEventDelete({ childId: event.childId, id: event.id });
     }
     res.json({ ok: true });
   } catch (err) {
