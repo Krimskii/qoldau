@@ -13,6 +13,10 @@ interface EventState {
   clarifyingAnswers: ClarifyingAnswers;
   /** Подключены ли мы к backend API (v0.4.0). */
   apiMode: boolean;
+  /** Идёт ли загрузка с API (v0.6.3) — для skeleton. */
+  isLoading: boolean;
+  /** Текст последней ошибки (v0.6.3) — для offline-состояния. */
+  error: string | null;
 
   // Actions
   setEvents: (events: QoldauEvent[]) => void;
@@ -52,6 +56,8 @@ export const useEventStore = create<EventState>()(
       events: [],
       clarifyingAnswers: {},
       apiMode: false,
+      isLoading: false,
+      error: null,
 
       setEvents: (events) => set({ events }),
 
@@ -131,18 +137,21 @@ export const useEventStore = create<EventState>()(
       clearAll: () => set({ events: [], clarifyingAnswers: {} }),
 
       loadFromApi: async () => {
+        set({ isLoading: true, error: null });
         try {
           const available = await isApiAvailable();
           if (!available) {
             console.info('[useEventStore] API unavailable, using local mock data');
+            set({ isLoading: false, error: 'API недоступен' });
             return;
           }
           const res = await api.events.list();
           const remoteEvents = (res as { events: QoldauEvent[] }).events;
-          set({ events: remoteEvents, apiMode: true });
+          set({ events: remoteEvents, apiMode: true, isLoading: false });
           console.info(`[useEventStore] Loaded ${remoteEvents.length} events from API`);
         } catch (err) {
           console.warn('[useEventStore] Failed to load from API, using local:', err);
+          set({ isLoading: false, error: err instanceof Error ? err.message : String(err) });
         }
       },
     }),
@@ -163,7 +172,7 @@ export const useEventStore = create<EventState>()(
           state.loadFromApi();
         }
       },
-      version: 1,
+      version: 2,
     },
   ),
 );

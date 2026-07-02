@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { EventTypeBadge, EventStatusBadge } from '@/components/ui/Primitives';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { EventListSkeleton } from '@/components/ui/Skeleton';
 import { useEventStore } from '@/store/useEventStore';
 import { EventTimelineIcon } from '@/components/icons';
 import { AppIcon } from '@/components/ui/AppIcon';
@@ -122,7 +123,7 @@ const FilterChip: React.FC<{
 
 export const EventTimeline: React.FC = () => {
   const navigate = useNavigate();
-  const { events } = useEventStore();
+  const { events, isLoading } = useEventStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   const filtered = useMemo(() => {
@@ -217,7 +218,9 @@ export const EventTimeline: React.FC = () => {
       </div>
 
       {/* Timeline by day */}
-      {grouped.length === 0 ? (
+      {isLoading && events.length === 0 ? (
+        <EventListSkeleton count={4} />
+      ) : grouped.length === 0 ? (
         <EmptyState
           icon="📋"
           title="Нет событий этого типа"
