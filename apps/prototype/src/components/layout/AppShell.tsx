@@ -6,6 +6,7 @@ import { ChildTopBar } from './ChildTopBar';
 import { useRoleStore } from '@/store/useRoleStore';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import type { UserRole } from '@/types/qoldau';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -13,26 +14,25 @@ interface AppShellProps {
 }
 
 /**
- * AppShell — phone-like layout (v0.3.16).
- * - Mobile: full width
- * - Desktop: max-width 430 (phone panel) for parent/child/tutor
- *           max-width 1100 (tablet) for specialist
+ * AppShell — phone-like layout (v0.6.1).
+ * - Mobile: full width, safe-area-inset-top padding для status bar.
+ * - Desktop: max-width 430 (phone panel) для parent/child
+ *           max-width 1100 (tablet) для specialist.
  * - Soft background, white cards, centered.
  *
- * Старт приложения — /overview (выбор роли). После выбора роли AppShell оборачивает
- * соответствующий интерфейс.
+ * v0.6.1: landing-страница /overview убрана. Корень → /parent/home.
  */
 export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) => {
   const { currentRole } = useRoleStore();
   const navigate = useNavigate();
   const { events } = useEventStore();
 
-  if (currentRole === 'overview') {
-    return <>{children}</>;
-  }
+  // Нормализуем role: tutor/overview → specialist (после объединения ролей в v0.6.1).
+  const normalizedRole: UserRole =
+    currentRole === 'overview' || currentRole === 'tutor' ? 'specialist' : currentRole;
 
-  const isSpecialist = currentRole === 'specialist';
-  const isChild = currentRole === 'child';
+  const isSpecialist = normalizedRole === 'specialist';
+  const isChild = normalizedRole === 'child';
 
   const notifCount = events.filter(
     (e) =>
@@ -42,6 +42,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
 
   const maxWidthClass = isSpecialist ? 'max-w-[1100px]' : 'max-w-[430px]';
 
+  // safe-area: top padding под status bar (iOS notch, Android status bar).
+  const safeTopStyle: React.CSSProperties = {
+    paddingTop: 'max(env(safe-area-inset-top), 0px)',
+  };
+
   return (
     <div className="min-h-screen bg-bg flex justify-center">
       <div
@@ -49,31 +54,19 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
       >
         {/* Header — child role gets avatar+brand TopBar, others get standard */}
         {isChild ? (
-          <ChildTopBar />
+          <div style={safeTopStyle} className="bg-bg/85 backdrop-blur-md sticky top-0 z-30">
+            <ChildTopBar />
+          </div>
         ) : (
-          <header className="sticky top-0 z-30 bg-bg/85 backdrop-blur-md px-5 pt-4 pb-3 flex items-center justify-between border-b border-line-soft">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/overview')}
-                className="w-10 h-10 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft"
-                aria-label="На главную"
-              >
-                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
-                  <path
-                    d="M12 21s-7-4.5-9-9c-1.5-3.4 0.8-7.4 4.4-7.4 1.9 0 3.6 1.1 4.6 2.7 1-1.6 2.7-2.7 4.6-2.7 3.6 0 5.9 4 4.4 7.4-2 4.5-9 9-9 9Z"
-                    fill="#071B3A"
-                    fillOpacity="0.9"
-                  />
-                </svg>
-              </button>
-              <div>
-                <p className="text-xs text-muted leading-none mb-0.5">Qoldau AI</p>
-                <p className="text-sm font-black text-ink leading-none">
-                  {currentRole === 'parent' && 'Родитель'}
-                  {currentRole === 'tutor' && 'Тьютор'}
-                  {currentRole === 'specialist' && 'Специалист'}
-                </p>
-              </div>
+          <header
+            style={safeTopStyle}
+            className="sticky top-0 z-30 bg-bg/85 backdrop-blur-md px-5 pt-4 pb-3 flex items-center justify-between border-b border-line-soft"
+          >
+            <div>
+              <p className="text-xs text-muted leading-none mb-0.5">Qoldau AI</p>
+              <p className="text-sm font-black text-ink leading-none">
+                {normalizedRole === 'parent' ? 'Родитель' : 'Специалист'}
+              </p>
             </div>
             <button
               onClick={() => navigate('/parent/notifications')}
@@ -95,7 +88,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
           {children}
         </main>
 
-        {showNav && <BottomNav role={currentRole} />}
+        {showNav && <BottomNav role={normalizedRole} />}
       </div>
     </div>
   );

@@ -57,7 +57,7 @@ export const VerifyPage: React.FC = () => {
             <p className="text-base font-black text-ink">Готово!</p>
             <p className="text-sm text-ink-2 text-center">Вы вошли в Qoldau.</p>
             <PrimaryAction
-              onClick={() => navigate('/overview')}
+              onClick={() => navigate('/parent/home')}
               label="Перейти к приложению"
             />
           </div>

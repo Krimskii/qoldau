@@ -52,7 +52,6 @@ import { SupportPlan } from '@/pages/specialist/SupportPlan';
 import { Reports } from '@/pages/specialist/Reports';
 
 // Overview
-import { Overview } from '@/pages/overview/Overview';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { VerifyPage } from '@/pages/auth/VerifyPage';
 
@@ -62,9 +61,6 @@ export const AppRoutes: React.FC = () => {
       <DemoIndicator />
       <ToastContainer />
       <Routes>
-        {/* Overview */}
-        <Route path="/overview" element={<Overview />} />
-
         {/* Auth (v0.6.0) */}
         <Route
           path="/auth/login"
@@ -249,9 +245,10 @@ export const AppRoutes: React.FC = () => {
           element={<AppShell><Reports /></AppShell>}
         />
 
-        {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/overview" replace />} />
-        <Route path="*" element={<Navigate to="/overview" replace />} />
+        {/* Default redirect (v0.6.1: корень → родитель, /overview убран) */}
+        <Route path="/" element={<Navigate to="/parent/home" replace />} />
+        <Route path="/overview" element={<Navigate to="/parent/home" replace />} />
+        <Route path="*" element={<Navigate to="/parent/home" replace />} />
       </Routes>
     </HashRouter>
   );

@@ -24,8 +24,8 @@ const CONTACTS: ContactDef[] = [
     name: 'Позвать маму',
     builtinKey: 'Mom',
     color: 'coral',
-    bg: 'bg-[#FFEAEA]',
-    border: 'border-[#ffd9d3]',
+    bg: 'bg-coral-soft',
+    border: 'border-coral/20',
     targetPerson: 'mom',
   },
   {
@@ -33,8 +33,8 @@ const CONTACTS: ContactDef[] = [
     name: 'Позвать тьютора',
     builtinKey: 'Tutor',
     color: 'blue',
-    bg: 'bg-[#EAF5FF]',
-    border: 'border-[#cce6f7]',
+    bg: 'bg-blue-soft',
+    border: 'border-blue/20',
     targetPerson: 'tutor',
   },
 ];
@@ -139,12 +139,12 @@ export const ChildCall: React.FC = () => {
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/child/home')}
-          className="w-10 h-10 rounded-2xl bg-white border border-[#dce9f4] flex items-center justify-center hover:bg-bg transition-colors"
+          className="w-10 h-10 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
-          <span className="text-2xl text-[#53677e]">‹</span>
+          <span className="text-2xl text-muted">‹</span>
         </button>
-        <h2 className="text-lg font-black text-[#143259]">Позвать</h2>
+        <h2 className="text-lg font-black text-ink">Позвать</h2>
         <div className="w-10" />
       </div>
 
@@ -165,7 +165,7 @@ export const ChildCall: React.FC = () => {
               <div className="font-black text-ink leading-tight text-base text-left">
                 {contact.name}
               </div>
-              <div className="w-12 h-12 rounded-full bg-[#39bb72] flex items-center justify-center shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-green flex items-center justify-center shadow-sm">
                 <span className="text-white text-2xl font-black" aria-hidden="true">☎</span>
               </div>
             </button>
@@ -177,18 +177,18 @@ export const ChildCall: React.FC = () => {
       <button
         onClick={handleSOS}
         aria-label="SOS — экстренный вызов"
-        className="bg-[#FFEAEA] border-2 border-[#FFC2BE] rounded-2xl px-5 py-5 flex items-center gap-4 min-h-[88px] transition-transform duration-200 ease-out hover:scale-[0.98] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E56F5D]/40"
+        className="bg-coral-soft border-2 border-coral/30 rounded-2xl px-5 py-5 flex items-center gap-4 min-h-[88px] transition-transform duration-200 ease-out hover:scale-[0.98] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/40"
       >
-        <div className="w-14 h-14 rounded-2xl bg-white border-2 border-[#FFC2BE] flex items-center justify-center flex-shrink-0">
-          <span className="text-[#cc251d] text-3xl font-black" aria-hidden="true">!</span>
+        <div className="w-14 h-14 rounded-2xl bg-white border-2 border-coral/30 flex items-center justify-center flex-shrink-0">
+          <span className="text-coral text-3xl font-black" aria-hidden="true">!</span>
         </div>
         <div className="flex-1 text-left">
-          <div className="text-2xl font-black text-[#cc251d] tracking-wider">SOS</div>
-          <div className="text-xs font-bold text-[#cc251d]/70 mt-0.5">
+          <div className="text-2xl font-black text-coral tracking-wider">SOS</div>
+          <div className="text-xs font-bold text-coral/70 mt-0.5">
             Срочно позвать взрослого
           </div>
         </div>
-        <div className="w-12 h-12 rounded-full bg-[#cc251d] flex items-center justify-center shadow-sm">
+        <div className="w-12 h-12 rounded-full bg-coral flex items-center justify-center shadow-sm">
           <span className="text-white text-2xl" aria-hidden="true">☎</span>
         </div>
       </button>
@@ -197,9 +197,9 @@ export const ChildCall: React.FC = () => {
       <button
         onClick={handleMessage}
         aria-label="Написать сообщение взрослому"
-        className="min-h-[64px] border-2 border-[#dce9f4] rounded-2xl bg-white flex items-center justify-center gap-2 font-black text-[#376488] text-base hover:bg-bg transition-colors"
+        className="min-h-[64px] border-2 border-line rounded-2xl bg-white flex items-center justify-center gap-2 font-black text-ink-2 text-base hover:bg-bg transition-colors"
       >
-        <SpeakIcon size={20} className="text-[#1c6cb8]" />
+        <SpeakIcon size={20} className="text-blue" />
         Написать сообщение
       </button>
 
@@ -210,7 +210,7 @@ export const ChildCall: React.FC = () => {
           aria-live="polite"
           className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-sm qoldau-success-pop"
         >
-          <div className="bg-white border-2 border-[#DDF5F0] rounded-3xl px-6 py-5 shadow-card text-center">
+          <div className="bg-white border-2 border-teal-soft rounded-3xl px-6 py-5 shadow-card text-center">
             <div className="flex justify-center mb-2">
               <SuccessSparkle className="w-16 h-16" />
             </div>

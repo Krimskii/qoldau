@@ -93,11 +93,11 @@ export const ChildSettingsSheet: React.FC<ChildSettingsSheetProps> = ({ isOpen, 
   const navigate = useNavigate();
   const setRole = useRoleStore((s) => s.setRole);
 
-  /** Выход из режима Ребёнок → возврат на /overview. */
+  /** Выход из режима Ребёнок → возврат в режим Родителя. */
   const handleExit = () => {
-    setRole('overview');
+    setRole('parent');
     onClose();
-    navigate('/overview');
+    navigate('/parent/home');
   };
 
   if (!isOpen) return null;
