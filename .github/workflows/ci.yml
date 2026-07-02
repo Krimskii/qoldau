@@ -20,7 +20,11 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: apps/prototype/package-lock.json
-      - run: npm ci
+      # Use `npm install` instead of `npm ci`: lock contains platform-specific
+      # esbuild/rollup optional deps with "extraneous: true" markers. `npm ci`
+      # installs them all (fails on wrong platform, npm/cli#4828); `npm install`
+      # correctly skips platform-mismatched optionals.
+      - run: npm install --no-audit --no-fund --prefer-offline
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
