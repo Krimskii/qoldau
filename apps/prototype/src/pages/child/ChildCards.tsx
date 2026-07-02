@@ -33,7 +33,7 @@ export const ChildCards: React.FC = () => {
       <div className="flex items-center gap-2.5 px-5 pt-3.5 pb-1">
         <button
           onClick={() => navigate('/child/home')}
-          className="w-10 h-10 rounded-[13px] border border-line bg-white flex items-center justify-center hover:bg-bg transition-colors"
+          className="w-11 h-11 rounded-[13px] border border-line bg-white flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
           <BackArrowIcon size={20} />

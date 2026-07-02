@@ -53,7 +53,7 @@ export const BackButton: React.FC<BackButtonProps> = ({
       <button
         onClick={handleClick}
         className={clsx(
-          'w-10 h-10 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft flex-shrink-0',
+          'w-11 h-11 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft flex-shrink-0',
           className,
         )}
         aria-label={label ?? 'Назад'}

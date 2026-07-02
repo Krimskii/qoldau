@@ -1,4 +1,5 @@
-import { defineConfig } from 'vite';
+/// <reference types="vitest" />
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
@@ -15,9 +16,13 @@ export default defineConfig({
     port: 5173,
     host: true,
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./test/setup.ts'],
+    testTimeout: 10_000,
+  },
   build: {
-    // v0.6.3: code splitting — выделяем крупные зависимости в отдельные чанки
-    // чтобы убрать 500kB warning и улучшить кеширование между деплоями.
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {

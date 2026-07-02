@@ -35,7 +35,26 @@ const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
 
 // ===== Middleware =====
-app.use(helmet({ contentSecurityPolicy: false }));
+// Helmet с CSP (v0.6.5). Frontend статический, разрешаем self + inline-style
+// (Tailwind injects) + API calls.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'blob:'],
+        fontSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'"],
+        // Vite dev HMR использует eval; в prod отключен
+        ...(process.env.NODE_ENV !== 'production' ? { scriptSrc: ["'self'", "'unsafe-eval'"] } : {}),
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 app.use(cors({
   origin: process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(',')

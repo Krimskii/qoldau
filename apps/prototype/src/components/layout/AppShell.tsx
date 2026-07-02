@@ -75,7 +75,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
             </div>
             <button
               onClick={() => navigate('/parent/notifications')}
-              className="relative w-10 h-10 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft"
+              className="relative w-11 h-11 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft"
               aria-label="Уведомления"
             >
               <Bell className="w-4 h-4 text-ink" />
