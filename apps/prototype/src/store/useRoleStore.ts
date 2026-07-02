@@ -13,23 +13,24 @@ const rolePermissions: Record<UserRole, string[]> = {
   child: ['child'],
   tutor: ['tutor', 'specialist'],
   specialist: ['specialist', 'tutor'],
-  overview: ['parent'],
+  overview: ['parent', 'child', 'tutor', 'specialist', 'overview'],
 };
 
 /**
- * v0.6.1: tutor и overview роли объединены в specialist.
- * Мигрируем старые значения, чтобы UI не ломался.
+ * v0.6.2: landing /overview возвращён, role='overview' означает «не выбрана роль».
+ * Мигрируем старые значения: 'overview' в localStorage (от v0.6.1) → 'parent' (default).
  */
 function migrateRole(role: UserRole | string | undefined): UserRole {
-  if (role === 'parent' || role === 'child' || role === 'specialist') return role;
-  if (role === 'tutor' || role === 'overview') return 'specialist';
-  return 'parent';
+  if (role === 'parent' || role === 'child' || role === 'tutor' || role === 'specialist' || role === 'overview') {
+    return role;
+  }
+  return 'overview';
 }
 
 export const useRoleStore = create<RoleState>()(
   persist(
     (set) => ({
-      currentRole: 'parent',
+      currentRole: 'overview', // v0.6.2: по дефолту — landing
       setRole: (role) => set({ currentRole: migrateRole(role) }),
       canAccess: (role, page) => {
         const allowedRoles = rolePermissions[role];
@@ -40,7 +41,7 @@ export const useRoleStore = create<RoleState>()(
       name: 'qoldau-role-v1',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ currentRole: state.currentRole }),
-      version: 2,
+      version: 3,
       migrate: (persistedState, _version) => {
         const state = persistedState as { currentRole?: UserRole | string } | null;
         if (state && typeof state.currentRole === 'string') {

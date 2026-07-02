@@ -41,9 +41,9 @@ export const ChildTopBar: React.FC<ChildTopBarProps> = ({
   const firstLetter = child.name.charAt(0).toUpperCase();
 
   const handleExit = () => {
-    setRole('parent');
+    setRole('overview');
     setExitConfirmOpen(false);
-    navigate('/parent/home');
+    navigate('/overview');
   };
 
   const notifCount = events.filter(
@@ -162,7 +162,7 @@ export const ChildTopBar: React.FC<ChildTopBarProps> = ({
               Выйти из режима Ребёнок?
             </h3>
             <p className="text-sm text-muted text-center mb-5 leading-relaxed">
-              Вернёмся в режим Родителя, чтобы переключить пользователя.
+              Вернёмся на стартовую страницу, чтобы выбрать родителя, тьютора или специалиста.
             </p>
             <div className="flex gap-2">
               <button

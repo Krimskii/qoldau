@@ -9,7 +9,7 @@ export interface DemoStep {
 }
 
 export const DEMO_STEPS: DemoStep[] = [
-  { id: 1, path: '/parent/home', title: 'Главная родителя', hint: 'Добро пожаловать в Qoldau AI', description: 'Продукт для сопровождения детей с РАС' },
+  { id: 1, path: '/overview', title: 'Добро пожаловать', hint: 'Стартовая страница Qoldau AI', description: 'Здесь можно запустить демо или выбрать роль' },
   { id: 2, path: '/parent/home', title: 'Главная родителя', hint: 'Видим состояние ребёнка', description: 'Быстрый доступ к голосовому вводу' },
   { id: 3, path: '/parent/voice', title: 'Голосовое наблюдение', hint: 'Шаг 1 из 8', description: 'Родитель наговорит наблюдение' },
   { id: 4, path: '/parent/ai-review', title: 'AI-разбор', hint: 'AI предложил структуру', description: 'Проверяем и подтверждаем' },
@@ -26,7 +26,7 @@ export const DEMO_STEPS: DemoStep[] = [
   { id: 15, path: '/tutor/report', title: 'Отчёт тьютора', hint: 'Готовый отчёт', description: 'Копируем родителю' },
   { id: 16, path: '/specialist/dashboard', title: 'Панель специалиста', hint: 'Все данные вместе', description: 'KPI и паттерны' },
   { id: 17, path: '/specialist/communication-profile', title: 'Коммуникации', hint: 'Сигналы ребёнка', description: 'Подтверждённые наблюдения' },
-  { id: 18, path: '/parent/home', title: 'Демо завершено', hint: 'Спасибо за внимание!', description: 'Возврат в Qoldau AI' },
+  { id: 18, path: '/overview', title: 'Демо завершено', hint: 'Спасибо за внимание!', description: 'Возврат на стартовую страницу' },
 ];
 
 interface DemoState {

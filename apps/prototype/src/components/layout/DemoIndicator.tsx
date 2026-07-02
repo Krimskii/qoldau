@@ -9,7 +9,7 @@ import { layout } from '@/styles/tokens';
  *
  * - Collapsed by default: shows only a small handle "Шаг X из Y · Title".
  * - Expanded: shows hint + progress bar + Назад/Далее buttons.
- * - «Назад» on the first step exits demo and returns to /parent/home
+ * - «Назад» on the first step exits demo and returns to /overview
  *   (the previous behaviour was just disabled, which felt broken).
  */
 export const DemoIndicator: React.FC = () => {
@@ -51,7 +51,7 @@ export const DemoIndicator: React.FC = () => {
 
   const handleExit = () => {
     endDemo();
-    navigate('/parent/home');
+    navigate('/overview');
   };
 
   const handleBack = () => {

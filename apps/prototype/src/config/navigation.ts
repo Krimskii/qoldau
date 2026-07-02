@@ -38,11 +38,11 @@ export interface RouteMeta {
 }
 
 export const ROLE_HOME: Record<UserRole, string> = {
-  overview: '/parent/home',
+  overview: '/overview',
   parent: '/parent/home',
   child: '/child/home',
   tutor: '/tutor/home',
-  specialist: '/tutor/home',
+  specialist: '/specialist/dashboard',
 };
 
 /**
@@ -50,6 +50,17 @@ export const ROLE_HOME: Record<UserRole, string> = {
  * Чтобы добавить новый route — добавь RouteMeta сюда + Route в router.tsx.
  */
 export const ROUTES: RouteMeta[] = [
+  // ===== Overview (v0.6.2: landing restored) =====
+  {
+    path: '/overview',
+    title: 'Главная',
+    role: 'overview',
+    showBottomNav: false,
+    showAppHeader: false,
+    fallbackPath: '/overview',
+    variant: 'full',
+  },
+
   // ===== Parent =====
   {
     path: '/parent/home',
@@ -425,16 +436,16 @@ export function getFallbackPath(pathname: string): string {
   const meta = getRouteMeta(pathname);
   if (meta) return meta.fallbackPath;
 
-  // Если pathname не в списке — fallback на parent home
-  // (например, /unknown → /parent/home)
-  return '/parent/home';
+  // Если pathname не в списке — fallback на landing /overview
+  // (например, /unknown → /overview)
+  return '/overview';
 }
 
 /**
  * Возвращает home для role.
  */
 export function getRoleHome(role: UserRole): string {
-  return ROLE_HOME[role] ?? '/parent/home';
+  return ROLE_HOME[role] ?? '/overview';
 }
 
 /**

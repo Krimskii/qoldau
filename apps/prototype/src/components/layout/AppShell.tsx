@@ -14,24 +14,29 @@ interface AppShellProps {
 }
 
 /**
- * AppShell — phone-like layout (v0.6.1).
+ * AppShell — phone-like layout (v0.6.2).
  * - Mobile: full width, safe-area-inset-top padding для status bar.
  * - Desktop: max-width 430 (phone panel) для parent/child
  *           max-width 1100 (tablet) для specialist.
  * - Soft background, white cards, centered.
  *
- * v0.6.1: landing-страница /overview убрана. Корень → /parent/home.
+ * v0.6.2: landing /overview восстановлен. currentRole === 'overview'
+ * означает «не выбрана роль» — не оборачиваем в shell.
  */
 export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) => {
   const { currentRole } = useRoleStore();
   const navigate = useNavigate();
   const { events } = useEventStore();
 
-  // Нормализуем role: tutor/overview → specialist (после объединения ролей в v0.6.1).
-  const normalizedRole: UserRole =
-    currentRole === 'overview' || currentRole === 'tutor' ? 'specialist' : currentRole;
+  // currentRole === 'overview' → пользователь на landing, не в роли.
+  if (currentRole === 'overview') {
+    return <>{children}</>;
+  }
 
-  const isSpecialist = normalizedRole === 'specialist';
+  // Нормализуем role для UI (все не-specialist роли — phone panel).
+  const normalizedRole: UserRole = currentRole;
+
+  const isSpecialist = normalizedRole === 'tutor' || normalizedRole === 'specialist';
   const isChild = normalizedRole === 'child';
 
   const notifCount = events.filter(
@@ -65,7 +70,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
             <div>
               <p className="text-xs text-muted leading-none mb-0.5">Qoldau AI</p>
               <p className="text-sm font-black text-ink leading-none">
-                {normalizedRole === 'parent' ? 'Родитель' : 'Специалист'}
+                {normalizedRole === 'parent' ? 'Родитель' : 'Тьютор'}
               </p>
             </div>
             <button
