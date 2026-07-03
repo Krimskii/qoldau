@@ -32,6 +32,20 @@ describe('POST /api/audio/ingest', () => {
     expect(res.body.code).toBe('AUDIO_REQUIRED');
   });
 
+  it('rejects invalid source role', async () => {
+    const res = await request(app)
+      .post('/api/audio/ingest')
+      .send({
+        audioBase64: Buffer.from('fake-webm-audio').toString('base64'),
+        childId: 'test-audio-child',
+        sourceRole: 'unknown-role',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.code).toBe('SOURCE_ROLE_INVALID');
+  });
+
   it('runs the mock pipeline and persists recording/events', async () => {
     const audioBase64 = Buffer.from('fake-webm-audio').toString('base64');
 
@@ -62,5 +76,24 @@ describe('POST /api/audio/ingest', () => {
       where: { childId: 'test-audio-child' },
     });
     expect(savedEvents.length).toBeGreaterThanOrEqual(res.body.events.length);
+  });
+});
+
+describe('GET /api/audio/health', () => {
+  const app = express();
+  app.use(express.json({ limit: '35mb' }));
+  app.use('/api/audio', audioRouter);
+
+  it('returns audio pipeline health without secrets', async () => {
+    const res = await request(app).get('/api/audio/health');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      ok: true,
+      service: 'audio-pipeline',
+      mode: 'sync',
+    });
+    expect(res.body.maxAudioMb).toBeGreaterThan(0);
+    expect(JSON.stringify(res.body)).not.toContain('sk-');
   });
 });
