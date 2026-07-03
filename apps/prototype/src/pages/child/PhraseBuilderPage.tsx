@@ -15,6 +15,7 @@ import {
   Walk2DIcon,
   Play2DIcon,
   Tired2DIcon,
+  Hurt2DIcon,
   Help2DIcon,
   Home2DIcon,
   Puzzle2DIcon,
@@ -25,6 +26,8 @@ import {
   Cartoon2DIcon,
   Car2DIcon,
   Music2DIcon,
+  Pause2DIcon,
+  Headphones2DIcon,
 } from '@/components/icons/child2d';
 
 type IconComponent = React.FC<{ size?: number; animated?: boolean; className?: string }>;
@@ -58,10 +61,91 @@ const FUNC_STYLES: Record<
  * Упорядочен по грамматической функции: pron → verb → noun → soc → neg.
  * Иконки из child2d.tsx (2D inline SVG).
  */
+/**
+ * Готовые фразы для Wave 0 — ребёнок может выбрать одной кнопкой
+ * самую частую коммуникацию. Это снижает барьер для детей,
+ * которые ещё не ориентируются в словаре.
+ */
+const PRESET_PHRASES: Array<{
+  id: string;
+  label: string;
+  words: string[];
+  Icon: IconComponent;
+  bg: string;
+  text: string;
+}> = [
+  {
+    id: 'want-drink',
+    label: 'Я хочу пить',
+    words: ['Я', 'хочу', 'пить'],
+    Icon: Water2DIcon,
+    bg: '#EAF5FF',
+    text: '#1c6cb8',
+  },
+  {
+    id: 'need-help',
+    label: 'Мне нужна помощь',
+    words: ['мне', 'нужна', 'помощь'],
+    Icon: Help2DIcon,
+    bg: '#EAF6EF',
+    text: '#276b48',
+  },
+  {
+    id: 'too-loud',
+    label: 'Мне громко',
+    words: ['мне', 'громко'],
+    Icon: Headphones2DIcon,
+    bg: '#FFF6DF',
+    text: '#9a7820',
+  },
+  {
+    id: 'want-pause',
+    label: 'Я хочу паузу',
+    words: ['Я', 'хочу', 'паузу'],
+    Icon: Pause2DIcon,
+    bg: '#F1EDFF',
+    text: '#5a3eb4',
+  },
+  {
+    id: 'call-mom',
+    label: 'Позови маму',
+    words: ['Позови', 'маму'],
+    Icon: Mom2DIcon,
+    bg: '#FBEDED',
+    text: '#a24545',
+  },
+  {
+    id: 'im-tired',
+    label: 'Я устал',
+    words: ['Я', 'устал'],
+    Icon: Tired2DIcon,
+    bg: '#F1EDFF',
+    text: '#5a3eb4',
+  },
+  {
+    id: 'it-hurts',
+    label: 'Мне больно',
+    words: ['мне', 'больно'],
+    Icon: Hurt2DIcon,
+    bg: '#FBEDED',
+    text: '#a24545',
+  },
+  {
+    id: 'im-okay',
+    label: 'Я в порядке',
+    words: ['Я', 'в', 'порядке'],
+    Icon: Heart2DIcon,
+    bg: '#EAF6EF',
+    text: '#276b48',
+  },
+];
+
 const VOCAB: Word[] = [
   // pron (кто)
   { text: 'Я',       icon: User2DIcon,   func: 'pron' },
+  { text: 'мне',     icon: User2DIcon,   func: 'pron' },
   { text: 'мама',    icon: Mom2DIcon,    func: 'pron' },
+  { text: 'маму',    icon: Mom2DIcon,    func: 'pron' },
   { text: 'папа',    icon: Dad2DIcon,    func: 'pron' },
   { text: 'тьютор',  icon: Tutor2DIcon,  func: 'pron' },
 
@@ -72,7 +156,8 @@ const VOCAB: Word[] = [
   { text: 'гулять',  icon: Walk2DIcon,   func: 'verb' },
   { text: 'играть',  icon: Play2DIcon,   func: 'verb' },
   { text: 'спать',   icon: Tired2DIcon,  func: 'verb' },
-  { text: 'помочь',  icon: Help2DIcon,   func: 'verb' },
+  { text: 'помощь',  icon: Help2DIcon,   func: 'verb' },
+  { text: 'Позови',  icon: Mom2DIcon,    func: 'verb' },
 
   // noun (что)
   { text: 'воду',    icon: Water2DIcon,  func: 'noun' },
@@ -83,6 +168,16 @@ const VOCAB: Word[] = [
   { text: 'мультик', icon: Cartoon2DIcon, func: 'noun' },
   { text: 'машину',  icon: Car2DIcon,     func: 'noun' },
   { text: 'музыку',  icon: Music2DIcon,   func: 'noun' },
+  { text: 'паузу',   icon: Pause2DIcon,   func: 'noun' },
+
+  // adj (состояние)
+  { text: 'громко',  icon: Headphones2DIcon, func: 'noun' },
+  { text: 'тихо',    icon: Music2DIcon,      func: 'noun' },
+  { text: 'больно',  icon: Hurt2DIcon,        func: 'noun' },
+  { text: 'устал',   icon: Tired2DIcon,       func: 'noun' },
+  { text: 'в',       icon: User2DIcon,        func: 'noun' },
+  { text: 'порядке', icon: Heart2DIcon,       func: 'noun' },
+  { text: 'нужна',   icon: Help2DIcon,        func: 'noun' },
 
   // soc (вежливо)
   { text: 'пожалуйста', icon: Hug2DIcon, func: 'soc' },
@@ -134,6 +229,19 @@ export const PhraseBuilderPage: React.FC = () => {
 
   /** Поиск иконки и функции по тексту (для рендера chips в phrase strip). */
   const findWord = (text: string): Word | null => VOCAB.find((w) => w.text === text) ?? null;
+
+  /** Tap по preset phrase — заполняет phrase strip всеми словами пресета. */
+  const handleSelectPreset = (words: string[]) => {
+    setPhrase(words);
+    setRemoving(null);
+    // Подсветим все слова пресета (speak-pulse последовательно).
+    words.forEach((w, idx) => {
+      setTimeout(() => {
+        setSpeaking(w);
+        setTimeout(() => setSpeaking((cur) => (cur === w ? null : cur)), 320);
+      }, idx * 80);
+    });
+  };
 
   /** Toggle: tap → add, tap again → remove. */
   const toggleWord = (text: string) => {
@@ -210,6 +318,40 @@ export const PhraseBuilderPage: React.FC = () => {
           <BackArrowIcon size={22} />
         </button>
         <div className="text-xl font-black text-ink">Собрать фразу</div>
+      </div>
+
+      {/* PRESET PHRASES — быстрые готовые фразы для Wave 0 */}
+      <div className="px-5 pt-2 pb-1">
+        <div className="text-[11px] font-black text-ink-soft uppercase tracking-wide mb-2">
+          Частые фразы — одно касание
+        </div>
+        <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-5 px-5">
+          {PRESET_PHRASES.map((preset) => {
+            const Icon = preset.Icon;
+            return (
+              <button
+                key={preset.id}
+                onClick={() => handleSelectPreset(preset.words)}
+                className="flex-shrink-0 bg-white border border-line rounded-[18px] p-2.5 flex items-center gap-2 active:scale-[0.95] transition-transform shadow-card-soft hover:shadow-card"
+                aria-label={preset.label}
+                style={{ minWidth: 140 }}
+              >
+                <div
+                  className="w-10 h-10 rounded-[12px] flex items-center justify-center flex-shrink-0"
+                  style={{ background: preset.bg }}
+                >
+                  <Icon size={28} animated={false} />
+                </div>
+                <div
+                  className="text-[13px] font-black text-left leading-tight"
+                  style={{ color: preset.text }}
+                >
+                  {preset.label}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Phrase strip (large, dashed → solid) */}

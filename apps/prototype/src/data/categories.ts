@@ -12,11 +12,18 @@ import {
   Water2DIcon,
   Food2DIcon,
   Toilet2DIcon,
+  Hurt2DIcon,
+  Tired2DIcon,
+  Help2DIcon,
+  Pause2DIcon,
+  Play2DIcon,
+  Home2DIcon,
+  Yes2DIcon,
+  No2DIcon,
   Cartoon2DIcon,
   Animals2DIcon,
   Car2DIcon,
   Music2DIcon,
-  Home2DIcon,
   Sparkle2DIcon,
   Calm2DIcon,
   Mom2DIcon,
@@ -56,10 +63,22 @@ export interface Category {
   items: CategoryItem[];
 }
 
-/* ───────── Потребности (3 «быстрые действия») ───────── */
+/* ───────── Потребности (8 «быстрых действий» для Wave 0) ─────────
+ * Базовые сигналы ребёнка:
+ *  - пить / есть / туалет — физические потребности
+ *  - больно / устал — самочувствие
+ *  - помоги / пауза / играть / домой — коммуникация и сенсорика
+ * Цветовая кодировка помогает ребёнку ориентироваться без чтения.
+ * ВАЖНО: эти карточки — для коммуникации, не для «исправления поведения».
+ * Они озвучивают потребности ребёнка, который не может их выразить словами.
+ * ────────────────────────────────────────────────────────────────────── */
 
 export interface QuickNeed {
-  id: 'water' | 'food' | 'toilet';
+  id:
+    | 'water' | 'food' | 'toilet'
+    | 'hurt' | 'tired'
+    | 'help' | 'pause' | 'play' | 'home'
+    | 'yes' | 'no';
   title: string;
   Icon: IconComponent;
   bg: string;
@@ -68,9 +87,21 @@ export interface QuickNeed {
 }
 
 export const QUICK_NEEDS: QuickNeed[] = [
+  // Базовые потребности
   { id: 'water',  title: 'Хочу пить',  Icon: Water2DIcon,  bg: 'bg-[#EAF5FF]', text: 'text-[#1c6cb8]', go: '/child/water' },
-  { id: 'food',   title: 'Хочу есть', Icon: Food2DIcon,   bg: 'bg-[#EAF6EF]', text: 'text-[#276b48]', go: '/child/food' },
-  { id: 'toilet', title: 'Туалет',    Icon: Toilet2DIcon, bg: 'bg-[#EAF5FF]', text: 'text-[#1c6cb8]', go: '/child/toilet' },
+  { id: 'food',   title: 'Хочу есть',  Icon: Food2DIcon,   bg: 'bg-[#EAF6EF]', text: 'text-[#276b48]', go: '/child/food' },
+  { id: 'toilet', title: 'Туалет',     Icon: Toilet2DIcon, bg: 'bg-[#EAF5FF]', text: 'text-[#1c6cb8]', go: '/child/toilet' },
+  // Самочувствие
+  { id: 'hurt',   title: 'Больно',     Icon: Hurt2DIcon,   bg: 'bg-[#FBEDED]', text: 'text-[#a24545]', go: '/child/phrase-builder' },
+  { id: 'tired',  title: 'Устал',      Icon: Tired2DIcon,  bg: 'bg-[#F1EDFF]', text: 'text-[#5a3eb4]', go: '/child/calm' },
+  // Коммуникация и сенсорика
+  { id: 'help',   title: 'Помоги',     Icon: Help2DIcon,   bg: 'bg-[#EAF6EF]', text: 'text-[#276b48]', go: '/child/call' },
+  { id: 'pause',  title: 'Пауза',      Icon: Pause2DIcon,  bg: 'bg-[#F1EDFF]', text: 'text-[#5a3eb4]', go: '/child/calm' },
+  { id: 'play',   title: 'Играть',     Icon: Play2DIcon,   bg: 'bg-[#FFF6DF]', text: 'text-[#9a7820]', go: '/child/cards' },
+  { id: 'home',   title: 'Домой',      Icon: Home2DIcon,   bg: 'bg-[#E9F7F5]', text: 'text-[#0d5c5c]', go: '/child/phrase-builder' },
+  // Ответы
+  { id: 'yes',    title: 'Да',         Icon: Yes2DIcon,    bg: 'bg-[#EAF6EF]', text: 'text-[#276b48]', go: '/child/phrase-builder' },
+  { id: 'no',     title: 'Нет',        Icon: No2DIcon,     bg: 'bg-[#FBEDED]', text: 'text-[#a24545]', go: '/child/phrase-builder' },
 ];
 
 /* ───────── Категории «Мир вокруг» ───────── */

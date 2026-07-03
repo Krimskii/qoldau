@@ -6,6 +6,7 @@ import {
   Brain,
   Calendar,
   Users,
+  ChevronRight,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
@@ -13,6 +14,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
+import { useNavigate } from 'react-router-dom';
 import { DEMO_CHILDREN } from '@/data/demoDataset';
 import { formatDate } from '@/utils/dateFormat';
 
@@ -36,6 +38,7 @@ const SIGNAL_CATEGORIES: Record<Signal['category'], { label: string; bg: string;
 };
 
 export const CommunicationProfile: React.FC = () => {
+  const navigate = useNavigate();
   const { events } = useEventStore();
   const { selectedChildId } = useDemoControlsStore();
   const currentChild = DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
@@ -262,11 +265,12 @@ export const CommunicationProfile: React.FC = () => {
         </div>
       </QoldauCard>
 
-      {/* Communication methods */}
+      {/* Communication methods — примеры (демо), будут из реальных данных */}
       <QoldauCard variant="default" padding="md">
         <h3 className="text-sm font-black mb-3 flex items-center gap-2">
           <MessageCircle className="w-4 h-4 text-teal" />
           Методы коммуникации
+          <span className="text-[10px] text-muted italic ml-auto">примеры (демо)</span>
         </h3>
         <div className="flex flex-wrap gap-2">
           {[
@@ -289,7 +293,7 @@ export const CommunicationProfile: React.FC = () => {
         </div>
       </QoldauCard>
 
-      {/* Progress за месяц */}
+      {/* Progress за месяц — реальные сигналы из store, +15% AAC убран как hardcoded */}
       <QoldauCard variant="default" padding="md">
         <h3 className="text-sm font-black mb-3 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-teal" />
@@ -297,13 +301,34 @@ export const CommunicationProfile: React.FC = () => {
         </h3>
         <div className="space-y-2.5">
           <ProgressRow label="Новых сигналов" value={`+${Math.max(0, signals.length - 3)}`} trend="up" color="teal" />
-          <ProgressRow label="Использование AAC" value="+15%" trend="up" color="teal" />
           <ProgressRow label="Подтверждённых" value={`+${highConfidence.length}`} trend="up" color="green" />
+          <ProgressRow
+            label="Использование AAC"
+            value={signals.length > 0 ? `${signals.filter((s) => s.sources.includes('child')).length}×` : '—'}
+            trend="up"
+            color="teal"
+          />
         </div>
         <p className="text-[11px] text-muted mt-3 italic">
-          Это наблюдения на основе данных. Не является медицинской оценкой.
+          Это наблюдения на основе данных. Не является медицинской оценкой. Реальные
+          подсчёты появятся, когда накопится достаточно наблюдений.
         </p>
       </QoldauCard>
+
+      {/* Связь: профиль построен из Event Timeline. */}
+      <button
+        onClick={() => navigate('/specialist/events')}
+        className="w-full bg-white border-2 border-teal/30 rounded-2xl p-4 flex items-center gap-3 hover:bg-teal-soft transition-all active:scale-[0.98] text-left"
+      >
+        <div className="w-10 h-10 rounded-2xl bg-teal-soft flex items-center justify-center shrink-0">
+          <Calendar className="w-5 h-5 text-teal-dark" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-black text-ink">Открыть Event Timeline</p>
+          <p className="text-xs text-muted">Эти сигналы собраны из наблюдений в Timeline</p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-teal-dark shrink-0" />
+      </button>
     </div>
   );
 };

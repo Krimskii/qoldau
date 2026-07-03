@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { ArrowRight, Clock, Brain, Sparkles } from 'lucide-react';
+import { ArrowRight, Clock, Brain, Sparkles, Calendar, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
@@ -18,6 +19,7 @@ interface Pattern {
 }
 
 export const CarePatterns: React.FC = () => {
+  const navigate = useNavigate();
   const { events } = useEventStore();
   const { selectedChildId } = useDemoControlsStore();
   const currentChild = DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
@@ -195,6 +197,21 @@ export const CarePatterns: React.FC = () => {
         text="Похоже, можно отслеживать потребление воды и связь с событиями поведения. Это наблюдение, не диагноз. Можно обсудить со специалистом."
         variant="warning"
       />
+
+      {/* Связь: паттерны выявлены из Event Timeline. */}
+      <button
+        onClick={() => navigate('/specialist/events')}
+        className="w-full bg-white border-2 border-teal/30 rounded-2xl p-4 flex items-center gap-3 hover:bg-teal-soft transition-all active:scale-[0.98] text-left"
+      >
+        <div className="w-10 h-10 rounded-2xl bg-teal-soft flex items-center justify-center shrink-0">
+          <Calendar className="w-5 h-5 text-teal-dark" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-black text-ink">Открыть Event Timeline</p>
+          <p className="text-xs text-muted">Эти паттерны построены по наблюдениям в Timeline</p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-teal-dark shrink-0" />
+      </button>
     </div>
   );
 };

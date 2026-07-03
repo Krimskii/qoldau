@@ -115,8 +115,7 @@ export const ConsentGate: React.FC<ConsentGateProps> = ({ onAccept, onDismiss })
                   4
                 </span>
                 <p>
-                  Распознавание использует сервисы <strong>OpenAI (Whisper)</strong> и{' '}
-                  <strong>Anthropic (Claude)</strong>.
+                  Распознавание использует сервисы <strong>OpenAI (Whisper для речи, gpt-4o-mini для анализа)</strong>.
                 </p>
               </li>
             </ul>

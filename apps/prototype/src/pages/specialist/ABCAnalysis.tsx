@@ -159,8 +159,11 @@ export const ABCAnalysis: React.FC = () => {
       <QoldauCard variant="default" padding="md">
         <h3 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-yellow" />
-          Замеченные паттерны
+          Примеры паттернов (демо)
         </h3>
+        <p className="text-[11px] text-muted italic mb-3">
+          Это примеры для иллюстрации формата. Реальные паттерны появятся, когда накопится достаточно наблюдений.
+        </p>
         <div className="space-y-2.5">
           <PatternRow
             trigger="Шум"

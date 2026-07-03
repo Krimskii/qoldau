@@ -81,9 +81,8 @@ export const MiniPolicy: React.FC<MiniPolicyProps> = ({ open, onClose }) => {
             <p className="font-bold text-ink">Распознавание речи.</p>
             <p>
               Когда вы записываете голосовое наблюдение, аудиозапись отправляется на наш
-              сервер и далее в сервисы распознавания речи{' '}
-              <strong>(OpenAI Whisper)</strong> и структурирования{' '}
-              <strong>(Anthropic Claude)</strong>. Аудио и результат на наших серверах
+              сервер и далее в сервисы{' '}
+              <strong>OpenAI (Whisper для речи, gpt-4o-mini для анализа)</strong>. Аудио и результат на наших серверах
               <strong> не сохраняются</strong>.
             </p>
           </div>

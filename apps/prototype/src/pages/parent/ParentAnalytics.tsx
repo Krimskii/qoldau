@@ -70,7 +70,7 @@ export const ParentAnalytics: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title="Аналитика" subtitle="За 7 дней" />
+      <PageHeader title="Аналитика" subtitle="Демо-данные за 7 дней" />
 
       {/* Donut + Top signals */}
       <SectionCard title="Распределение событий" accent="teal" action={<BarChart3 className="w-5 h-5 text-teal" />}>
@@ -136,6 +136,9 @@ export const ParentAnalytics: React.FC = () => {
             <span className="text-xs font-bold text-green">{h.count} раз</span>
           </div>
         ))}
+        <p className="text-[11px] text-muted mt-3 italic">
+          Это демо-данные для примера. В следующей версии — реальные подсчёты.
+        </p>
       </SectionCard>
 
       {/* Dynamics */}
