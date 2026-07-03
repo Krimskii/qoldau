@@ -179,7 +179,7 @@
       "title": "Приватность — пилот",
       "subtitle": "Qoldau AI · v1.0",
       "intro": "Qoldau AI — инструмент для наблюдений за коммуникацией и состоянием ребёнка.",
-      "notMedical": "Это не медицинское устройство: приложение не ставит диагнозов и не лечит.",
+      "notMedical": "This is not a medical device: the app does not diagnose or treat.",
       "storage": "Все данные о ребёнке (имя, события, наблюдения) хранятся только на вашем устройстве. Мы не храним их на серверах и не передаём третьим лицам, кроме случая ниже.",
       "stt": "When you record a voice observation, the audio is sent to our server and then to OpenAI services (Whisper for speech, gpt-4o-mini for analysis). Audio and result are not stored on our servers.",
       "control": "Вы в любый момент можете удалить все данные в настройках приложения («Очистить данные»).",

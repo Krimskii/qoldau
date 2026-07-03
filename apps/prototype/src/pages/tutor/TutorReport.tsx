@@ -33,7 +33,7 @@ export const TutorReport: React.FC = () => {
     const attention = tutorEvents.filter(
       (e) => e.type === 'sensory' || e.type === 'behavior' || e.type === 'sos'
     ).length;
-    return { total: total || 4, positive: positive || 2, attention: attention || 1 };
+    return { total, positive, attention };
   }, [tutorEvents]);
 
   // Group by date

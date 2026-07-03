@@ -3,6 +3,7 @@ import { FileText, Download, Mail, Calendar, TrendingUp, CheckCircle2 } from 'lu
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Button } from '@/components/ui/Button';
+import { useToastStore } from '@/store/useToastStore';
 
 const REPORT_TYPES = [
   { key: 'weekly', title: 'Недельный отчёт', subtitle: 'Итоги за неделю', icon: Calendar, accent: 'teal' },
@@ -19,11 +20,12 @@ const ACCENT_CLASSES: Record<string, { bg: string; text: string; pill: string }>
 };
 
 export const Reports: React.FC = () => {
+  const { showToast } = useToastStore();
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Отчёты"
-        subtitle="Формирование документов"
+        subtitle="Пример отчёта (демо)"
         showBack
       />
 
@@ -102,13 +104,20 @@ export const Reports: React.FC = () => {
         </div>
       </QoldauCard>
 
-      {/* Действия */}
+      {/* Действия — в Wave 0 кнопки помечают ограничение, чтобы не быть тупиком. */}
       <div className="grid grid-cols-2 gap-2.5">
-        <Button className="flex items-center justify-center gap-2">
+        <Button
+          className="flex items-center justify-center gap-2"
+          onClick={() => showToast('Скачивание PDF появится в следующей версии', 'info')}
+        >
           <Download className="w-4 h-4" />
           Скачать PDF
         </Button>
-        <Button variant="secondary" className="flex items-center justify-center gap-2">
+        <Button
+          variant="secondary"
+          className="flex items-center justify-center gap-2"
+          onClick={() => showToast('Отправка появится в следующей версии', 'info')}
+        >
           <Mail className="w-4 h-4" />
           Отправить
         </Button>
