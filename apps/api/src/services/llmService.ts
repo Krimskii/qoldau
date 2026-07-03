@@ -1,10 +1,9 @@
 /**
- * llmService — OpenAI integration for AI parser.
+ * llmService — OpenAI integration for RU observation parsing.
  *
- * Opt-in: uses OPENAI_API_KEY. If the key is missing or the API call fails,
- * parsing falls back to the local keyword-based mock.
- *
- * Default model: gpt-4o-mini. Override with OPENAI_LLM_MODEL.
+ * Contract stays stable: parseTranscript returns events, insight,
+ * clarificationQuestions, and source. v1.0rc also adds aiFallback/aiError so
+ * clients can distinguish "mock because no key" from "mock after provider error".
  */
 import OpenAI from 'openai';
 import { randomUUID } from 'node:crypto';
@@ -35,6 +34,13 @@ export interface AIParserResult {
 }
 
 type LLMSource = 'openai' | 'mock';
+type AIErrorCode = 'quota' | 'rate_limit' | 'invalid_json' | 'network' | 'provider_error';
+
+export interface AIParserResponse extends AIParserResult {
+  source: LLMSource;
+  aiFallback: boolean;
+  aiError?: AIErrorCode;
+}
 
 interface ServiceEnv {
   apiKey: string | null;
@@ -71,27 +77,22 @@ function loadEnv(): ServiceEnv {
 
 const env = loadEnv();
 
-const SYSTEM_PROMPT = `Ты помощник для родителя, который фиксирует голосовые наблюдения о дне ребёнка.
-Твоя задача — аккуратно превратить расшифровку речи в структурированные события.
+const SYSTEM_PROMPT = `Ты помогаешь родителю бережно структурировать русскоязычное голосовое наблюдение о дне ребёнка.
 
-Правила безопасности:
-- Это наблюдение, не диагноз.
-- Пиши как гипотезу: "похоже", "возможно", "заметил(а)", "нужно подтвердить".
-- Не добавляй факты, которых нет в тексте.
-- Не давай медицинских заключений, терапевтических обещаний или категоричных оценок.
-- Язык ответа: русский.
+Извлекай события даже из свободного, разговорного текста: "поел кашу", "попил воду", "уснул в машине", "проснулся ночью", "сходил на горшок", "закрывал уши", "плакал", "кричал", "сказал мама", "показал жестом".
 
-Типы событий, только из списка:
-- food: приём пищи.
-- water: питьё.
-- toilet: туалет.
-- sleep: сон.
-- sensory: сенсорная реакция.
-- behavior: заметное состояние или действие.
-- communication: речь, жесты, просьбы, ответы.
-- state: общее состояние.
+Верни только JSON по схеме. Не добавляй markdown.
 
-Уточняющие вопросы добавляй только если они помогают бережно понять ситуацию. Не больше 3.`;
+Правила:
+- Каждое явное наблюдаемое действие или состояние превращай в отдельное событие.
+- Используй только типы: food, water, sleep, toilet, behavior, sensory, communication, state.
+- Если время не названо, поставь приблизительное HH:MM из контекста или текущее неизвестное время "00:00".
+- title: короткое русское название.
+- description: одна осторожная фраза, начинай с "Похоже," или "Возможно,".
+- insight: 1-2 осторожные фразы и обязательно текст "Это наблюдение, не диагноз."
+- Не используй медицинские утверждения, диагнозы, лечение, нормализацию, стигматизирующие оценки.
+- Не утверждай точную причину реакции.
+- Уточняющие вопросы — только если реально нужны, максимум 3.`;
 
 const JSON_SCHEMA = {
   name: 'parse_observation',
@@ -108,27 +109,24 @@ const JSON_SCHEMA = {
           properties: {
             timestamp: {
               type: 'string',
-              description: 'HH:MM in 24-hour format. Use current/contextual time if not present.',
+              pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
+              description: 'HH:MM in 24-hour format. Use 00:00 if not stated.',
             },
-            title: {
-              type: 'string',
-              description: 'Short event title, 2-5 words.',
-            },
+            title: { type: 'string', minLength: 2, maxLength: 80 },
             description: {
               type: 'string',
-              description: 'One cautious sentence based only on the transcript.',
+              minLength: 8,
+              description: 'Cautious Russian sentence beginning with Похоже or Возможно.',
             },
-            type: {
-              type: 'string',
-              enum: EVENT_TYPES,
-            },
+            type: { type: 'string', enum: EVENT_TYPES },
           },
           required: ['timestamp', 'title', 'description', 'type'],
         },
       },
       insight: {
         type: 'string',
-        description: 'One or two cautious sentences. Must include: "Это наблюдение, не диагноз."',
+        minLength: 8,
+        description: 'Must include: Это наблюдение, не диагноз.',
       },
       clarificationQuestions: {
         type: 'array',
@@ -154,6 +152,41 @@ const JSON_SCHEMA = {
   },
 } as const;
 
+function currentTime(): string {
+  const t = new Date();
+  return `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+}
+
+function firstTime(text: string, fallback = currentTime()): string {
+  const match = text.match(/\b([01]?\d|2[0-3])[:.ч ]([0-5]\d)\b/u);
+  if (!match) return fallback;
+  return `${match[1].padStart(2, '0')}:${match[2]}`;
+}
+
+function addEvent(
+  events: AIParserEvent[],
+  seen: Set<string>,
+  transcript: string,
+  type: AIParserEvent['type'],
+  title: string,
+  description: string,
+) {
+  const key = `${type}:${title}`;
+  if (seen.has(key)) return;
+  seen.add(key);
+  events.push({ timestamp: firstTime(transcript), type, title, description });
+}
+
+function hasAny(text: string, patterns: RegExp[]): boolean {
+  return patterns.some((pattern) => pattern.test(text));
+}
+
+function ensureSafeInsight(insight: string): string {
+  const trimmed = insight.trim();
+  if (!trimmed) return 'Похоже, наблюдение зафиксировано. Это наблюдение, не диагноз.';
+  return trimmed.includes('Это наблюдение, не диагноз') ? trimmed : `${trimmed} Это наблюдение, не диагноз.`;
+}
+
 function validateAndNormalize(raw: ParsedToolInput | null | undefined): AIParserResult {
   const safeRaw = raw ?? { events: [] };
   const events = (safeRaw.events ?? [])
@@ -165,16 +198,15 @@ function validateAndNormalize(raw: ParsedToolInput | null | undefined): AIParser
       && EVENT_TYPES.includes(event.type as (typeof EVENT_TYPES)[number]),
     )
     .map((event) => ({
-      timestamp: event.timestamp,
+      timestamp: /^\d{1,2}:\d{2}$/.test(event.timestamp) ? event.timestamp.padStart(5, '0') : '00:00',
       title: event.title,
-      description: event.description,
+      description: /^(Похоже|Возможно),/u.test(event.description)
+        ? event.description
+        : `Похоже, ${event.description.charAt(0).toLowerCase()}${event.description.slice(1)}`,
       type: event.type,
     }));
 
-  const insight = typeof safeRaw.insight === 'string' && safeRaw.insight.trim().length > 0
-    ? safeRaw.insight.trim()
-    : 'Похоже, наблюдение зафиксировано. Это наблюдение, не диагноз.';
-
+  const insight = ensureSafeInsight(typeof safeRaw.insight === 'string' ? safeRaw.insight : '');
   const clarificationQuestions = (safeRaw.clarificationQuestions ?? [])
     .filter((question): question is { id: string; question: string; options: string[] } =>
       typeof question.id === 'string'
@@ -193,81 +225,62 @@ function validateAndNormalize(raw: ParsedToolInput | null | undefined): AIParser
 
 function parseMock(transcript: string): AIParserResult {
   const text = transcript.toLowerCase();
-  const events: AIParserResult['events'] = [];
-  const timeMatches = transcript.match(/\b(\d{1,2}):(\d{2})\b/g);
-  const nextTime = () => {
-    const t = new Date();
-    return `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
-  };
-  const findTime = (idx: number) => (timeMatches && timeMatches[idx]) || nextTime();
+  const events: AIParserEvent[] = [];
+  const seen = new Set<string>();
 
-  if (text.includes('поел') || text.includes('кашу') || text.includes('суп') || text.includes('еда')) {
-    events.push({
-      timestamp: findTime(0),
-      title: 'Приём пищи',
-      description: 'Похоже, был зафиксирован приём пищи.',
-      type: 'food',
-    });
+  if (hasAny(text, [/\bпоел[аи]?\b/u, /\bел[аи]?\b/u, /\bсъел[аи]?\b/u, /\bкушал[аи]?\b/u, /кашу/u, /суп/u, /йогурт/u, /печень/u, /обед/u, /завтрак/u, /ужин/u])) {
+    addEvent(events, seen, transcript, 'food', 'Приём пищи', 'Похоже, был зафиксирован приём пищи.');
   }
-  if (text.includes('пил') || text.includes('вода') || text.includes('выпил')) {
-    events.push({
-      timestamp: findTime(events.length),
-      title: 'Питьё',
-      description: 'Похоже, был зафиксирован приём жидкости.',
-      type: 'water',
-    });
+  if (hasAny(text, [/\bпил[аи]?\b/u, /\bвыпил[аи]?\b/u, /\bпопил[аи]?\b/u, /вод[уы]/u, /сок/u, /компот/u, /чай/u])) {
+    addEvent(events, seen, transcript, 'water', 'Питьё', 'Похоже, был зафиксирован приём жидкости.');
   }
-  if (text.includes('туалет') || text.includes('горшок') || text.includes('ту-ту')) {
-    events.push({
-      timestamp: findTime(events.length),
-      title: 'Туалет',
-      description: 'Возможно, ребёнок подал сигнал о туалете или сходил в туалет.',
-      type: 'toilet',
-    });
+  if (hasAny(text, [/уснул[аи]?/u, /заснул[аи]?/u, /\bспал[аи]?\b/u, /проснул[аи]?[с]?/u, /сон/u, /дремал[аи]?/u])) {
+    addEvent(events, seen, transcript, 'sleep', 'Сон', 'Похоже, был отмечен эпизод сна или пробуждения.');
   }
-  if (text.includes('закрывал уши') || text.includes('шум') || text.includes('громко')) {
-    events.push({
-      timestamp: findTime(events.length),
-      title: 'Реакция на шум',
-      description: 'Похоже, была сенсорная реакция на громкий звук.',
-      type: 'sensory',
-    });
+  if (hasAny(text, [/туалет/u, /горшок/u, /ту-ту/u, /писал[аи]?/u, /пописал[аи]?/u, /какал[аи]?/u, /подгуз/u])) {
+    addEvent(events, seen, transcript, 'toilet', 'Туалет', 'Возможно, ребёнок подал сигнал о туалете или сходил в туалет.');
   }
-  if (text.includes('сказал') || text.includes('произнес') || text.includes('произнёс')) {
-    events.push({
-      timestamp: findTime(events.length),
-      title: 'Коммуникация',
-      description: 'Похоже, ребёнок использовал речь или звук для коммуникации.',
-      type: 'communication',
-    });
+  if (hasAny(text, [/закрывал[аи]? уши/u, /зажимал[аи]? уши/u, /уши закры/u, /шум/u, /громк/u, /свет/u, /ярк/u, /сенсор/u])) {
+    addEvent(events, seen, transcript, 'sensory', 'Сенсорная реакция', 'Похоже, была сенсорная реакция на звук, свет или другой стимул.');
+  }
+  if (hasAny(text, [/плакал[аи]?/u, /кричал[аи]?/u, /расстроил[с]?/u, /злился/u, /убежал[аи]?/u, /ударил[аи]?/u, /нервничал[аи]?/u, /истерик/u])) {
+    addEvent(events, seen, transcript, 'behavior', 'Эмоциональная реакция', 'Возможно, была заметная эмоциональная или поведенческая реакция.');
+  }
+  if (hasAny(text, [/сказал[аи]?/u, /произн[её]с/u, /повторил[аи]?/u, /попросил[аи]?/u, /показал[аи]?/u, /жест/u, /\bмама\b/u, /\bпапа\b/u, /\bдай\b/u, /\bнет\b/u, /\bда\b/u])) {
+    addEvent(events, seen, transcript, 'communication', 'Коммуникация', 'Похоже, ребёнок использовал речь, звук или жест для коммуникации.');
+  }
+  if (hasAny(text, [/спокойн/u, /устал[аи]?/u, /вес[её]л/u, /возбужден/u, /возбужд[её]н/u, /сонн/u])) {
+    addEvent(events, seen, transcript, 'state', 'Состояние', 'Похоже, было отмечено общее состояние ребёнка.');
   }
 
   const insight = events.length > 0
     ? `Похоже, в наблюдении выделено ${events.length} ${events.length === 1 ? 'событие' : 'события'}. Это гипотеза. Это наблюдение, не диагноз.`
     : 'Не удалось уверенно выделить события. Это наблюдение, не диагноз.';
-
-  return {
-    events,
-    insight,
-    clarificationQuestions: [
-      {
-        id: 'context',
-        question: 'Что происходило перед этим?',
-        options: ['Еда', 'Игра', 'Прогулка', 'Не знаю'],
-      },
-      {
-        id: 'after',
-        question: 'Как ребёнок выглядел после?',
-        options: ['Спокойно', 'Устал(а)', 'Возбуждённо', 'Не заметил(а)'],
-      },
-    ],
-  };
+  const clarificationQuestions = events.length > 0
+    ? [
+        { id: 'context', question: 'Что происходило перед этим?', options: ['Еда', 'Игра', 'Прогулка', 'Не знаю'] },
+        { id: 'after', question: 'Как ребёнок выглядел после?', options: ['Спокойно', 'Устал(а)', 'Возбуждённо', 'Не заметил(а)'] },
+      ]
+    : [];
+  return { events, insight, clarificationQuestions };
 }
 
 function parseResponseText(text: string): ParsedToolInput {
   const trimmed = text.trim();
   if (!trimmed) return { events: [] };
   return JSON.parse(trimmed) as ParsedToolInput;
+}
+
+function classifyOpenAIError(err: unknown): AIErrorCode {
+  const status = typeof err === 'object' && err !== null && 'status' in err
+    ? Number((err as { status?: unknown }).status)
+    : undefined;
+  const message = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase();
+  if (status === 429 && /quota|billing|insufficient_quota/u.test(message)) return 'quota';
+  if (status === 429) return 'rate_limit';
+  if (/quota|billing|insufficient_quota/u.test(message)) return 'quota';
+  if (/network|fetch|econn|timeout|socket/u.test(message)) return 'network';
+  return 'provider_error';
 }
 
 export const llmService = {
@@ -278,7 +291,7 @@ export const llmService = {
     return { enabled: env.enabled, model: env.model, source: env.enabled ? 'openai' : 'mock' };
   },
 
-  async parseTranscript(input: AIParserInput): Promise<AIParserResult & { source: LLMSource }> {
+  async parseTranscript(input: AIParserInput): Promise<AIParserResponse> {
     const transcript = (input?.transcript ?? '').trim();
     if (!transcript) {
       return {
@@ -286,39 +299,45 @@ export const llmService = {
         insight: 'Транскрипт пустой. Это наблюдение, не диагноз.',
         clarificationQuestions: [],
         source: env.enabled ? 'openai' : 'mock',
+        aiFallback: false,
       };
     }
-
     if (!env.client) {
-      return { ...parseMock(transcript), source: 'mock' };
+      return { ...parseMock(transcript), source: 'mock', aiFallback: false };
     }
 
     try {
       const response = await env.client.chat.completions.create({
         model: env.model,
-        temperature: 0.2,
-        response_format: {
-          type: 'json_schema',
-          json_schema: JSON_SCHEMA,
-        },
+        temperature: 0.1,
+        response_format: { type: 'json_schema', json_schema: JSON_SCHEMA },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           {
             role: 'user',
-            content: `Расшифровка голосового наблюдения (${input.language ?? 'ru'}):\n\n${transcript}\n\nВерни только JSON по схеме parse_observation.`,
+            content: `Русский транскрипт наблюдения:\n\n${transcript}\n\nИзвлеки все наблюдаемые события. Верни JSON строго по схеме parse_observation.`,
           },
         ],
       });
-
+      const usage = response.usage;
+      console.info('[llm] openai usage', {
+        model: env.model,
+        promptTokens: usage?.prompt_tokens ?? 0,
+        completionTokens: usage?.completion_tokens ?? 0,
+        totalTokens: usage?.total_tokens ?? 0,
+      });
       const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error('OpenAI response did not include JSON content');
-      }
+      if (!content) throw new Error('OpenAI response did not include JSON content');
       const normalized = validateAndNormalize(parseResponseText(content));
-      return { ...normalized, source: 'openai' };
+      return { ...normalized, source: 'openai', aiFallback: false };
     } catch (err) {
-      console.error('[llm] OpenAI parse failed, fallback to mock:', err instanceof Error ? err.message : err);
-      return { ...parseMock(transcript), source: 'mock' };
+      const aiError = err instanceof SyntaxError ? 'invalid_json' : classifyOpenAIError(err);
+      console.warn('[llm] OpenAI parse failed, fallback to mock', {
+        model: env.model,
+        aiError,
+        status: typeof err === 'object' && err !== null && 'status' in err ? (err as { status?: unknown }).status : undefined,
+      });
+      return { ...parseMock(transcript), source: 'mock', aiFallback: true, aiError };
     }
   },
 };
