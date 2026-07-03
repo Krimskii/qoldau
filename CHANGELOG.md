@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0rc Wave 0 Prep] - 2026-07-03
+
+Release supervision sync for Android/prod pilot handoff.
+
+### Docs / Release
+- Added Wave 0 source-of-truth sections to README, setup, handoff, and architecture docs.
+- Documented current audio flow: `VoiceObservation -> MediaRecorder -> /api/audio/ingest -> STT -> LLM -> Event -> Timeline`.
+- Documented AI response fields: `transcript`, `events`, `aiFallback`, `aiError`, `sttMode`, `aiMode`, and server-side token usage logging.
+- Added Wave 0 checklist: rotated OpenAI key, active billing/quota, prod proxy health, Android install, consent gate, tutorial, voice record, honest AI unavailable state, manual save, single Timeline event, cautious wording.
+- Clarified release env model: AI/STT/LLM keys are server-side only; APK receives only `VITE_API_BASE_URL`.
+- Added `scripts/build-android-release.ps1` for HTTPS prod-proxy Android builds without committing APK/AAB outputs.
+- Hardened `.gitignore` with root `build/`.
+
+### Security
+- Reconfirmed no secrets should be committed: `.env`, `.env.local`, keystore files, APK/AAB outputs.
+- Production APK must use HTTPS proxy URL. LAN/localhost HTTP is debug-only.
+
 ## [0.7.6] - 2026-07-03 (Real voice pipeline: parallel-agent build + docs sync)
 
 Параллельная разработка тремя агентами (Codex / MiniMax / Claude) — см.

@@ -4,6 +4,82 @@
 
 ---
 
+## Wave 0 RC Source Of Truth
+
+Branch baseline: `integration/v1.0rc-pilot-ru` at `48557e4`.
+
+Pilot architecture is per-device + stateless AI proxy:
+
+```text
+VoiceObservation
+  -> MediaRecorder
+  -> POST /api/audio/ingest
+  -> STT (OpenAI Whisper)
+  -> LLM parser (OpenAI gpt-4o-mini)
+  -> stateless response
+  -> frontend creates local Event
+  -> Event Timeline
+```
+
+Backend does not store family events for the Wave 0 path. The app stores pilot data on-device in localStorage/Zustand. Backend runtime is the HTTPS AI proxy only.
+
+### Audio Response Contract
+
+`POST /api/audio/ingest` returns:
+
+```ts
+{
+  ok: true;
+  jobId: string;
+  status: 'completed';
+  transcript: string;
+  events: Array<{
+    timestamp?: string;
+    title: string;
+    description: string;
+    type: string;
+    sourceRole: string;
+  }>;
+  insight: string;
+  questions: Array<{ id?: string; text: string; options?: string[] }>;
+  sttMode: 'whisper' | 'mock' | string;
+  aiMode: 'openai' | 'mock' | string;
+  aiFallback?: boolean;
+  aiError?: string;
+  durationSec?: number;
+  ai: {
+    source: 'openai' | 'mock' | string;
+    model: string;
+    insight: string;
+    fallback?: boolean;
+    error?: string;
+    clarificationQuestions: Array<{ id?: string; text: string; options?: string[] }>;
+  };
+}
+```
+
+LLM usage is logged server-side only in `apps/api/src/services/llmService.ts`:
+`[llm] openai usage { model, promptTokens, completionTokens, totalTokens }`.
+The log must not include transcript text, names, audio, or child identifiers.
+
+### Runtime Behaviour
+
+- Real AI success: `sttMode:"whisper"`, `aiMode:"openai"`, `aiFallback:false`, parsed events are inserted locally once.
+- AI quota/network/provider error: backend returns `aiMode:"mock"`, `aiFallback:true`, `aiError:"quota" | "rate_limit" | "invalid_json" | "network" | "provider_error"`. Frontend must show an honest unavailable state and offer manual save/retry.
+- No key / mock mode: `aiMode:"mock"`, `aiFallback:false`. This is expected for local demo without backend secrets.
+- Manual save fallback: VoiceObservation can save/edit transcript manually if AI is unavailable.
+- Retry: user can record again after an unavailable state.
+
+### Release Env Model
+
+- Backend/proxy env contains `OPENAI_API_KEY`, optional `WHISPER_API_KEY`, `OPENAI_LLM_MODEL`, `WHISPER_MODEL`, `SENTRY_DSN`, CORS, and rate limits.
+- Frontend/APK env contains only `VITE_API_BASE_URL=https://<prod-proxy-url>` plus optional frontend Sentry DSN.
+- APK must not contain OpenAI, STT, LLM, keystore, or server secrets.
+- Production APK must call HTTPS. LAN/localhost HTTP is debug only.
+- `capacitor://localhost` should be allowed in backend `CORS_ORIGIN` for Capacitor requests.
+
+---
+
 ## ⚠️ v0.8 — Per-device stateless (актуально, приоритет над деталями ниже)
 
 Пилот-архитектура зафиксирована: **per-device + stateless AI-прокси** (см.
