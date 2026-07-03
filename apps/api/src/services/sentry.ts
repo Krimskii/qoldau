@@ -32,8 +32,23 @@ export const sentry = {
       dsn,
       environment,
       tracesSampleRate,
-      // Не отправляем PII по умолчанию
+      // Do not send child names, transcripts, audio payloads, cookies, or auth headers.
       sendDefaultPii: false,
+      beforeSend(event) {
+        if (event.request) {
+          delete event.request.data;
+          delete event.request.cookies;
+          delete event.request.headers;
+          delete event.request.query_string;
+        }
+        if (event.extra) {
+          delete event.extra.audioBase64;
+          delete event.extra.transcript;
+          delete event.extra.childName;
+          delete event.extra.childId;
+        }
+        return event;
+      },
       integrations: [
         // Express request handler должен быть зарегистрирован ПОСЛЕ init
         // и ДО всех routes. Вызывающий код ответственен за порядок.

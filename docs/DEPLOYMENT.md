@@ -9,6 +9,63 @@ Prisma migrate, Redis, or realtime sockets at runtime.
 
 Recommended platform: Railway or Render, deployed from `apps/api/Dockerfile`.
 
+### v1.0 Railway runbook: execute production deploy
+
+Owner-only dashboard steps:
+
+1. Open [Railway](https://railway.com/) and create a new project.
+2. Choose **Deploy from GitHub repo** and select `Krimskii/qoldau`.
+3. Select branch `feature/v1.0-deploy-execute` for the first verification deploy.
+   After merge, switch the service branch to the production integration/main branch.
+4. Set the service root directory to `apps/api`.
+5. Railway will read `apps/api/railway.json` and build from `apps/api/Dockerfile`.
+6. In **Settings -> Networking**, generate a public domain. Copy the HTTPS URL.
+7. In **Variables**, add the env vars below. Do not commit their values to git.
+8. Wait until deploy is green and the healthcheck `/api/health` passes.
+
+Required production variables:
+
+| Name | Required | Notes |
+| --- | --- | --- |
+| `NODE_ENV` | yes | `production` |
+| `ANTHROPIC_API_KEY` | yes | entered by owner in Railway dashboard |
+| `WHISPER_API_KEY` | yes | entered by owner in Railway dashboard |
+| `ANTHROPIC_MODEL` | yes | example: `claude-3-5-haiku-20241022` |
+| `WHISPER_MODEL` | yes | example: `whisper-1` |
+| `CORS_ORIGIN` | yes | include APK origin: `capacitor://localhost`; add web domains comma-separated |
+| `SENTRY_DSN` | optional | empty keeps Sentry disabled |
+| `AUDIO_INGEST_RATE_LIMIT_PER_MIN` | yes | recommended pilot value: `10` |
+| `AUDIO_MAX_MB` | optional | default `25` |
+| `JSON_BODY_LIMIT` | optional | default `35mb` |
+
+Verification commands after Railway gives the public URL:
+
+```bash
+curl https://<proxy-url>/api/health
+curl https://<proxy-url>/api/ai/health
+curl https://<proxy-url>/api/stt/health
+curl https://<proxy-url>/api/audio/health
+```
+
+Expected production modes:
+
+- `/api/ai/health`: `mode` should be `claude`/`anthropic`, not `mock`.
+- `/api/stt/health`: `mode` should be `whisper`, not `mock`.
+- `/api/audio/health`: should include `maxAudioMb` and `rateLimitPerMin`.
+
+Sentry privacy check:
+
+- `sendDefaultPii` is disabled.
+- Request body, headers, cookies, query string, `audioBase64`, `transcript`,
+  `childName`, and `childId` are stripped before sending events.
+- Do not add transcripts or child names to manual `captureException` context.
+
+APK build variable:
+
+```bash
+VITE_API_BASE_URL=https://<proxy-url>
+```
+
 ### Railway / Render settings
 
 | Setting | Value |

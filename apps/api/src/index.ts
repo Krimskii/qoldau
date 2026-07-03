@@ -41,7 +41,7 @@ app.use(
 );
 app.use(cors({
   origin: process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',')
+    ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
     : ['http://localhost:5173', 'http://localhost:4173', 'capacitor://localhost'],
   credentials: true,
 }));
