@@ -1,12 +1,8 @@
-/**
- * Smoke tests для health endpoint.
- */
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import cors from 'cors';
 import { healthRouter } from '../src/routes/health';
-import { prisma } from '../src/db/prisma';
 
 describe('GET /api/health', () => {
   const app = express();
@@ -14,35 +10,25 @@ describe('GET /api/health', () => {
   app.use(express.json());
   app.use('/api/health', healthRouter);
 
-  beforeAll(async () => {
-    // Prisma должна подключиться к test DB
-    await prisma.$connect();
-  });
-
-  it('returns ok=true with db status', async () => {
+  it('returns stateless proxy health without db/cache/auth state', async () => {
     const res = await request(app).get('/api/health');
+
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
-    expect(res.body.service).toBe('qoldau-api');
+    expect(res.body.service).toBe('qoldau-ai-proxy');
+    expect(res.body.mode).toBe('stateless');
     expect(res.body.version).toBeDefined();
-    expect(res.body.db.status).toBe('ok');
     expect(res.body.ai).toBeDefined();
     expect(res.body.stt).toBeDefined();
+    expect(res.body.db).toBeUndefined();
+    expect(res.body.cache).toBeUndefined();
   });
 
-  it('includes cache type', async () => {
+  it('AI and STT modes are mock without keys', async () => {
     const res = await request(app).get('/api/health');
-    expect(res.body.cache.type).toBe('memory'); // in-memory default в test
-  });
 
-  it('AI mode is mock without key', async () => {
-    const res = await request(app).get('/api/health');
     expect(res.body.ai.enabled).toBe(false);
     expect(res.body.ai.source).toBe('mock');
-  });
-
-  it('STT mode is mock without key', async () => {
-    const res = await request(app).get('/api/health');
     expect(res.body.stt.enabled).toBe(false);
     expect(res.body.stt.source).toBe('mock');
   });

@@ -1,12 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { sttService } from '../../services/sttService.js';
 import { llmService } from '../../services/llmService.js';
-import { realtimeService } from '../../services/realtimeService.js';
-import { eventsRepo, type EventInput, type EventType, type SourceRole } from '../../repositories/events.js';
-import { recordingsRepo } from '../../repositories/recordings.js';
+import type { EventType, SourceRole } from '../../repositories/events.js';
 import {
   AudioPipelineError,
   type AudioIngestRequest,
+  type AudioPipelineEvent,
   type AudioPipelineInput,
   type AudioPipelineResult,
 } from './audioPipeline.types.js';
@@ -73,53 +72,20 @@ function validateInput(input: AudioIngestRequest): AudioPipelineInput {
   };
 }
 
-function makeRecordingLabel(transcript: string): string {
-  const clean = transcript.trim().replace(/\s+/g, ' ');
-  if (!clean) return 'Голосовая запись';
-  return clean.length > 48 ? `${clean.slice(0, 48)}...` : clean;
-}
-
-function parseEventTimestamp(raw: string | undefined): Date {
-  const date = new Date();
-  if (!raw) return date;
-  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return date;
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  if (Number.isNaN(hour) || Number.isNaN(minute) || hour > 23 || minute > 59) return date;
-  date.setHours(hour, minute, 0, 0);
-  return date;
-}
-
 function normalizeEventType(type: string): EventType {
   return VALID_EVENT_TYPES.includes(type as EventType) ? (type as EventType) : 'voice_observation';
 }
 
-function toEventInput(params: {
+function toStatelessEvent(params: {
   parsed: { timestamp?: string; title: string; description: string; type: string };
-  childId: string;
   sourceRole: SourceRole;
-  transcript: string;
-  recordingId: string;
-  jobId: string;
-  index: number;
-}): EventInput {
+}): AudioPipelineEvent {
   return {
-    childId: params.childId,
     type: normalizeEventType(params.parsed.type),
     title: params.parsed.title,
     description: params.parsed.description,
+    timestamp: params.parsed.timestamp,
     sourceRole: params.sourceRole,
-    timestamp: parseEventTimestamp(params.parsed.timestamp),
-    status: params.sourceRole === 'child' ? 'confirmed' : 'pending',
-    rawText: params.transcript,
-    payload: {
-      ai: true,
-      source: 'audio_pipeline',
-      recordingId: params.recordingId,
-      jobId: params.jobId,
-      index: params.index,
-    },
   };
 }
 
@@ -154,45 +120,29 @@ export const audioPipelineService = {
       language: input.language,
     });
 
-    const recording = await recordingsRepo.create({
-      childId: input.childId,
-      label: makeRecordingLabel(transcript),
-      durationSec: input.durationSec ?? stt.durationSec,
-    });
-
-    const createdEvents = [];
-    for (const [index, parsed] of llm.events.entries()) {
-      const event = await eventsRepo.create(
-        toEventInput({
-          parsed,
-          childId: input.childId,
-          sourceRole: input.sourceRole,
-          transcript,
-          recordingId: recording.id,
-          jobId,
-          index,
-        }),
-      );
-      realtimeService.broadcastEvent({ childId: event.childId, id: event.id });
-      createdEvents.push(event);
-    }
+    const questions = normalizeQuestions(llm.clarificationQuestions);
+    const events = llm.events.map((parsed) => toStatelessEvent({
+      parsed,
+      sourceRole: input.sourceRole,
+    }));
 
     return {
       ok: true,
       jobId,
       status: 'completed',
-      recording: {
-        ...recording,
-        transcript,
-        sttSource: stt.source,
-      },
+      transcript,
+      events,
+      insight: llm.insight,
+      questions,
+      sttMode: stt.source,
+      aiMode: llm.source,
+      durationSec: input.durationSec ?? stt.durationSec,
       ai: {
         source: llm.source,
         model: llmService.model,
         insight: llm.insight,
-        clarificationQuestions: normalizeQuestions(llm.clarificationQuestions),
+        clarificationQuestions: questions,
       },
-      events: createdEvents,
     };
   },
 };

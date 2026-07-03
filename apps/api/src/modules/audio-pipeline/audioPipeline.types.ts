@@ -1,5 +1,4 @@
-import type { EventRecord, SourceRole } from '../../repositories/events.js';
-import type { RecordingRecord } from '../../repositories/recordings.js';
+import type { SourceRole } from '../../repositories/events.js';
 
 export type AudioPipelineMode = 'observation' | 'child_speech' | 'tutor_note';
 
@@ -34,16 +33,30 @@ export interface AudioPipelineAIResult {
   }>;
 }
 
+export interface AudioPipelineEvent {
+  timestamp?: string;
+  title: string;
+  description: string;
+  type: string;
+  sourceRole: SourceRole;
+}
+
 export interface AudioPipelineResult {
   ok: true;
   jobId: string;
   status: 'completed';
-  recording: RecordingRecord & {
-    transcript: string;
-    sttSource: string;
-  };
+  transcript: string;
   ai: AudioPipelineAIResult;
-  events: EventRecord[];
+  events: AudioPipelineEvent[];
+  insight: string;
+  questions: Array<{
+    id?: string;
+    text: string;
+    options?: string[];
+  }>;
+  sttMode: string;
+  aiMode: string;
+  durationSec?: number;
 }
 
 export class AudioPipelineError extends Error {

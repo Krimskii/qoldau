@@ -1,26 +1,12 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import { audioRouter } from '../src/modules/audio-pipeline/audio.routes';
-import { prisma } from '../src/db/prisma';
 
 describe('POST /api/audio/ingest', () => {
   const app = express();
   app.use(express.json({ limit: '35mb' }));
   app.use('/api/audio', audioRouter);
-
-  beforeAll(async () => {
-    await prisma.$connect();
-    await prisma.child.upsert({
-      where: { id: 'test-audio-child' },
-      update: {},
-      create: {
-        id: 'test-audio-child',
-        name: 'Demo Child',
-        age: 6,
-      },
-    });
-  });
 
   it('rejects missing audio', async () => {
     const res = await request(app)
@@ -46,7 +32,7 @@ describe('POST /api/audio/ingest', () => {
     expect(res.body.code).toBe('SOURCE_ROLE_INVALID');
   });
 
-  it('runs the mock pipeline and persists recording/events', async () => {
+  it('runs the mock stateless pipeline without persisted recording/events', async () => {
     const audioBase64 = Buffer.from('fake-webm-audio').toString('base64');
 
     const res = await request(app)
@@ -62,20 +48,15 @@ describe('POST /api/audio/ingest', () => {
     expect(res.status).toBe(201);
     expect(res.body.ok).toBe(true);
     expect(res.body.status).toBe('completed');
-    expect(res.body.recording.id).toBeDefined();
-    expect(res.body.recording.transcript).toBeTruthy();
-    expect(res.body.recording.sttSource).toBe('mock');
+    expect(res.body.transcript).toBeTruthy();
+    expect(res.body.sttMode).toBe('mock');
+    expect(res.body.aiMode).toBe('mock');
     expect(Array.isArray(res.body.events)).toBe(true);
-
-    const recording = await prisma.recording.findUnique({
-      where: { id: res.body.recording.id },
-    });
-    expect(recording?.childId).toBe('test-audio-child');
-
-    const savedEvents = await prisma.event.findMany({
-      where: { childId: 'test-audio-child' },
-    });
-    expect(savedEvents.length).toBeGreaterThanOrEqual(res.body.events.length);
+    expect(res.body.events[0]).not.toHaveProperty('id');
+    expect(res.body.events[0]).not.toHaveProperty('childId');
+    expect(res.body).not.toHaveProperty('recording');
+    expect(res.body.insight).toBeTruthy();
+    expect(Array.isArray(res.body.questions)).toBe(true);
   });
 });
 

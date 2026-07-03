@@ -29,3 +29,15 @@ export const sttRateLimit = rateLimit({
   legacyHeaders: false,
   message: { ok: false, error: 'Слишком много STT-запросов. Подождите минуту.' },
 });
+
+export const audioIngestRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: Number(process.env.AUDIO_INGEST_RATE_LIMIT_PER_MIN ?? 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    ok: false,
+    code: 'AUDIO_RATE_LIMITED',
+    error: 'Too many audio requests. Please wait a minute.',
+  },
+});

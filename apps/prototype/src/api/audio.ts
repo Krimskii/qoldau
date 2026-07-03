@@ -17,14 +17,25 @@ export interface AudioPipelineResponse {
   ok: true;
   jobId: string;
   status: 'completed';
+  transcript: string;
+  insight: string;
+  questions: Array<{
+    id?: string;
+    text: string;
+    options?: string[];
+  }>;
+  sttMode: string;
+  aiMode: string;
+  durationSec?: number;
+  /** @deprecated Temporary UI compatibility shim. Backend no longer persists recordings. */
   recording: {
-    id: string;
+    id?: string;
     childId: string;
-    label: string;
+    label?: string;
     durationSec: number;
     transcript: string;
     sttSource: string;
-    timestamp: string;
+    timestamp?: string;
   };
   ai: {
     source: string;
@@ -36,7 +47,13 @@ export interface AudioPipelineResponse {
       options?: string[];
     }>;
   };
-  events: unknown[];
+  events: Array<{
+    timestamp?: string;
+    title: string;
+    description: string;
+    type: string;
+    sourceRole: string;
+  }>;
 }
 
 export interface AudioPipelineHealth {
@@ -83,7 +100,9 @@ export async function uploadAudioObservation(
 ): Promise<AudioPipelineResponse> {
   try {
     const audioBase64 = await blobToBase64(input.blob);
-    return await request<AudioPipelineResponse>('/api/audio/ingest', {
+    const result = await request<Omit<AudioPipelineResponse, 'recording'> & {
+      recording?: AudioPipelineResponse['recording'];
+    }>('/api/audio/ingest', {
       method: 'POST',
       body: JSON.stringify({
         audioBase64,
@@ -95,6 +114,15 @@ export async function uploadAudioObservation(
         mode: input.mode ?? 'observation',
       }),
     });
+    return {
+      ...result,
+      recording: result.recording ?? {
+        childId: input.childId,
+        durationSec: result.durationSec ?? input.durationSec ?? 0,
+        transcript: result.transcript,
+        sttSource: result.sttMode,
+      },
+    };
   } catch (err) {
     if (err instanceof ApiError) {
       throw new AudioIngestError(err.message || 'Audio ingest request failed', {
