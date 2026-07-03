@@ -112,7 +112,7 @@ export const HealthCheckBanner: React.FC = () => {
 
       {state.api === 'offline' && (
         <p className="text-[10px] text-coral mt-2 leading-relaxed">
-          Backend недоступен. Приложение работает в demo-режиме.
+          Backend недоступен. Приложение работает в демо-режиме.
         </p>
       )}
     </div>

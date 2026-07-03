@@ -81,7 +81,7 @@ export const ParentHome: React.FC = () => {
       {/* Hero — карточка ребёнка */}
       <QoldauCard variant="tinted-teal" padding="md">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#FFE7BE] to-[#E4F8FF] border-2 border-white flex items-center justify-center flex-shrink-0 shadow-card-soft">
+          <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-yellow-soft to-blue-soft border-2 border-white flex items-center justify-center flex-shrink-0 shadow-card-soft">
             <Sparkles className="w-7 h-7 text-teal-dark" />
           </div>
           <div className="flex-1 min-w-0">

@@ -26,6 +26,8 @@
     "heroSubtitle": "Voice-first platform for supporting children with ASD. Child signals → adult speaks → AI structures → system helps spot repeated patterns.",
     "startDemo": "Start demo",
     "demoHint": "Step-by-step guide through 18 screens",
+    "setupFamily": "Set up family",
+    "tryDemoInstead": "Try demo instead",
     "familySetupTitle": "Set up for your family",
     "familySetupHint": "Enter your child's name — it will replace the demo data across the app. You can change it later in the profile.",
     "familySetupPlaceholder": "Child's name",

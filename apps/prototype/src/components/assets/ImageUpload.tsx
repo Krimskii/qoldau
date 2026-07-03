@@ -112,7 +112,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       <div className="flex items-start gap-2 p-3 bg-[#FFFCEC] border border-[#f7e5a3] rounded-xl">
         <AlertTriangle className="w-4 h-4 text-[#9a7820] flex-shrink-0 mt-0.5" />
         <p className="text-xs text-ink-2 leading-snug">
-          В demo-режиме изображение сохраняется только в этом браузере и не отправляется на сервер.
+          В демо-режиме изображение сохраняется только в этом браузере и не отправляется на сервер.
           Не используйте личные фото в публичной демонстрации без согласия.
         </p>
       </div>

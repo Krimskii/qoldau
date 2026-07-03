@@ -75,7 +75,7 @@ export const LoginPage: React.FC = () => {
                 required
                 disabled={submitting}
                 className="flex-1 bg-transparent text-sm text-ink focus:outline-none"
-                aria-label="Email"
+                aria-label="Электронная почта"
               />
             </label>
 
@@ -93,7 +93,7 @@ export const LoginPage: React.FC = () => {
             />
 
             <p className="text-[10px] text-muted text-center leading-relaxed pt-2">
-              В demo-режиме magic-link не отправляется на почту. После нажатия кнопки
+              В демо-режиме magic-link не отправляется на почту. После нажатия кнопки
               ниже появится ссылка для перехода.
             </p>
           </form>
@@ -104,7 +104,7 @@ export const LoginPage: React.FC = () => {
               <div className="flex-1">
                 <p className="text-sm font-bold text-ink">Magic-link создан</p>
                 <p className="text-xs text-ink-2 leading-relaxed mt-1">
-                  В demo-режиме ссылка показана ниже. В production она придёт на {email}.
+                  В демо-режиме ссылка показана ниже. В production она придёт на {email}.
                 </p>
               </div>
             </div>

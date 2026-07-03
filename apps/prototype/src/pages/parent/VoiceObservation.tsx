@@ -453,7 +453,7 @@ export const VoiceObservation: React.FC = () => {
             <p className="text-sm text-ink-2 leading-relaxed max-w-xs">
               {canUseVoice
                 ? 'Нажмите на кнопку и расскажите, что произошло.'
-                : 'Голосовая запись недоступна в этом браузере. Используйте demo-текст или ручной ввод.'}
+                : 'Голосовая запись недоступна в этом браузере. Используйте демо-текст или ручной ввод.'}
               {' '}AI предложит структуру наблюдения.
             </p>
           </div>
@@ -514,7 +514,7 @@ export const VoiceObservation: React.FC = () => {
       {phase === 'idle' && !timer.isActive && !hasTranscript && !isAudioPhase && (
         <div className="flex flex-col gap-2">
           <PrimaryAction
-            label="Использовать demo-текст"
+            label="Использовать демо-текст"
             onClick={handleUseDemo}
             variant="soft"
             icon={<Sparkles size={18} />}

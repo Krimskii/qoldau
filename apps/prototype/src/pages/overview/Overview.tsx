@@ -13,7 +13,7 @@
  * - Safe-area-inset-top padding (status bar на смартфонах).
  * - Кнопки Войти/Выйти (auth, v0.6.0).
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,6 +23,7 @@ import {
   FileText,
   Sparkles,
   LogIn,
+  Heart,
 } from 'lucide-react';
 import { useRoleStore } from '@/store/useRoleStore';
 import { useDemoStore } from '@/store/useDemoStore';
@@ -32,6 +33,7 @@ import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { DemoControlsCard } from '@/components/ui/DemoControlsCard';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { FamilySetupCard } from '@/components/ui/FamilySetupCard';
+import { getFamilyChildName } from '@/data/demoDataset';
 import type { UserRole } from '@/types/qoldau';
 
 interface RoleDef {
@@ -56,10 +58,32 @@ export const Overview: React.FC = () => {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
 
+  // v0.9: онбординг — если имя ребёнка не задано, ведём на настройку семьи.
+  const [familyChildName, setFamilyChildNameState] = useState<string | null>(null);
+  useEffect(() => {
+    setFamilyChildNameState(getFamilyChildName());
+  }, []);
+  const isFirstRun = !familyChildName;
+
   const handleStartDemo = () => {
     setRole('parent');
     startDemo();
     navigate('/parent/home');
+  };
+
+  const handleSetupFamily = () => {
+    // Скроллим к FamilySetupCard. После сохранения имя появится в сторе и
+    // приложение перезагрузится (см. FamilySetupCard) — после возврата
+    // у пользователя будет реальный child, а не демо-плейсхолдер.
+    const el = document.getElementById('family-setup');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const input = el.querySelector<HTMLInputElement>('input[type="text"]');
+      if (input) {
+        // Небольшая задержка чтобы scrollIntoView успел отработать.
+        window.setTimeout(() => input.focus(), 250);
+      }
+    }
   };
 
   const handleRole = (def: RoleDef) => {
@@ -133,7 +157,7 @@ export const Overview: React.FC = () => {
         <div className="text-center max-w-3xl mx-auto">
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-soft text-teal-dark text-xs font-bold uppercase tracking-wide">
             <Sparkles className="w-3 h-3" />
-            Demo MVP · v0.6.6
+            Pilot · v0.9
           </span>
           <h1 className="mt-5 text-5xl md:text-6xl font-black text-ink leading-[1.05] tracking-tight">
             {t('landing.heroTitle1')}<br />
@@ -144,20 +168,52 @@ export const Overview: React.FC = () => {
           </p>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <button
-            onClick={handleStartDemo}
-            className="px-8 py-4 bg-gradient-to-r from-teal to-teal-dark text-white rounded-2xl font-bold text-lg shadow-card hover:shadow-card-hover transition-all active:scale-[0.98] flex items-center gap-2"
-          >
-            <Play className="w-5 h-5" />
-            {t('landing.startDemo')}
-          </button>
-          <p className="text-xs text-muted">{t('landing.demoHint')}</p>
+        <div className="mt-10 flex flex-col items-center justify-center gap-3">
+          {isFirstRun ? (
+            <>
+              {/* Первый запуск → онбординг: настройка реальной семьи */}
+              <button
+                onClick={handleSetupFamily}
+                className="px-8 py-4 bg-gradient-to-r from-coral to-[#cc251d] text-white rounded-2xl font-bold text-lg shadow-card hover:shadow-card-hover transition-all active:scale-[0.98] flex items-center gap-2"
+                data-testid="onboarding-setup-family"
+              >
+                <Heart className="w-5 h-5" />
+                {t('landing.setupFamily')}
+              </button>
+              <button
+                onClick={handleStartDemo}
+                className="px-6 py-2.5 rounded-2xl border border-line text-ink-2 hover:bg-bg transition-colors text-sm font-bold flex items-center gap-1.5"
+                data-testid="onboarding-try-demo"
+              >
+                <Play className="w-4 h-4" />
+                {t('landing.tryDemoInstead')}
+              </button>
+              <p className="text-xs text-muted">{t('landing.demoHint')}</p>
+            </>
+          ) : (
+            <>
+              {/* Возврат пользователя: основной CTA — запуск приложения */}
+              <button
+                onClick={handleStartDemo}
+                className="px-8 py-4 bg-gradient-to-r from-teal to-teal-dark text-white rounded-2xl font-bold text-lg shadow-card hover:shadow-card-hover transition-all active:scale-[0.98] flex items-center gap-2"
+              >
+                <Play className="w-5 h-5" />
+                {t('landing.startDemo')}
+              </button>
+              <p className="text-xs text-muted">{t('landing.demoHint')}</p>
+            </>
+          )}
         </div>
       </section>
 
-      {/* Family setup — реальная семья, отдельно от демо */}
-      <section className="max-w-[1100px] mx-auto px-6 pb-4">
+      {/* Family setup — реальная семья, отдельно от демо.
+          На первом запуске сюда скроллит hero CTA (handleSetupFamily).
+          После сохранения FamilySetupCard делает window.location.reload(),
+          useEffect перечитывает имя → isFirstRun становится false. */}
+      <section
+        id="family-setup"
+        className="max-w-[1100px] mx-auto px-6 pb-4"
+      >
         <FamilySetupCard />
       </section>
 

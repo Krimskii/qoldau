@@ -167,7 +167,7 @@ export const EventTimeline: React.FC = () => {
       />
 
       {/* Hero — visual brand для Event Timeline */}
-      <div className="bg-gradient-to-br from-[#DDF5F0] to-[#EAF8F6] border border-teal/20 rounded-3xl p-4 flex items-center gap-3">
+      <div className="bg-gradient-to-br from-teal-soft to-teal-tint border border-teal/20 rounded-3xl p-4 flex items-center gap-3">
         <div className="w-14 h-14 rounded-2xl bg-white border border-teal/20 flex items-center justify-center flex-shrink-0">
           <EventTimelineIcon size={36} className="text-teal" />
         </div>
