@@ -116,8 +116,8 @@ npm run build      # → dist/ (Node.js, запускается через `npm 
 
 | Слой | Статус |
 | ---- | ------ |
-| STT (распознавание речи) | ✅ **real** — OpenAI Whisper (`WHISPER_API_KEY`), fallback `transcribeMock()` |
-| AI-парсинг наблюдений | ✅ **real** — Anthropic Claude (`ANTHROPIC_API_KEY`), fallback `aiParser.mock.ts` |
+| STT (распознавание речи) | ✅ **real** — OpenAI Whisper (`OPENAI_API_KEY` / `WHISPER_API_KEY`), fallback `transcribeMock()` |
+| AI-парсинг наблюдений | ✅ **real** — OpenAI `gpt-4o-mini` (`OPENAI_API_KEY`), fallback `aiParser.mock.ts` |
 | Audio pipeline | ✅ **real** — `POST /api/audio/ingest` (audio → STT → LLM → Event) |
 | Backend / БД | ✅ **real** — Express + Prisma (SQLite Phase 1, Postgres-ready) |
 | Auth | ✅ **real** — magic-link (JWT), opt-in |

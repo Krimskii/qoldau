@@ -36,14 +36,14 @@ APK семей на него ходил.
 3. **Runbook в `docs/DEPLOYMENT.md`** — точные шаги владельцу:
    - создать проект на Railway → deploy from GitHub (ветка/интеграция);
    - env-переменные (значения владелец вводит сам, НЕ в git):
-     `ANTHROPIC_API_KEY`, `WHISPER_API_KEY`, `ANTHROPIC_MODEL`, `WHISPER_MODEL`,
+     **`OPENAI_API_KEY`** (один ключ на STT+LLM), `OPENAI_LLM_MODEL`, `WHISPER_MODEL`,
      `CORS_ORIGIN`, `SENTRY_DSN`, `NODE_ENV=production`, `AUDIO_INGEST_RATE_LIMIT_PER_MIN`;
    - как получить публичный HTTPS-URL.
 
 4. **После деплоя — верификация** (владелец даёт URL):
    ```
    curl https://<url>/api/health
-   curl https://<url>/api/ai/health     # ожидается mode:"claude"
+   curl https://<url>/api/ai/health     # ожидается mode:"openai"
    curl https://<url>/api/stt/health    # ожидается mode:"whisper"
    curl https://<url>/api/audio/health  # maxAudioMb/rateLimitPerMin
    ```

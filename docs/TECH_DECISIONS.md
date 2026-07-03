@@ -56,16 +56,18 @@
 
 ### AI Parser (LLM) — реально реализовано (v0.6.0+)
 
-**LLM = Anthropic Claude**, opt-in через `ANTHROPIC_API_KEY` (mock fallback без ключа).
+**LLM = OpenAI** (v1.0, мигрировано с Anthropic Claude), opt-in через
+`OPENAI_API_KEY` (mock fallback без ключа).
 
-- Backend: `apps/api/src/services/llmService.ts` — `@anthropic-ai/sdk`, модель
-  `claude-3-5-haiku-20241022` (override через `ANTHROPIC_MODEL`), structured
-  output через `tool_use`. `llmService.status()` → `source: 'claude' | 'mock'`.
+- Backend: `apps/api/src/services/llmService.ts` — SDK `openai`, модель
+  `gpt-4o-mini` (override через `OPENAI_LLM_MODEL`), structured output через
+  function calling / json_schema. `llmService.status()` → `source: 'openai' | 'mock'`.
 - Возвращает: parsed events, AI insight, clarification questions.
 - Frontend mock-парсер (`src/lib/ai/aiParser.mock.ts`) остаётся для demo/offline.
 
-> ⚠️ OpenAI используется **только** для Whisper STT. LLM-парсинг идёт через
-> Anthropic Claude, не через OpenAI. `ANTHROPIC_API_KEY` ≠ `WHISPER_API_KEY`.
+> ⚠️ v1.0: **и STT (Whisper), и LLM работают на OpenAI** — достаточно одного
+> `OPENAI_API_KEY`. STT берёт `WHISPER_API_KEY || OPENAI_API_KEY`. Anthropic
+> Claude больше не используется (`@anthropic-ai/sdk` удалён).
 
 ### Дизайн-токены
 

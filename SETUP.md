@@ -58,8 +58,9 @@ cp apps/prototype/.env.example apps/prototype/.env
 
 | Env | Default | Effect |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | (empty) | Включает Claude 3.5 Haiku вместо mock-парсера |
-| `WHISPER_API_KEY` | (empty) | Включает OpenAI Whisper вместо mock-STT |
+| `OPENAI_API_KEY` | (empty) | Включает real AI: OpenAI `gpt-4o-mini` (LLM) + Whisper (STT). Один ключ на оба |
+| `OPENAI_LLM_MODEL` | `gpt-4o-mini` | Override модели LLM |
+| `WHISPER_API_KEY` | (empty) | (опц.) отдельный ключ для STT; иначе берётся `OPENAI_API_KEY` |
 | `SENTRY_DSN` | (empty) | Включает backend error tracking |
 | `VITE_SENTRY_DSN` | (empty) | Включает frontend error tracking |
 | `JWT_SECRET` | dev-secret | **Обязательно сменить в проде** |
@@ -99,7 +100,7 @@ npm run dev
 curl http://localhost:4000/api/health
 
 # Real voice pipeline health (v0.7.6) — поле mode показывает real vs mock:
-curl http://localhost:4000/api/ai/health      # → mode:"claude"  (real) или "mock"
+curl http://localhost:4000/api/ai/health      # → mode:"openai"  (real) или "mock"
 curl http://localhost:4000/api/stt/health     # → mode:"whisper" (real) или "mock"
 curl http://localhost:4000/api/audio/health   # → {service:"audio-pipeline", mode:"sync", maxAudioMb}
 
@@ -130,13 +131,13 @@ cd apps/prototype && npm run build
 ### Real voice pipeline (v0.7.6)
 
 Полный голосовой flow: `Parent → VoiceObservation → запись (MediaRecorder) →
-POST /api/audio/ingest → STT (Whisper) → LLM (Claude) → Event → Timeline`.
+POST /api/audio/ingest → STT (Whisper) → LLM (OpenAI gpt-4o-mini) → Event → Timeline`.
 
 - `VoiceObservation.tsx` использует `MediaRecorder`, если он доступен в браузере;
   иначе (или при недоступном backend) — fallback на Web Speech / demo-flow, demo
   не ломается.
-- Провайдеры opt-in: без `ANTHROPIC_API_KEY`/`WHISPER_API_KEY` соответствующий
-  этап работает в mock-режиме (штатный fallback).
+- Провайдеры opt-in: без `OPENAI_API_KEY` STT и LLM работают в mock-режиме
+  (штатный fallback). Один ключ включает и распознавание, и структуризацию.
 - Детали, режимы (full/STT-only/LLM-only/mock), контракт client/hook и
   smoke-test — в [docs/HANDOFF_PC_SETUP.md](docs/HANDOFF_PC_SETUP.md) и
   [docs/AGENT_WORKFLOW.md](docs/AGENT_WORKFLOW.md).

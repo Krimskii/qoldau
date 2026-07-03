@@ -33,26 +33,25 @@ cp apps/api/.env.example apps/api/.env
 
 Ключевые переменные (см. полный список в `apps/api/.env.example`):
 
-| Переменная          | Назначение                                                  |
-| ------------------- | ----------------------------------------------------------- |
-| `ANTHROPIC_API_KEY` | LLM-парсер наблюдений — **Anthropic Claude** (real AI)      |
-| `ANTHROPIC_MODEL`   | модель Claude (default `claude-3-5-haiku-20241022`)         |
-| `WHISPER_API_KEY`   | STT — **OpenAI Whisper** (распознавание речи)              |
-| `WHISPER_MODEL`     | модель Whisper (default `whisper-1`)                        |
-| `DATABASE_URL`      | Prisma (SQLite по умолчанию в Phase 1)                      |
-| `JWT_SECRET`        | секрет для auth (magic-link)                                |
-| `SENTRY_DSN`        | error tracking (опционально, пусто = выкл)                 |
-| `AUDIO_MAX_MB`      | лимит размера аудио (по умолчанию 25)                       |
-| `PORT`              | порт backend (по умолчанию 4000)                            |
-| `CORS_ORIGIN`       | origin(ы) фронтенда для CORS                                |
+| Переменная          | Назначение                                                       |
+| ------------------- | ---------------------------------------------------------------- |
+| `OPENAI_API_KEY`    | **Один ключ на STT + LLM** (OpenAI). Real AI, opt-in.            |
+| `OPENAI_LLM_MODEL`  | модель LLM (default `gpt-4o-mini`)                               |
+| `WHISPER_MODEL`     | модель STT (default `whisper-1`)                                 |
+| `WHISPER_API_KEY`   | (опц.) отдельный ключ для STT; иначе берётся `OPENAI_API_KEY`    |
+| `SENTRY_DSN`        | error tracking (опционально, пусто = выкл)                       |
+| `AUDIO_MAX_MB`      | лимит размера аудио (по умолчанию 25)                            |
+| `PORT`              | порт backend (по умолчанию 4000)                                 |
+| `CORS_ORIGIN`       | origin(ы) фронтенда для CORS                                     |
 
-> ⚠️ **Провайдеры (сверено с кодом):** LLM — Anthropic Claude (`@anthropic-ai/sdk`,
-> `llmService.ts`); STT — OpenAI Whisper (`sttService.ts`, вызывает
-> `api.openai.com/v1/audio/transcriptions`). Оба **opt-in**: без своего ключа
-> соответствующий сервис работает в mock-режиме (это штатный fallback, не ошибка).
+> ⚠️ **Провайдеры (v1.0, сверено с кодом):** LLM — **OpenAI** `gpt-4o-mini`
+> (`llmService.ts`, SDK `openai`); STT — **OpenAI Whisper** (`sttService.ts`,
+> `api.openai.com/v1/audio/transcriptions`). Достаточно **одного** `OPENAI_API_KEY`
+> на оба. Anthropic Claude мигрирован в v1.0 (`@anthropic-ai/sdk` удалён). Оба
+> **opt-in**: без ключа — mock-режим (штатный fallback).
 >
-> ⚠️ `ANTHROPIC_API_KEY` и `WHISPER_API_KEY` кладутся **только** в `apps/api/.env` на
-> локальной машине. Никогда не коммить этот файл (он в `.gitignore`).
+> ⚠️ `OPENAI_API_KEY` кладётся **только** в `apps/api/.env` на локальной машине.
+> Никогда не коммить этот файл (он в `.gitignore`).
 
 ### Frontend — `apps/prototype/.env` (опционально)
 
@@ -110,21 +109,22 @@ curl http://localhost:4000/api/audio/health
 
 **Ожидаемо при корректных ключах** (поле называется `mode`):
 
-- `/api/ai/health` → `{ "ok": true, "service": "ai", "enabled": true, "mode": "claude", "model": "claude-3-5-haiku-20241022" }`
+- `/api/ai/health` → `{ "ok": true, "service": "ai", "enabled": true, "mode": "openai", "model": "gpt-4o-mini" }`
 - `/api/stt/health` → `{ "ok": true, "service": "stt", "enabled": true, "mode": "whisper", "model": "whisper-1" }`
 - `/api/audio/health` → `{ "ok": true, "service": "audio-pipeline", "mode": "sync", "maxAudioMb": 25 }`
 
-Если `mode: "mock"` — значит соответствующий ключ не задан в `apps/api/.env`, приложение
+Если `mode: "mock"` — значит `OPENAI_API_KEY` не задан в `apps/api/.env`, приложение
 работает на заглушках (это штатный fallback, не ошибка).
 
 ### Режимы работы
 
-| Режим        | Условие                                        | Что работает                        |
-| ------------ | ---------------------------------------------- | ----------------------------------- |
-| Full real    | есть `ANTHROPIC_API_KEY` **и** `WHISPER_API_KEY` | real STT + real LLM                 |
-| STT-only     | есть `WHISPER_API_KEY`, нет `ANTHROPIC_API_KEY`  | real распознавание, mock-структуризация |
-| LLM-only     | есть `ANTHROPIC_API_KEY`, нет `WHISPER_API_KEY`  | mock-транскрипт, real-структуризация |
-| Mock         | нет ни одного ключа                            | полностью на заглушках, demo не ломается |
+| Режим     | Условие                          | Что работает                             |
+| --------- | -------------------------------- | ---------------------------------------- |
+| Full real | есть `OPENAI_API_KEY`            | real STT (Whisper) + real LLM (gpt-4o-mini) |
+| Mock      | нет `OPENAI_API_KEY`             | полностью на заглушках, demo не ломается |
+
+> Один `OPENAI_API_KEY` включает и STT, и LLM. `WHISPER_API_KEY` — опциональный
+> отдельный ключ для STT, если нужно развести.
 
 ### Проверка полного audio pipeline
 

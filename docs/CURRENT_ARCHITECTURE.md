@@ -11,7 +11,7 @@
 для v0.7.x:
 
 - **Backend = stateless AI-прокси.** `POST /api/audio/ingest` → Whisper STT →
-  Claude LLM → возвращает `{ transcript, events[], insight, questions, sttMode,
+  OpenAI LLM → возвращает `{ transcript, events[], insight, questions, sttMode,
   aiMode }`. **НЕ пишет в БД, НЕ хранит события, НЕ имеет пользователей.**
 - **Routes только:** `/api/health`, `/api/stt`, `/api/ai`, `/api/audio`.
   Убраны `events`/`recordings`/`children`/`auth`/`reset`.
@@ -20,8 +20,10 @@
   `useEventStore` (фронт генерит `id`/`childId`/`status`).
 - **Prisma/Postgres/auth/multi-tenant — не в пилотном пути.** Данные семьи —
   локально (localStorage).
-- **Провайдеры:** LLM = **Anthropic Claude** (`aiMode: claude|mock`); STT =
-  **OpenAI Whisper** (`sttMode: whisper|mock`). OpenAI — только для STT, не для LLM.
+- **Провайдеры (v1.0):** LLM = **OpenAI** `gpt-4o-mini` (`aiMode: openai|mock`);
+  STT = **OpenAI Whisper** `whisper-1` (`sttMode: whisper|mock`). Один ключ
+  `OPENAI_API_KEY` на оба (STT берёт `WHISPER_API_KEY || OPENAI_API_KEY`).
+  Anthropic Claude больше не используется (мигрировано в v1.0).
 
 Разделы ниже (Realtime WebSocket, auth-routes, DB-write pipeline) — исторические
 для v0.7.x; в пилоте v1.0 они не используются.
@@ -40,7 +42,7 @@
 
 **Real integrations (opt-in через env):**
 - **STT**: Web Speech API в браузере (Chrome/Edge/Safari) + `Whisper API` на backend (если `WHISPER_API_KEY`)
-- **LLM**: `Anthropic Claude claude-3-5-haiku` (если `ANTHROPIC_API_KEY`)
+- **LLM**: `OpenAI gpt-4o-mini` (если `OPENAI_API_KEY`) — мигрировано с Claude в v1.0
 - **Auth**: magic-link → HS256 JWT (без SMTP в dev, devMagicUrl в response)
 - **DB**: Prisma + SQLite (dev) / Postgres (prod-ready, swap `provider` в `schema.prisma`)
 - **Cache**: in-memory LRU (default) / Redis (если `REDIS_URL`)
