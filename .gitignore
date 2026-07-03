@@ -2,10 +2,27 @@ node_modules/
 dist/
 .DS_Store
 *.log
-.env
-.env.local
 .vscode/
 .idea/
+
+# Env / secrets — never commit real values; .env.example is the only tracked one
+.env
+.env.*
+!.env.example
+apps/**/.env
+apps/**/.env.local
+
+# Build outputs / artifacts
+apps/**/dist
+apps/**/build
+*.apk
+*.aab
+android/app/build
+
+# Android signing — credentials, never commit
+*.jks
+*.keystore
+keystore.properties
 
 # TypeScript incremental build cache
 *.tsbuildinfo
