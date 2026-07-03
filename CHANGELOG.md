@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.6] - 2026-07-03 (Real voice pipeline: parallel-agent build + docs sync)
+
+Параллельная разработка тремя агентами (Codex / MiniMax / Claude) — см.
+`docs/AGENT_WORKFLOW.md`. Ветки: `feature/v0.7.6-audio-foundation` (Codex),
+`feature/v0.7.6-voice-ui-flow` (MiniMax), `docs/v0.7.6-handoff-sync` (Claude).
+
+### Audio foundation (Codex — `feature/v0.7.6-audio-foundation`)
+- **`useAudioRecorder`** (`apps/prototype/src/hooks/useAudioRecorder.ts`) —
+  `MediaRecorder`-обёртка: `{ isRecording, isProcessing, duration, audioBlob,
+  error, startRecording, stopRecording, resetRecording }`. Без UI/navigate,
+  безопасен для браузеров без `MediaRecorder`.
+- **Audio ingest client** (`apps/prototype/src/api/audio.ts`) — `blobToBase64`,
+  `uploadAudioObservation`, `getAudioPipelineHealth`.
+- **Health endpoints**: `GET /api/ai/health` (`mode: claude|mock`),
+  `GET /api/stt/health` (`mode: whisper|mock`), `GET /api/audio/health`.
+
+### Voice UI flow (MiniMax — `feature/v0.7.6-voice-ui-flow`)
+- **`VoiceObservation.tsx`** подключён к real audio pipeline: primary path
+  `MediaRecorder → POST /api/audio/ingest`; fallback на Web Speech / demo при
+  недоступном `MediaRecorder` или backend. Optimistic insert + WebSocket
+  broadcast (дедуп по id, без дублей Event). Осторожные AI-формулировки.
+
+### Docs sync (Claude — `docs/v0.7.6-handoff-sync`)
+- Документация сверена с кодом: **LLM = Anthropic Claude** (не OpenAI),
+  **STT = OpenAI Whisper**. Исправлены устаревшие упоминания OpenAI-LLM и
+  `source: openai` в `HANDOFF_PC_SETUP.md`, `TECH_DECISIONS.md`, `README.md`.
+- Новый `docs/AGENT_WORKFLOW.md` — ветки, зоны файлов агентов, git-правила,
+  контракт интеграции, QA/smoke-test checklist.
+- `SETUP.md` — health-эндпоинты v0.7.6 + секция real voice pipeline.
+
+### Провайдеры (сверено с кодом)
+- **LLM:** Anthropic Claude (`@anthropic-ai/sdk`, `ANTHROPIC_API_KEY`,
+  `claude-3-5-haiku-20241022`) — opt-in, mock fallback.
+- **STT:** OpenAI Whisper (`WHISPER_API_KEY`, `whisper-1`) — opt-in, mock fallback.
+- OpenAI используется **только** для Whisper STT, не для LLM-парсинга.
+
 ## [0.7.5] - 2026-07-02 (Audio pipeline: record → STT → AI → events)
 
 ### Audio Pipeline (bounded module: `apps/api/src/modules/audio-pipeline/`)
