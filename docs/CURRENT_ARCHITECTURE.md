@@ -1,7 +1,30 @@
-# Qoldau AI — Current Architecture (v0.7.4)
+# Qoldau AI — Current Architecture
 
 > Единая точка входа для разработчика, попавшего в проект.
-> Последнее обновление: 2026-07-02 (v0.7.4 — privacy hardening + demo-ready)
+
+---
+
+## ⚠️ v0.8 — Per-device stateless (актуально, приоритет над деталями ниже)
+
+Пилот-архитектура зафиксирована: **per-device + stateless AI-прокси** (см.
+[ROADMAP_V1.md](ROADMAP_V1.md)). Это переопределяет часть деталей ниже, написанных
+для v0.7.x:
+
+- **Backend = stateless AI-прокси.** `POST /api/audio/ingest` → Whisper STT →
+  Claude LLM → возвращает `{ transcript, events[], insight, questions, sttMode,
+  aiMode }`. **НЕ пишет в БД, НЕ хранит события, НЕ имеет пользователей.**
+- **Routes только:** `/api/health`, `/api/stt`, `/api/ai`, `/api/audio`.
+  Убраны `events`/`recordings`/`children`/`auth`/`reset`.
+- **Realtime (socket.io) — удалён.** Данные per-device, синк между устройствами
+  не нужен. `useRealtimeEvents` убран с фронта; события вставляются локально в
+  `useEventStore` (фронт генерит `id`/`childId`/`status`).
+- **Prisma/Postgres/auth/multi-tenant — не в пилотном пути.** Данные семьи —
+  локально (localStorage).
+- **Провайдеры:** LLM = **Anthropic Claude** (`aiMode: claude|mock`); STT =
+  **OpenAI Whisper** (`sttMode: whisper|mock`). OpenAI — только для STT, не для LLM.
+
+Разделы ниже (Realtime WebSocket, auth-routes, DB-write pipeline) — исторические
+для v0.7.x; в пилоте v1.0 они не используются.
 
 ---
 
