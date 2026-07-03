@@ -26,6 +26,8 @@ export interface AudioPipelineAIResult {
   source: string;
   model: string;
   insight: string;
+  fallback?: boolean;
+  error?: string;
   clarificationQuestions: Array<{
     id?: string;
     text: string;
@@ -56,6 +58,8 @@ export interface AudioPipelineResult {
   }>;
   sttMode: string;
   aiMode: string;
+  aiFallback?: boolean;
+  aiError?: string;
   durationSec?: number;
 }
 

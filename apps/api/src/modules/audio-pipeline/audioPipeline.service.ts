@@ -136,11 +136,15 @@ export const audioPipelineService = {
       questions,
       sttMode: stt.source,
       aiMode: llm.source,
+      aiFallback: llm.aiFallback,
+      aiError: llm.aiError,
       durationSec: input.durationSec ?? stt.durationSec,
       ai: {
         source: llm.source,
         model: llmService.model,
         insight: llm.insight,
+        fallback: llm.aiFallback,
+        error: llm.aiError,
         clarificationQuestions: questions,
       },
     };
