@@ -2,7 +2,7 @@
  * POST /api/ai/parse — AI parser (v0.6.0).
  *
  * Phase 1: keyword-matching (mock fallback)
- * Phase 2: Anthropic Claude через llmService (opt-in, ANTHROPIC_API_KEY).
+ * Phase 2: OpenAI via llmService (opt-in, OPENAI_API_KEY).
  *
  * Body: { transcript: string, childId?: string }
  * Response: { ok, events: [...], insight: string, clarificationQuestions: [...], aiSource }
@@ -22,7 +22,7 @@ aiRouter.post('/parse', aiRateLimit, async (req, res) => {
     });
   }
 
-  // Имитация AI-задержки для UX-консистентности (Claude обычно быстрее, но не мгновенно).
+  // Имитация AI-задержки для UX-консистентности.
   const t0 = Date.now();
   const result = await llmService.parseTranscript({ transcript });
   const elapsed = Date.now() - t0;
