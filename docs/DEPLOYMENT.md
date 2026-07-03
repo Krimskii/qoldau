@@ -1,5 +1,63 @@
 # Deployment Guide (v0.6.0)
 
+## Stateless AI proxy deployment (v0.9)
+
+Use this section for the APK-backed pilot. The backend is a stateless AI proxy:
+it accepts audio, runs STT + LLM parsing, and returns transcript/events/insight
+to the app. It does not store family data and does not require DB, auth, seed,
+Prisma migrate, Redis, or realtime sockets at runtime.
+
+Recommended platform: Railway or Render, deployed from `apps/api/Dockerfile`.
+
+### Railway / Render settings
+
+| Setting | Value |
+| --- | --- |
+| Root directory | `apps/api` |
+| Runtime | Dockerfile |
+| Start command | image default: `node dist/index.js` |
+| Healthcheck path | `/api/health` |
+| Public URL | HTTPS URL from Railway/Render |
+
+### Required environment variables
+
+| Name | Example / note |
+| --- | --- |
+| `NODE_ENV` | `production` |
+| `PORT` | platform-provided, fallback `4000` |
+| `CORS_ORIGIN` | comma-separated allowed origins, e.g. `capacitor://localhost,https://qoldau.example.com` |
+| `WHISPER_API_KEY` | STT provider key |
+| `WHISPER_MODEL` | default `whisper-1` |
+| `ANTHROPIC_API_KEY` | LLM provider key |
+| `ANTHROPIC_MODEL` | default from backend config |
+| `SENTRY_DSN` | optional; empty disables Sentry |
+
+### Budget and safety limits
+
+| Name | Default | Purpose |
+| --- | ---: | --- |
+| `AUDIO_MAX_MB` | `25` | rejects oversized audio before STT/LLM spend |
+| `JSON_BODY_LIMIT` | `35mb` | Express body parser cap |
+| `AUDIO_INGEST_RATE_LIMIT_PER_MIN` | `10` | per-IP limit for `/api/audio/ingest` |
+
+`/api/audio/ingest` returns structured JSON for recoverable pipeline errors:
+`{ "ok": false, "code": "...", "error": "..." }`.
+
+### Smoke checks after deploy
+
+```bash
+curl https://<proxy-url>/api/health
+curl https://<proxy-url>/api/ai/health
+curl https://<proxy-url>/api/stt/health
+curl https://<proxy-url>/api/audio/health
+```
+
+The APK build must point to the deployed proxy:
+
+```bash
+VITE_API_BASE_URL=https://<proxy-url>
+```
+
 Полный гайд по деплою Qoldau AI в production. Три варианта на выбор.
 
 ---

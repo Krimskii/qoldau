@@ -38,5 +38,7 @@ audioRouter.get('/health', (_req, res) => {
     service: 'audio-pipeline',
     mode: 'sync',
     maxAudioMb: Number(process.env.AUDIO_MAX_MB ?? 25),
+    jsonBodyLimit: process.env.JSON_BODY_LIMIT ?? '35mb',
+    rateLimitPerMin: Number(process.env.AUDIO_INGEST_RATE_LIMIT_PER_MIN ?? 10),
   });
 });

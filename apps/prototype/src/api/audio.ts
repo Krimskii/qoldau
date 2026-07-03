@@ -27,16 +27,6 @@ export interface AudioPipelineResponse {
   sttMode: string;
   aiMode: string;
   durationSec?: number;
-  /** @deprecated Temporary UI compatibility shim. Backend no longer persists recordings. */
-  recording: {
-    id?: string;
-    childId: string;
-    label?: string;
-    durationSec: number;
-    transcript: string;
-    sttSource: string;
-    timestamp?: string;
-  };
   ai: {
     source: string;
     model: string;
@@ -61,6 +51,8 @@ export interface AudioPipelineHealth {
   service: 'audio-pipeline';
   mode: 'sync';
   maxAudioMb: number;
+  jsonBodyLimit?: string;
+  rateLimitPerMin?: number;
 }
 
 export class AudioIngestError extends Error {
@@ -100,9 +92,7 @@ export async function uploadAudioObservation(
 ): Promise<AudioPipelineResponse> {
   try {
     const audioBase64 = await blobToBase64(input.blob);
-    const result = await request<Omit<AudioPipelineResponse, 'recording'> & {
-      recording?: AudioPipelineResponse['recording'];
-    }>('/api/audio/ingest', {
+    return await request<AudioPipelineResponse>('/api/audio/ingest', {
       method: 'POST',
       body: JSON.stringify({
         audioBase64,
@@ -114,15 +104,6 @@ export async function uploadAudioObservation(
         mode: input.mode ?? 'observation',
       }),
     });
-    return {
-      ...result,
-      recording: result.recording ?? {
-        childId: input.childId,
-        durationSec: result.durationSec ?? input.durationSec ?? 0,
-        transcript: result.transcript,
-        sttSource: result.sttMode,
-      },
-    };
   } catch (err) {
     if (err instanceof ApiError) {
       throw new AudioIngestError(err.message || 'Audio ingest request failed', {

@@ -49,8 +49,7 @@ describe('audio api client', () => {
 
     expect(result.jobId).toBe('audio-test');
     expect(result.transcript).toBe('test transcript');
-    expect(result.recording.transcript).toBe('test transcript');
-    expect(result.recording.sttSource).toBe('mock');
+    expect(result.sttMode).toBe('mock');
     expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/audio\/ingest$/);
     expect(fetchMock).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
       method: 'POST',

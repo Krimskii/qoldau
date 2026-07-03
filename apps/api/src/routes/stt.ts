@@ -8,8 +8,8 @@
  * Response: { ok, transcript, confidence, durationSec, sttSource }
  */
 import { Router } from 'express';
-import { sttService } from '../services/sttService';
-import { sttRateLimit } from '../middleware/rateLimit';
+import { sttService } from '../services/sttService.js';
+import { sttRateLimit } from '../middleware/rateLimit.js';
 
 export const sttRouter = Router();
 

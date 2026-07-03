@@ -8,8 +8,8 @@
  * Response: { ok, events: [...], insight: string, clarificationQuestions: [...], aiSource }
  */
 import { Router } from 'express';
-import { llmService } from '../services/llmService';
-import { aiRateLimit } from '../middleware/rateLimit';
+import { llmService } from '../services/llmService.js';
+import { aiRateLimit } from '../middleware/rateLimit.js';
 
 export const aiRouter = Router();
 
