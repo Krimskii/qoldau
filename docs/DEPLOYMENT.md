@@ -15,8 +15,8 @@ Owner-only dashboard steps:
 
 1. Open [Railway](https://railway.com/) and create a new project.
 2. Choose **Deploy from GitHub repo** and select `Krimskii/qoldau`.
-3. Select branch `feature/v1.0-deploy-execute` for the first verification deploy.
-   After merge, switch the service branch to the production integration/main branch.
+3. Select branch `release/v1.0rc-wave0-gate` for the first verification deploy.
+   After it merges to master, switch the Railway service branch to `master`.
 4. Set the service root directory to `apps/api`.
 5. Railway will read `apps/api/railway.json` and build from `apps/api/Dockerfile`.
 6. In **Settings -> Networking**, generate a public domain. Copy the HTTPS URL.
@@ -28,11 +28,11 @@ Required production variables:
 | Name | Required | Notes |
 | --- | --- | --- |
 | `NODE_ENV` | yes | `production` |
-| `ANTHROPIC_API_KEY` | yes | entered by owner in Railway dashboard |
-| `WHISPER_API_KEY` | yes | entered by owner in Railway dashboard |
-| `ANTHROPIC_MODEL` | yes | example: `claude-3-5-haiku-20241022` |
-| `WHISPER_MODEL` | yes | example: `whisper-1` |
-| `CORS_ORIGIN` | yes | include APK origin: `capacitor://localhost`; add web domains comma-separated |
+| `OPENAI_API_KEY` | yes | ONE key powers both LLM parse + Whisper STT. Entered by owner in Railway dashboard, never in git |
+| `OPENAI_LLM_MODEL` | optional | default `gpt-4o-mini` |
+| `WHISPER_API_KEY` | optional | dedicated STT key; if empty, STT uses `OPENAI_API_KEY` |
+| `WHISPER_MODEL` | optional | default `whisper-1` |
+| `CORS_ORIGIN` | yes | Android APK origin is `https://localhost` (Capacitor 8 default scheme). Pilot value: `https://localhost,capacitor://localhost`; add web domains comma-separated |
 | `SENTRY_DSN` | optional | empty keeps Sentry disabled |
 | `AUDIO_INGEST_RATE_LIMIT_PER_MIN` | yes | recommended pilot value: `10` |
 | `AUDIO_MAX_MB` | optional | default `25` |
@@ -49,7 +49,7 @@ curl https://<proxy-url>/api/audio/health
 
 Expected production modes:
 
-- `/api/ai/health`: `mode` should be `claude`/`anthropic`, not `mock`.
+- `/api/ai/health`: `mode` should be `openai`, not `mock`.
 - `/api/stt/health`: `mode` should be `whisper`, not `mock`.
 - `/api/audio/health`: should include `maxAudioMb` and `rateLimitPerMin`.
 
@@ -82,11 +82,11 @@ VITE_API_BASE_URL=https://<proxy-url>
 | --- | --- |
 | `NODE_ENV` | `production` |
 | `PORT` | platform-provided, fallback `4000` |
-| `CORS_ORIGIN` | comma-separated allowed origins, e.g. `capacitor://localhost,https://qoldau.example.com` |
-| `WHISPER_API_KEY` | STT provider key |
+| `CORS_ORIGIN` | comma-separated allowed origins, e.g. `https://localhost,capacitor://localhost,https://qoldau.example.com` |
+| `OPENAI_API_KEY` | ONE key for LLM parse + Whisper STT |
+| `OPENAI_LLM_MODEL` | default `gpt-4o-mini` |
+| `WHISPER_API_KEY` | optional; if empty STT falls back to `OPENAI_API_KEY` |
 | `WHISPER_MODEL` | default `whisper-1` |
-| `ANTHROPIC_API_KEY` | LLM provider key |
-| `ANTHROPIC_MODEL` | default from backend config |
 | `SENTRY_DSN` | optional; empty disables Sentry |
 
 ### Budget and safety limits
