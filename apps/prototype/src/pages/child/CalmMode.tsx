@@ -231,9 +231,12 @@ export const CalmMode: React.FC = () => {
       </div>
 
       <h2 className="text-[26px] mt-1.5 mb-0.5 font-black">Можно отдохнуть</h2>
-      <div className="font-bold mb-[18px]" style={{ color: '#12807a' }}>
+      <div className="font-bold mb-1" style={{ color: '#12807a' }}>
         Ты в безопасности · Я рядом
       </div>
+      <p className="text-xs text-ink-2 text-center px-6 mb-3 leading-relaxed">
+        Если что-то звучит слишком громко или нужно подышать — мы здесь, рядом. Можно выйти в любой момент.
+      </p>
 
       {/* Timer card */}
       <div className="bg-white rounded-3xl p-5 mx-5 shadow-card text-left">
@@ -346,9 +349,18 @@ export const CalmMode: React.FC = () => {
         </div>
       )}
 
-      {/* Footer */}
-      <div className="text-center font-bold mt-4 mb-2" style={{ color: '#12807a' }}>
-        Я рядом <span aria-hidden="true">💚</span>
+      {/* Footer — крупная кнопка возврата + soft disclaimer */}
+      <div className="mt-4 mb-2 px-5 flex flex-col items-center gap-2">
+        <button
+          onClick={handleExitToHome}
+          className="w-full max-w-xs min-h-[52px] px-5 rounded-2xl bg-white border-2 border-teal/30 text-teal-dark font-black text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-transform hover:bg-teal-soft"
+        >
+          <span aria-hidden>←</span>
+          На главную
+        </button>
+        <p className="text-[11px] text-muted text-center italic px-4 leading-relaxed">
+          Пауза — это нормально. Здесь можно побыть столько, сколько нужно.
+        </p>
       </div>
 
       <div style={{ height: 12 }} />

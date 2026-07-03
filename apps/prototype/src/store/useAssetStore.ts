@@ -58,15 +58,27 @@ function buildDefaultCardConfigs(childId: string): AACCardConfig[] {
     category: AssetCategory;
     eventType: AACCardConfig['eventType'];
   }> = [
+    // Базовые потребности
+    { id: 'card-water', label: 'Пить', phrase: 'Хочу пить', builtinKey: 'Water', category: 'need', eventType: 'aac_card' },
     { id: 'card-food', label: 'Еда', phrase: 'Хочу есть', builtinKey: 'Food', category: 'need', eventType: 'aac_card' },
+    { id: 'card-toilet', label: 'Туалет', phrase: 'Хочу в туалет', builtinKey: 'Toilet', category: 'need', eventType: 'aac_card' },
+    // Самочувствие
     { id: 'card-pain', label: 'Больно', phrase: 'Мне больно', builtinKey: 'Sad', category: 'feeling', eventType: 'aac_card' },
     { id: 'card-tired', label: 'Устал', phrase: 'Я устал', builtinKey: 'Sleep', category: 'feeling', eventType: 'aac_card' },
-    { id: 'card-home', label: 'Домой', phrase: 'Хочу домой', builtinKey: 'Home', category: 'need', eventType: 'aac_card' },
+    // Коммуникация и активности
+    { id: 'card-help', label: 'Помоги', phrase: 'Мне нужна помощь', builtinKey: 'Help', category: 'feeling', eventType: 'aac_card' },
+    { id: 'card-pause', label: 'Пауза', phrase: 'Я хочу паузу', builtinKey: 'Pause', category: 'calm', eventType: 'aac_card' },
+    { id: 'card-loud', label: 'Громко', phrase: 'Мне громко', builtinKey: 'Headphones', category: 'calm', eventType: 'aac_card' },
     { id: 'card-play', label: 'Играть', phrase: 'Хочу играть', builtinKey: 'Play', category: 'activity', eventType: 'aac_card' },
+    { id: 'card-home', label: 'Домой', phrase: 'Хочу домой', builtinKey: 'Home', category: 'need', eventType: 'aac_card' },
     { id: 'card-hug', label: 'Обниматься', phrase: 'Обнимите меня', builtinKey: 'Hug', category: 'calm', eventType: 'aac_card' },
+    // Ответы
+    { id: 'card-yes', label: 'Да', phrase: 'Да', builtinKey: 'Yes', category: 'feeling', eventType: 'aac_card' },
     { id: 'card-no', label: 'Нет', phrase: 'Нет', builtinKey: 'No', category: 'feeling', eventType: 'aac_card' },
+    // Люди
     { id: 'card-mom', label: 'Позвать маму', phrase: 'Позовите маму', builtinKey: 'Mom', category: 'person', eventType: 'sos' },
     { id: 'card-tutor', label: 'Позвать тьютора', phrase: 'Позовите тьютора', builtinKey: 'Tutor', category: 'person', eventType: 'sos' },
+    // Медиа (любимые)
     { id: 'cartoon', label: 'Мультик', phrase: 'Хочу мультик', builtinKey: 'Cartoon', category: 'media', eventType: 'media_request', isFavorite: true } as any,
     { id: 'songs', label: 'Песенки', phrase: 'Хочу песенки', builtinKey: 'Music', category: 'media', eventType: 'media_request', isFavorite: true } as any,
     { id: 'animals', label: 'Животные', phrase: 'Хочу про животных', builtinKey: 'Animals', category: 'media', eventType: 'media_request', isFavorite: true } as any,

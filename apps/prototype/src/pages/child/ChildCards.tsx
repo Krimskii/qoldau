@@ -78,9 +78,9 @@ export const ChildCards: React.FC = () => {
         <ChevronRight className="w-5 h-5 text-ink-2 flex-shrink-0" />
       </button>
 
-      {/* Section: Потребности */}
+      {/* Section: Потребности (8 базовых карточек — пить/есть/туалет/больно/устал/помоги/пауза/играть/домой/да/нет) */}
       <Section title="Потребности" subtitle="Базовые сигналы">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-2.5">
           {QUICK_NEEDS.map((need) => (
             <button
               key={need.id}
