@@ -112,7 +112,7 @@ const FilterChip: React.FC<{
 
 export const EventTimeline: React.FC = () => {
   const navigate = useNavigate();
-  const { events, isLoading } = useEventStore();
+  const { events, isLoading, error } = useEventStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   // v0.8 (per-device): события приходят только из локального стора.
@@ -212,6 +212,14 @@ export const EventTimeline: React.FC = () => {
       {/* Timeline by day */}
       {isLoading && events.length === 0 ? (
         <EventListSkeleton count={4} />
+      ) : error && events.length === 0 ? (
+        <QoldauCard variant="tinted-warm" padding="md">
+          <p className="text-sm font-black text-coral-dark">Не удалось загрузить наблюдения</p>
+          <p className="text-xs text-ink-2 mt-1 leading-relaxed">
+            {error}
+            {' '}Можно попробовать перезагрузить страницу.
+          </p>
+        </QoldauCard>
       ) : grouped.length === 0 ? (
         <EmptyState
           icon="📋"
