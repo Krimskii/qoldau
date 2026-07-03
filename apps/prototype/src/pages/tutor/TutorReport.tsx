@@ -130,11 +130,12 @@ export const TutorReport: React.FC = () => {
         )}
       </QoldauCard>
 
-      {/* What helped */}
+      {/* What helped — примеры (демо), в следующей версии будет из реальных данных */}
       <QoldauCard variant="tinted-green">
         <div className="flex items-center gap-2 mb-2">
           <CheckCircle className="w-4 h-4 text-green" />
           <h4 className="text-sm font-black text-ink">Что помогло</h4>
+          <span className="text-[10px] text-muted italic ml-auto">примеры (демо)</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <span className="px-3 py-1 rounded-full bg-white text-green text-xs font-bold border border-green/30">Пауза</span>

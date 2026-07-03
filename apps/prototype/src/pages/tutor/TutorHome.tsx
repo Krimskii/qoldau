@@ -39,7 +39,7 @@ export const TutorHome: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title={`${child.name}, ${child.age} лет`} subtitle="Сегодня, 1 июля" />
+      <PageHeader title={`${child.name}, ${child.age} лет`} subtitle={tutor.scheduleToday.split('·')[0].trim() || 'Сегодня'} />
 
       {/* Status */}
       <QoldauCard variant="tinted-green" padding="md">
@@ -77,11 +77,11 @@ export const TutorHome: React.FC = () => {
         <ChevronRight className="w-5 h-5 opacity-90" />
       </button>
 
-      {/* Hints */}
+      {/* Hints — общие рекомендации (демо, не персональные) */}
       <SectionCard title={`Подсказки для ${child.name}`} accent="purple">
         <div className="flex items-start gap-2 mb-3">
           <CircleHelp className="w-4 h-4 text-purple flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-muted">Подобрано под ребёнка</p>
+          <p className="text-xs text-muted">Общие рекомендации · примеры (демо)</p>
         </div>
         <ul className="space-y-2">
           {HINTS.map((hint, i) => (

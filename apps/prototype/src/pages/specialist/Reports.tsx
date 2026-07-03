@@ -123,7 +123,7 @@ export const Reports: React.FC = () => {
         </Button>
       </div>
 
-      {/* Другие типы отчётов */}
+      {/* Другие типы отчётов — клик показывает toast (в Wave 0 не генерируются) */}
       <section>
         <h3 className="text-sm font-black text-ink mb-3 px-1">Другие отчёты</h3>
         <div className="grid grid-cols-2 gap-2.5">
@@ -133,6 +133,7 @@ export const Reports: React.FC = () => {
             return (
               <button
                 key={type.key}
+                onClick={() => showToast(`«${type.title}» появится в следующей версии`, 'info')}
                 className={`${accent.bg} border border-line rounded-2xl p-4 text-left hover:shadow-card-soft active:scale-[0.98] transition-all`}
               >
                 <div className={`w-10 h-10 rounded-2xl bg-white flex items-center justify-center mb-2`}>

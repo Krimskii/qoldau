@@ -10,6 +10,7 @@ import {
   Brain,
   CheckCircle,
   Activity,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -231,6 +232,21 @@ export const SpecialistDashboard: React.FC = () => {
         </button>
       </div>
 
+      {/* Связь: Event Timeline → профили. Явный CTA на timeline событий. */}
+      <button
+        onClick={() => navigate('/specialist/events')}
+        className="w-full bg-white border-2 border-teal/30 rounded-2xl p-4 flex items-center gap-3 hover:bg-teal-soft transition-all active:scale-[0.98] text-left"
+      >
+        <div className="w-10 h-10 rounded-2xl bg-teal-soft flex items-center justify-center shrink-0">
+          <Calendar className="w-5 h-5 text-teal-dark" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-black text-ink">Открыть Event Timeline</p>
+          <p className="text-xs text-muted">Все наблюдения родителя, тьютора и ребёнка — единый поток</p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-teal-dark shrink-0" />
+      </button>
+
       {/* Repeating situations */}
       {repeatingSituations.length > 0 && (
         <SectionCard title="Повторяющиеся ситуации" accent="teal">
@@ -249,12 +265,15 @@ export const SpecialistDashboard: React.FC = () => {
         </SectionCard>
       )}
 
-      {/* What helped */}
+      {/* What helped — примеры (демо) */}
       <SectionCard
         title="Что помогало"
         accent="green"
         action={<CheckCircle className="w-5 h-5 text-green" />}
       >
+        <p className="text-[11px] text-muted italic mb-2">
+          Примеры для иллюстрации формата. Реальные данные — после накопления наблюдений.
+        </p>
         <div className="space-y-2">
           {whatHelped.map((h) => (
             <div key={h} className="flex items-center gap-2 text-sm text-ink-2">
