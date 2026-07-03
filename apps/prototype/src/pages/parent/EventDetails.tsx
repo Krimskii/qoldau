@@ -2,7 +2,6 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  Edit,
   Link2,
   FileText,
   Lightbulb,
@@ -93,7 +92,6 @@ export const EventDetails: React.FC = () => {
     return ['Можно обсудить со специалистом', 'Можно отметить в отчёте'];
   })();
 
-  const handleEdit = () => showToast('Редактирование будет в следующей версии', 'info');
   const handleCopy = () => showToast('Событие скопировано', 'success');
   const handleAddToReport = () => showToast('Событие добавлено в отчёт', 'success');
 
@@ -244,15 +242,9 @@ export const EventDetails: React.FC = () => {
         </p>
       </QoldauCard>
 
-      {/* Actions */}
-      <div className="grid grid-cols-3 gap-2">
-        <button
-          onClick={handleEdit}
-          className="flex items-center justify-center gap-1.5 h-12 rounded-2xl bg-white border border-line text-ink hover:bg-bg transition-colors text-sm font-bold"
-        >
-          <Edit className="w-4 h-4" />
-          Изменить
-        </button>
+      {/* Actions — Wave 0: «Изменить» скрыт, чтобы не вести в тупик.
+        Редактирование появится в следующей версии. Сейчас: Копировать + В отчёт. */}
+      <div className="grid grid-cols-2 gap-2">
         <button
           onClick={handleCopy}
           className="flex items-center justify-center gap-1.5 h-12 rounded-2xl bg-white border border-line text-ink hover:bg-bg transition-colors text-sm font-bold"
