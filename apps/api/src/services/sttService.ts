@@ -34,16 +34,44 @@ function createMockClient(): WhisperClient {
   };
 }
 
+/**
+ * Определяем аудио-контейнер по магическим байтам буфера и возвращаем
+ * расширение+MIME, которые Whisper распознаёт. Разные устройства пишут разные
+ * контейнеры (Android WebView часто mp4, десктоп — webm/opus); Whisper
+ * определяет формат по имени файла, поэтому жёсткое 'audio.webm' на mp4-байтах
+ * даёт 400 Invalid file format. Детект по сигнатуре надёжнее, чем доверять
+ * заявленному mimeType.
+ */
+function detectAudioFormat(buffer: Buffer): { ext: string; mime: string } {
+  const ascii = (start: number, end: number) =>
+    buffer.length >= end ? buffer.toString('ascii', start, end) : '';
+  // EBML (WebM / Matroska): 1A 45 DF A3
+  if (buffer.length >= 4 && buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3) {
+    return { ext: 'webm', mime: 'audio/webm' };
+  }
+  if (ascii(0, 4) === 'OggS') return { ext: 'ogg', mime: 'audio/ogg' };
+  if (ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WAVE') return { ext: 'wav', mime: 'audio/wav' };
+  // ISO-BMFF (mp4 / m4a): 'ftyp' по смещению 4
+  if (ascii(4, 8) === 'ftyp') return { ext: 'mp4', mime: 'audio/mp4' };
+  if (ascii(0, 3) === 'ID3') return { ext: 'mp3', mime: 'audio/mpeg' };
+  if (buffer.length >= 2 && buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0) {
+    return { ext: 'mp3', mime: 'audio/mpeg' };
+  }
+  // По умолчанию — webm (самый частый контейнер web MediaRecorder).
+  return { ext: 'webm', mime: 'audio/webm' };
+}
+
 /** Real Whisper client (через fetch к OpenAI API, без external SDK). */
 function createWhisperClient(apiKey: string, model: string): WhisperClient {
   return {
     async transcribe(input) {
       // Whisper API принимает multipart/form-data с file.
-      // Конвертируем base64 → Buffer → Blob.
+      // Конвертируем base64 → Buffer → File с ПРАВИЛЬНЫМ расширением по сигнатуре.
       const buffer = Buffer.from(input.audio, 'base64');
+      const fmt = detectAudioFormat(buffer);
       const formData = new FormData();
       // Создаём File из Buffer (Node 18+ имеет File global).
-      const file = new File([buffer], 'audio.webm', { type: 'audio/webm' });
+      const file = new File([buffer], `audio.${fmt.ext}`, { type: fmt.mime });
       formData.append('file', file);
       formData.append('model', model);
       if (input.language) formData.append('language', input.language);

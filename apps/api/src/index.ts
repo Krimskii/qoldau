@@ -20,6 +20,11 @@ import { sentry } from './services/sentry.js';
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
 
+// За обратным прокси (Railway/Render) клиентский IP приходит в X-Forwarded-For.
+// Без trust proxy express-rate-limit бросает ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+// и не может корректно ключевать лимит по клиенту. 1 = доверяем первому хопу.
+app.set('trust proxy', 1);
+
 sentry.init(app);
 
 app.use(
