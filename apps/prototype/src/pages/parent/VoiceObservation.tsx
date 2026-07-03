@@ -218,9 +218,11 @@ export const VoiceObservation: React.FC = () => {
         }
 
         setPhase('success');
-        // Через 1.2s уходим в timeline, чтобы пользователь увидел "Наблюдение распознано".
+        // Через 1.2s уходим в ленту событий, чтобы пользователь увидел
+        // "Наблюдение распознано". Роут таймлайна — /parent/events (не
+        // /parent/timeline, которого нет в router → 404).
         window.setTimeout(() => {
-          navigate('/parent/timeline');
+          navigate('/parent/events');
         }, 1200);
       } catch (err) {
         // Backend недоступен / ошибка сети / прокси упал.
