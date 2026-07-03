@@ -4,7 +4,7 @@
  * Polls /api/health каждые 30с. Показывает статус API, DB, AI mode.
  */
 import React, { useEffect, useState } from 'react';
-import { Activity, Database, Cpu, Mic } from 'lucide-react';
+import { Activity, Cpu, Mic } from 'lucide-react';
 import { api } from '@/api/client';
 import { AppIcon } from './AppIcon';
 import { formatTime } from '@/utils/dateFormat';
@@ -12,8 +12,7 @@ import { formatTime } from '@/utils/dateFormat';
 interface HealthState {
   ok: boolean;
   api: 'online' | 'offline' | 'unknown';
-  db: 'ok' | 'error' | 'unknown';
-  ai: { source: 'claude' | 'mock'; enabled: boolean; model: string } | null;
+  ai: { source: 'openai' | 'mock'; enabled: boolean; model: string } | null;
   stt: { source: 'whisper' | 'mock'; enabled: boolean; model: string } | null;
   lastChecked: number;
 }
@@ -21,7 +20,6 @@ interface HealthState {
 const initial: HealthState = {
   ok: false,
   api: 'unknown',
-  db: 'unknown',
   ai: null,
   stt: null,
   lastChecked: 0,
@@ -41,19 +39,19 @@ export const HealthCheckBanner: React.FC = () => {
         return;
       }
       try {
+        // Stateless-прокси: ответ /api/health — { ok, mode:'stateless', ai, stt }.
+        // Поля `db` НЕТ (базы нет by design) — не читаем его, иначе throw → offline.
         const result = (await api.health()) as unknown as {
           ok: boolean;
-          db: { status: 'ok' | 'error' };
-          ai: { source: 'claude' | 'mock'; enabled: boolean; model: string };
+          ai: { source: 'openai' | 'mock'; enabled: boolean; model: string };
           stt: { source: 'whisper' | 'mock'; enabled: boolean; model: string };
         };
         if (cancelled) return;
         setState({
           ok: result.ok,
           api: 'online',
-          db: result.db.status,
-          ai: result.ai,
-          stt: result.stt,
+          ai: result.ai ?? null,
+          stt: result.stt ?? null,
           lastChecked: Date.now(),
         });
       } catch {
@@ -85,21 +83,16 @@ export const HealthCheckBanner: React.FC = () => {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <StatusRow
           icon={Activity}
           label="API"
           status={state.api === 'online' ? 'ok' : state.api === 'offline' ? 'error' : 'pending'}
         />
         <StatusRow
-          icon={Database}
-          label="Database"
-          status={state.db === 'ok' ? 'ok' : state.db === 'error' ? 'error' : 'pending'}
-        />
-        <StatusRow
           icon={Cpu}
           label="AI"
-          status={state.ai?.source === 'claude' ? 'live' : 'mock'}
+          status={state.ai?.source === 'openai' ? 'live' : 'mock'}
           hint={state.ai?.model ?? 'mock'}
         />
         <StatusRow
