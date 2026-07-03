@@ -109,24 +109,27 @@ npm run build      # → dist/ (Node.js, запускается через `npm 
 
 ---
 
-## Что mock
+## Что реально, что mock
 
-| Слой | Mock-имплементация |
-| ---- | ------------------ |
-| Распознавание речи | `transcribeMock()` возвращает DEMO_TRANSCRIPT через 1.5с |
-| AI-парсинг | `aiParser.mock.ts` — keyword-matching по русским словам |
-| Event storage | localStorage через Zustand-persist |
+Начиная с v0.6, ключевые интеграции реализованы как **opt-in real с mock-fallback**:
+без ключа/backend приложение полностью работает на заглушках (demo не ломается).
+
+| Слой | Статус |
+| ---- | ------ |
+| STT (распознавание речи) | ✅ **real** — OpenAI Whisper (`WHISPER_API_KEY`), fallback `transcribeMock()` |
+| AI-парсинг наблюдений | ✅ **real** — Anthropic Claude (`ANTHROPIC_API_KEY`), fallback `aiParser.mock.ts` |
+| Audio pipeline | ✅ **real** — `POST /api/audio/ingest` (audio → STT → LLM → Event) |
+| Backend / БД | ✅ **real** — Express + Prisma (SQLite Phase 1, Postgres-ready) |
+| Auth | ✅ **real** — magic-link (JWT), opt-in |
+| Realtime | ✅ **real** — socket.io (`event:new/updated/deleted`) |
+| Event storage (frontend) | localStorage через Zustand-persist (+ sync с backend в apiMode) |
 | Custom images | base64 в localStorage (max ~5MB) |
-| SOS / Call Mom | `addEvent()` + success popup |
-| Push | Toast-уведомления |
+| Push | Toast-уведомления (реальные push — Phase 2) |
 
-**Не реализовано в MVP (Phase 2+):**
-- ❌ Real STT (Whisper / Web Speech)
-- ❌ Real LLM (OpenAI / Claude)
-- ❌ Backend / БД / Cloud sync
-- ❌ Auth / login
+**Не реализовано (Phase 2+):**
 - ❌ Push notifications / email / SMS
 - ❌ Payment / subscription
+- ❌ Cloud sync между устройствами (сейчас per-device)
 
 **Не реализовано и не планируется:**
 - ❌ Medical records / диагнозы
