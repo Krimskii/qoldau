@@ -1,5 +1,41 @@
 # Qoldau AI
 
+## Wave 0 RC Snapshot
+
+Current release baseline: `integration/v1.0rc-pilot-ru` (`48557e4`).
+
+Qoldau AI Wave 0 is a React + Vite + TypeScript SPA wrapped with Capacitor for Android, backed by a stateless HTTPS AI proxy. Pilot family data is stored per-device in localStorage; backend does not store family events in the Wave 0 audio path.
+
+Audio flow:
+
+```text
+VoiceObservation -> MediaRecorder -> /api/audio/ingest -> STT -> LLM -> Event -> Timeline
+```
+
+AI/STT provider model:
+
+- Backend only: `OPENAI_API_KEY`, `OPENAI_LLM_MODEL=gpt-4o-mini`, `WHISPER_MODEL=whisper-1`.
+- Frontend/APK only: `VITE_API_BASE_URL=https://<prod-proxy-url>`.
+- No OpenAI/STT/LLM keys in APK, frontend env, Android resources, docs, or git.
+
+Important response fields:
+
+- `transcript`
+- `events[]`
+- `aiFallback: boolean`
+- `aiError?: string`
+- `sttMode: "whisper" | "mock"`
+- `aiMode: "openai" | "mock"`
+
+Wave 0 release readiness docs:
+
+- [docs/CURRENT_ARCHITECTURE.md](docs/CURRENT_ARCHITECTURE.md)
+- [docs/HANDOFF_PC_SETUP.md](docs/HANDOFF_PC_SETUP.md)
+- [docs/ANDROID_RELEASE_RUNBOOK.md](docs/ANDROID_RELEASE_RUNBOOK.md)
+- [SETUP.md](SETUP.md)
+
+---
+
 Voice-first AI-платформа сопровождения детей с РАС, родителей, тьюторов и специалистов.
 
 **Текущая версия: v0.4.0** — Full Demo MVP + Backend API + deployment-ready
@@ -234,6 +270,6 @@ Qoldau AI **не является медицинским устройством*
 - «Нужно подтвердить.»
 - «Можно обсудить со специалистом.»
 
-Запрещены: «лечит аутизм», «диагностирует», «исправляет ребёнка», «нормализует поведение», «ИИ точно понял причину», «поведенческое нарушение», «неадекватное поведение», «ребёнок манипулирует».
+Запрещены медицинские обещания, диагнозы, ярлыки поведения и утверждения о точном понимании причины.
 
 Подробнее: [docs/SAFETY_WORDING.md](docs/SAFETY_WORDING.md).

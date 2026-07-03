@@ -4,6 +4,44 @@
 
 ---
 
+## Wave 0 RC Handoff Checklist
+
+Use branch `integration/v1.0rc-pilot-ru` or release prep branch `release/v1.0rc-codex-prep`.
+
+### Required owner-only secrets
+
+Do not send secrets through git, APK, screenshots, or docs.
+
+- Rotate/revoke any OpenAI key that was pasted into chat or logs.
+- Create a fresh `OPENAI_API_KEY` in the OpenAI dashboard.
+- Confirm OpenAI billing/quota is active.
+- Put `OPENAI_API_KEY` only in backend/proxy env (`apps/api/.env` locally, Railway/Render env in prod).
+- Optional: use `WHISPER_API_KEY` only if STT should use a separate key.
+- Frontend/APK gets only `VITE_API_BASE_URL=https://<prod-proxy-url>`.
+
+### Wave 0 release smoke
+
+- Production proxy URL works over HTTPS.
+- `/api/health`, `/api/ai/health`, `/api/stt/health`, `/api/audio/health` are green.
+- Android APK installs on a real device.
+- Consent gate is visible before first audio upload.
+- First-run tutorial is visible.
+- Voice record works.
+- AI unavailable state is honest when quota/key/network fails.
+- Manual save works.
+- Event appears once in Timeline.
+- Text uses cautious observation wording and does not present medical conclusions.
+
+### Audio Flow
+
+```text
+VoiceObservation -> MediaRecorder -> /api/audio/ingest -> STT -> LLM -> Event -> Timeline
+```
+
+If backend returns `aiFallback:true`, treat parsed AI output as unavailable and offer manual save/retry.
+
+---
+
 ## 1. Забрать код
 
 ```bash

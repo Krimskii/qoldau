@@ -6,6 +6,55 @@
 
 ---
 
+## Wave 0 RC Quick Setup
+
+Current release baseline: `integration/v1.0rc-pilot-ru`.
+
+### Local development
+
+```bash
+git switch integration/v1.0rc-pilot-ru
+
+cd apps/api
+npm install
+npm run dev
+
+cd ../prototype
+npm install
+npm run dev
+```
+
+### Production proxy env
+
+Backend/proxy only:
+
+```bash
+OPENAI_API_KEY=...
+OPENAI_LLM_MODEL=gpt-4o-mini
+WHISPER_MODEL=whisper-1
+CORS_ORIGIN=capacitor://localhost,https://<frontend-domain>
+NODE_ENV=production
+AUDIO_INGEST_RATE_LIMIT_PER_MIN=10
+```
+
+Frontend/APK only:
+
+```bash
+VITE_API_BASE_URL=https://<prod-proxy-url>
+```
+
+Never put AI/STT/LLM keys into `apps/prototype/.env`, Android resources, APK/AAB, or committed files.
+
+### Android Wave 0 build
+
+```powershell
+.\scripts\build-android-release.ps1 -PROD_API_URL "https://<prod-proxy-url>" -Variant release
+```
+
+The script builds the web bundle, runs `npx cap sync android`, then runs Gradle. It does not commit APK/AAB outputs.
+
+---
+
 ## 1. Clone
 
 ```bash
