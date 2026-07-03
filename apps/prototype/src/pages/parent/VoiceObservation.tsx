@@ -139,27 +139,34 @@ export const VoiceObservation: React.FC = () => {
         });
         setPipelineResult(result);
 
-        // Backend создал events. Два пути обновления UI:
-        // 1) Optimistic local insert — мгновенный feedback
-        // 2) WebSocket broadcast подтянет через useRealtimeEvents (canonical source)
-        // Делаем оба, дедуп по id.
+        // v0.8 (per-device): backend — stateless-прокси, не пишет в БД и
+        // не шлёт realtime. События НЕ приходят с id с сервера. Фронт сам
+        // генерирует id и вставляет в локальный стор — единственный
+        // источник правды. Дубли исключены: нет WebSocket-вещания.
         if (Array.isArray(result.events) && result.events.length > 0) {
-          const local = result.events.map((e) => ({
-            id: (e as { id?: string }).id ?? `evt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-            childId: (e as { childId?: string }).childId ?? DEMO_PRIMARY_CHILD.id,
-            type: ((e as { type?: string }).type ?? 'voice_observation') as QoldauEvent['type'],
-            title: (e as { title?: string }).title ?? 'Голосовое наблюдение',
-            description: (e as { description?: string }).description ?? result.ai?.insight ?? '',
-            timestamp: (e as { timestamp?: string }).timestamp ?? new Date().toISOString(),
-            sourceRole: ((e as { sourceRole?: QoldauEvent['sourceRole'] }).sourceRole ?? 'parent'),
-            status: ((e as { status?: QoldauEvent['status'] }).status ?? 'ai_parsed'),
-            rawText: result.recording.transcript,
-          }));
-          try {
-            addEventsLocally(local as Omit<QoldauEvent, 'id'>[]);
-          } catch {
-            /* ignore: store может упасть на дубликатах, OK */
-          }
+          // Небольшой offset чтобы избежать коллизий timestamp в пределах одного ответа.
+          const baseTs = Date.now();
+          const local: Omit<QoldauEvent, 'id'>[] = result.events.map(
+            (e, idx) => ({
+              childId: DEMO_PRIMARY_CHILD.id,
+              type: ((e as { type?: string }).type ?? 'voice_observation') as QoldauEvent['type'],
+              title: (e as { title?: string }).title ?? 'Голосовое наблюдение',
+              description:
+                (e as { description?: string }).description ?? result.insight ?? '',
+              // Сервер не задаёт timestamp — ставим локальное время,
+              // чуть сдвигаем каждый event для упорядочивания.
+              timestamp: new Date(baseTs + idx * 1000).toISOString(),
+              sourceRole:
+                ((e as { sourceRole?: QoldauEvent['sourceRole'] }).sourceRole ??
+                'parent') as QoldauEvent['sourceRole'],
+              status: 'ai_parsed',
+              rawText: result.transcript,
+            }),
+          );
+          // addEvents генерирует id локально и сохраняет в localStorage
+          // через persist middleware — фронт становится единственным
+          // источником правды для событий на этом устройстве.
+          addEventsLocally(local);
         }
 
         setPhase('success');
@@ -168,8 +175,8 @@ export const VoiceObservation: React.FC = () => {
           navigate('/parent/timeline');
         }, 1200);
       } catch (err) {
-        // Backend недоступен / ошибка сети / mock не сконфигурирован.
-        // Fallback на Web Speech flow.
+        // Backend недоступен / ошибка сети / прокси упал.
+        // Fallback на Web Speech flow — приложение не ломается.
         const msg = err instanceof Error ? err.message : 'Не удалось отправить аудио';
         setPipelineError(msg);
         setPhase('fallback');

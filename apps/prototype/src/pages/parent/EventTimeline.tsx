@@ -7,13 +7,11 @@ import { EventTypeBadge, EventStatusBadge } from '@/components/ui/Primitives';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EventListSkeleton } from '@/components/ui/Skeleton';
 import { useEventStore } from '@/store/useEventStore';
-import { useRealtimeEvents } from '@/hooks/useRealtimeEvents';
 import { EventTimelineIcon } from '@/components/icons';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { QoldauEvent } from '@/types/qoldau';
 import { eventTypeColors, toneToColor, type EventTone } from '@/styles/tokens';
 import { formatDate, formatTime } from '@/utils/dateFormat';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 
 type FilterType = 'all' | string;
 
@@ -117,8 +115,8 @@ export const EventTimeline: React.FC = () => {
   const { events, isLoading } = useEventStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
-  // v0.7.2: realtime подписка на новые события (effect-only)
-  useRealtimeEvents(DEMO_PRIMARY_CHILD.id);
+  // v0.8 (per-device): события приходят только из локального стора.
+  // Backend stateless-прокси, WebSocket-дубли убраны — источник правды один.
 
   const filtered = useMemo(() => {
     if (activeFilter === 'all') return events;

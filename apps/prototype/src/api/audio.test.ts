@@ -23,15 +23,12 @@ describe('audio api client', () => {
         ok: true,
         jobId: 'audio-test',
         status: 'completed',
-        recording: {
-          id: 'rec-test',
-          childId: 'child-test',
-          label: 'Test',
-          durationSec: 3,
-          transcript: 'test transcript',
-          sttSource: 'mock',
-          timestamp: new Date().toISOString(),
-        },
+        transcript: 'test transcript',
+        sttMode: 'mock',
+        aiMode: 'mock',
+        durationSec: 3,
+        insight: 'Observation only.',
+        questions: [],
         ai: {
           source: 'mock',
           model: 'mock',
@@ -51,6 +48,9 @@ describe('audio api client', () => {
     });
 
     expect(result.jobId).toBe('audio-test');
+    expect(result.transcript).toBe('test transcript');
+    expect(result.recording.transcript).toBe('test transcript');
+    expect(result.recording.sttSource).toBe('mock');
     expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/audio\/ingest$/);
     expect(fetchMock).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
       method: 'POST',
