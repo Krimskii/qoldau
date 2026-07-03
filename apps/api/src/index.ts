@@ -39,10 +39,18 @@ app.use(
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }),
 );
+// Capacitor app origins are fixed for our APK/PWA and must ALWAYS be allowed,
+// regardless of CORS_ORIGIN, or the mobile WebView gets CORS-blocked and the
+// app falls back to offline/mock. Android (androidScheme 'https') sends
+// `https://localhost`; iOS sends `capacitor://localhost`.
+const APP_ORIGINS = ['https://localhost', 'capacitor://localhost', 'http://localhost'];
+const DEV_WEB_ORIGINS = ['http://localhost:5173', 'http://localhost:4173'];
+const configuredOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
+  : DEV_WEB_ORIGINS;
+const allowedOrigins = Array.from(new Set([...APP_ORIGINS, ...configuredOrigins]));
 app.use(cors({
-  origin: process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
-    : ['http://localhost:5173', 'http://localhost:4173', 'capacitor://localhost'],
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json({ limit: process.env.JSON_BODY_LIMIT ?? '35mb' }));
