@@ -38,5 +38,10 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Web audio capture (getUserMedia/MediaRecorder) in the Capacitor WebView.
+         BridgeWebChromeClient.onPermissionRequest requires BOTH RECORD_AUDIO and
+         MODIFY_AUDIO_SETTINGS for AUDIO_CAPTURE; without the latter the WebView
+         denies the request even after the user grants the mic prompt. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 </manifest>
