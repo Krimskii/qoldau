@@ -66,9 +66,15 @@ function createWhisperClient(apiKey: string, model: string): WhisperClient {
   return {
     async transcribe(input) {
       // Whisper API принимает multipart/form-data с file.
+      // Некоторые клиенты присылают data-URL целиком (например
+      // `data:audio/webm;codecs=opus;base64,...`) — срезаем префикс, иначе
+      // Buffer.from декодит мусор и Whisper отвечает 400 Invalid file format.
+      const raw = input.audio;
+      const base64 = raw.startsWith('data:') ? raw.slice(raw.indexOf(',') + 1) : raw;
       // Конвертируем base64 → Buffer → File с ПРАВИЛЬНЫМ расширением по сигнатуре.
-      const buffer = Buffer.from(input.audio, 'base64');
+      const buffer = Buffer.from(base64, 'base64');
       const fmt = detectAudioFormat(buffer);
+      console.info('[stt] whisper upload', { bytes: buffer.length, ext: fmt.ext });
       const formData = new FormData();
       // Создаём File из Buffer (Node 18+ имеет File global).
       const file = new File([buffer], `audio.${fmt.ext}`, { type: fmt.mime });

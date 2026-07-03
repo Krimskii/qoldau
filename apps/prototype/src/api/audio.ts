@@ -84,7 +84,12 @@ export async function blobToBase64(blob: Blob): Promise<string> {
     reader.onerror = () => reject(reader.error ?? new Error('Failed to read audio blob'));
     reader.readAsDataURL(blob);
   });
-  return dataUrl.replace(/^data:[^;]+;base64,/, '');
+  // data-URL всегда `data:[mediatype][;base64],<data>` — данные идут после первой
+  // запятой. slice надёжнее regex: mediatype может содержать параметры с ';'
+  // (например `data:audio/webm;codecs=opus;base64,...`), из-за чего строгий
+  // regex не срезал префикс и на сервер уходил битый base64.
+  const comma = dataUrl.indexOf(',');
+  return comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
 }
 
 export async function uploadAudioObservation(
