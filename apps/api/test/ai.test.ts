@@ -30,7 +30,7 @@ describe('POST /api/ai/parse', () => {
     expect(res.body.ok).toBe(true);
     expect(Array.isArray(res.body.events)).toBe(true);
     expect(res.body.events.length).toBeGreaterThanOrEqual(3); // food, water, toilet, sensory
-    expect(res.body.aiSource).toBe('mock'); // без ANTHROPIC_API_KEY
+    expect(res.body.aiSource).toBe('mock'); // без OPENAI_API_KEY
     expect(res.body.insight).toContain('Это гипотеза');
   });
 

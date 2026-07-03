@@ -6,4 +6,6 @@ process.env.JWT_SECRET = 'test-secret';
 // Используем отдельный файл SQLite для тестов, чтобы не модифицировать dev.db
 process.env.DATABASE_URL = 'file:./prisma/test.db';
 process.env.ANTHROPIC_API_KEY = '';
+process.env.OPENAI_API_KEY = '';
+process.env.OPENAI_LLM_MODEL = '';
 process.env.WHISPER_API_KEY = '';

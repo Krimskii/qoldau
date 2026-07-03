@@ -1,20 +1,13 @@
 /**
- * llmService — Anthropic Claude integration for AI parser (v0.6.0).
+ * llmService — OpenAI integration for AI parser.
  *
- * Opt-in: использует ANTHROPIC_API_KEY env. Если ключа нет или
- * парсинг провалился — fallback на keyword-based mock.
+ * Opt-in: uses OPENAI_API_KEY. If the key is missing or the API call fails,
+ * parsing falls back to the local keyword-based mock.
  *
- * Модель по умолчанию: claude-3-5-haiku (дешёвая, быстрая).
- * Override через env: ANTHROPIC_MODEL.
- *
- * Использование:
- *   const result = await llmService.parseTranscript(transcript);
- *   // { events, insight, clarificationQuestions, source: 'claude' | 'mock' }
+ * Default model: gpt-4o-mini. Override with OPENAI_LLM_MODEL.
  */
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { randomUUID } from 'node:crypto';
-
-// --- Локальные типы (временный fallback до появления @qoldau/shared) ---
 
 export interface AIParserInput {
   transcript: string;
@@ -41,101 +34,17 @@ export interface AIParserResult {
   clarificationQuestions: AIParserQuestion[];
 }
 
+type LLMSource = 'openai' | 'mock';
+
 interface ServiceEnv {
   apiKey: string | null;
   model: string;
-  client: Anthropic | null;
+  client: OpenAI | null;
   enabled: boolean;
 }
 
-function loadEnv(): ServiceEnv {
-  const apiKey = process.env.ANTHROPIC_API_KEY?.trim() || null;
-  const model = process.env.ANTHROPIC_MODEL?.trim() || 'claude-3-5-haiku-20241022';
-  if (!apiKey) {
-    return { apiKey: null, model, client: null, enabled: false };
-  }
-  const client = new Anthropic({ apiKey });
-  return { apiKey: '[set]', model, client, enabled: true };
-}
-
-const env = loadEnv();
-
-/**
- * Системный промпт — задаём роль и JSON-схему.
- * Anthropic поддерживает tool_use как structured output — это надёжнее, чем парсить JSON из текста.
- */
-const SYSTEM_PROMPT = `Ты ассистент для родителя ребёнка с особенностями развития (аутизм / РАС / задержка речи).
-Родитель записывает голосовое наблюдение — расшифровку речи нужно превратить в структурированные события дня.
-
-ВАЖНО:
-- Это наблюдение, НЕ диагноз.
-- Используй осторожные формулировки: "похоже", "возможно", "заметил(а)".
-- Не выдумывай того, чего нет в тексте. Если не хватает деталей — задай уточняющий вопрос.
-- Не давай медицинских заключений и терапевтических рекомендаций.
-- Язык ответа: русский.
-
-Типы событий (используй только эти):
-- food (приём пищи: поел, каша, суп, еда)
-- water (питьё: вода, выпил, попил)
-- toilet (туалет: горшок, ту-ту, писал, какал)
-- sleep (сон: уснул, спал, проснулся)
-- sensory (сенсорная реакция: закрывал уши, яркий свет, шум, громко)
-- behavior (поведение: плакал, кричал, убежал, ударил, нервничал)
-- communication (коммуникация: сказал, произнёс, показал жестом, да/нет)
-- state (общее состояние: спокойный, возбуждённый, усталый)
-
-Уточняющие вопросы задавай только если они реально помогают понять ситуацию (не больше 3).`;
-
-/**
- * Инструмент (tool) — Anthropic tool_use гарантирует JSON-структуру.
- */
-const PARSE_TOOL: Anthropic.Tool = {
-  name: 'parse_observation',
-  description: 'Превращает голосовое наблюдение родителя в структурированные события дня',
-  input_schema: {
-    type: 'object',
-    properties: {
-      events: {
-        type: 'array',
-        description: 'События, выделенные из наблюдения',
-        items: {
-          type: 'object',
-          properties: {
-            timestamp: { type: 'string', description: 'HH:MM (24-часовой формат)' },
-            title: { type: 'string', description: 'Краткое название (2-5 слов)' },
-            description: { type: 'string', description: '1 предложение с осторожной формулировкой' },
-            type: {
-              type: 'string',
-              enum: ['food', 'water', 'toilet', 'sleep', 'sensory', 'behavior', 'communication', 'state'],
-            },
-          },
-          required: ['timestamp', 'title', 'description', 'type'],
-        },
-      },
-      insight: {
-        type: 'string',
-        description: '1-2 предложения с пометкой "Это наблюдение, не диагноз".',
-      },
-      clarificationQuestions: {
-        type: 'array',
-        description: 'До 3 уточняющих вопросов (id + question + options[2-4])',
-        items: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            question: { type: 'string' },
-            options: { type: 'array', items: { type: 'string' }, minItems: 2, maxItems: 4 },
-          },
-          required: ['id', 'question', 'options'],
-        },
-      },
-    },
-    required: ['events', 'insight', 'clarificationQuestions'],
-  },
-};
-
 interface ParsedToolInput {
-  events: Array<{
+  events?: Array<{
     timestamp?: string;
     title?: string;
     description?: string;
@@ -149,20 +58,117 @@ interface ParsedToolInput {
   }>;
 }
 
+const EVENT_TYPES = ['food', 'water', 'toilet', 'sleep', 'sensory', 'behavior', 'communication', 'state'] as const;
+
+function loadEnv(): ServiceEnv {
+  const apiKey = process.env.OPENAI_API_KEY?.trim() || null;
+  const model = process.env.OPENAI_LLM_MODEL?.trim() || 'gpt-4o-mini';
+  if (!apiKey) {
+    return { apiKey: null, model, client: null, enabled: false };
+  }
+  return { apiKey: '[set]', model, client: new OpenAI({ apiKey }), enabled: true };
+}
+
+const env = loadEnv();
+
+const SYSTEM_PROMPT = `Ты помощник для родителя, который фиксирует голосовые наблюдения о дне ребёнка.
+Твоя задача — аккуратно превратить расшифровку речи в структурированные события.
+
+Правила безопасности:
+- Это наблюдение, не диагноз.
+- Пиши как гипотезу: "похоже", "возможно", "заметил(а)", "нужно подтвердить".
+- Не добавляй факты, которых нет в тексте.
+- Не давай медицинских заключений, терапевтических обещаний или категоричных оценок.
+- Язык ответа: русский.
+
+Типы событий, только из списка:
+- food: приём пищи.
+- water: питьё.
+- toilet: туалет.
+- sleep: сон.
+- sensory: сенсорная реакция.
+- behavior: заметное состояние или действие.
+- communication: речь, жесты, просьбы, ответы.
+- state: общее состояние.
+
+Уточняющие вопросы добавляй только если они помогают бережно понять ситуацию. Не больше 3.`;
+
+const JSON_SCHEMA = {
+  name: 'parse_observation',
+  strict: true,
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      events: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            timestamp: {
+              type: 'string',
+              description: 'HH:MM in 24-hour format. Use current/contextual time if not present.',
+            },
+            title: {
+              type: 'string',
+              description: 'Short event title, 2-5 words.',
+            },
+            description: {
+              type: 'string',
+              description: 'One cautious sentence based only on the transcript.',
+            },
+            type: {
+              type: 'string',
+              enum: EVENT_TYPES,
+            },
+          },
+          required: ['timestamp', 'title', 'description', 'type'],
+        },
+      },
+      insight: {
+        type: 'string',
+        description: 'One or two cautious sentences. Must include: "Это наблюдение, не диагноз."',
+      },
+      clarificationQuestions: {
+        type: 'array',
+        maxItems: 3,
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            id: { type: 'string' },
+            question: { type: 'string' },
+            options: {
+              type: 'array',
+              minItems: 2,
+              maxItems: 4,
+              items: { type: 'string' },
+            },
+          },
+          required: ['id', 'question', 'options'],
+        },
+      },
+    },
+    required: ['events', 'insight', 'clarificationQuestions'],
+  },
+} as const;
+
 function validateAndNormalize(raw: ParsedToolInput | null | undefined): AIParserResult {
-  const safeRaw: ParsedToolInput = raw ?? { events: [] };
+  const safeRaw = raw ?? { events: [] };
   const events = (safeRaw.events ?? [])
-    .filter((e): e is { timestamp: string; title: string; description: string; type: string } =>
-      typeof e.timestamp === 'string'
-      && typeof e.title === 'string'
-      && typeof e.description === 'string'
-      && typeof e.type === 'string',
+    .filter((event): event is { timestamp: string; title: string; description: string; type: string } =>
+      typeof event.timestamp === 'string'
+      && typeof event.title === 'string'
+      && typeof event.description === 'string'
+      && typeof event.type === 'string'
+      && EVENT_TYPES.includes(event.type as (typeof EVENT_TYPES)[number]),
     )
-    .map((e) => ({
-      timestamp: e.timestamp,
-      title: e.title,
-      description: e.description,
-      type: e.type,
+    .map((event) => ({
+      timestamp: event.timestamp,
+      title: event.title,
+      description: event.description,
+      type: event.type,
     }));
 
   const insight = typeof safeRaw.insight === 'string' && safeRaw.insight.trim().length > 0
@@ -170,22 +176,21 @@ function validateAndNormalize(raw: ParsedToolInput | null | undefined): AIParser
     : 'Похоже, наблюдение зафиксировано. Это наблюдение, не диагноз.';
 
   const clarificationQuestions = (safeRaw.clarificationQuestions ?? [])
-    .filter((q): q is { id: string; question: string; options: string[] } =>
-      typeof q.id === 'string'
-      && typeof q.question === 'string'
-      && Array.isArray(q.options)
-      && q.options.length >= 2,
+    .filter((question): question is { id: string; question: string; options: string[] } =>
+      typeof question.id === 'string'
+      && typeof question.question === 'string'
+      && Array.isArray(question.options)
+      && question.options.length >= 2,
     )
-    .map((q) => ({
-      id: q.id,
-      question: q.question,
-      options: q.options.slice(0, 4),
+    .map((question) => ({
+      id: question.id,
+      question: question.question,
+      options: question.options.slice(0, 4),
     }));
 
   return { events, insight, clarificationQuestions };
 }
 
-/** Mock fallback — портирован из apps/api/src/routes/ai.ts. */
 function parseMock(transcript: string): AIParserResult {
   const text = transcript.toLowerCase();
   const events: AIParserResult['events'] = [];
@@ -196,57 +201,91 @@ function parseMock(transcript: string): AIParserResult {
   };
   const findTime = (idx: number) => (timeMatches && timeMatches[idx]) || nextTime();
 
-  if (text.includes('поел') || text.includes('каш') || text.includes('суп') || text.includes('еда')) {
-    events.push({ timestamp: findTime(0), title: 'Поел', description: 'Приём пищи зафиксирован', type: 'food' });
+  if (text.includes('поел') || text.includes('кашу') || text.includes('суп') || text.includes('еда')) {
+    events.push({
+      timestamp: findTime(0),
+      title: 'Приём пищи',
+      description: 'Похоже, был зафиксирован приём пищи.',
+      type: 'food',
+    });
   }
   if (text.includes('пил') || text.includes('вода') || text.includes('выпил')) {
-    events.push({ timestamp: findTime(events.length), title: 'Выпил воду', description: 'Приём жидкости', type: 'water' });
+    events.push({
+      timestamp: findTime(events.length),
+      title: 'Питьё',
+      description: 'Похоже, был зафиксирован приём жидкости.',
+      type: 'water',
+    });
   }
   if (text.includes('туалет') || text.includes('горшок') || text.includes('ту-ту')) {
-    events.push({ timestamp: findTime(events.length), title: 'Туалет', description: 'Сигнал о туалете', type: 'toilet' });
+    events.push({
+      timestamp: findTime(events.length),
+      title: 'Туалет',
+      description: 'Возможно, ребёнок подал сигнал о туалете или сходил в туалет.',
+      type: 'toilet',
+    });
   }
   if (text.includes('закрывал уши') || text.includes('шум') || text.includes('громко')) {
-    events.push({ timestamp: findTime(events.length), title: 'Закрывал уши', description: 'Сенсорная реакция на шум', type: 'sensory' });
+    events.push({
+      timestamp: findTime(events.length),
+      title: 'Реакция на шум',
+      description: 'Похоже, была сенсорная реакция на громкий звук.',
+      type: 'sensory',
+    });
   }
-  if (text.includes('сказал') || text.includes('произнес')) {
-    events.push({ timestamp: findTime(events.length), title: 'Коммуникация', description: 'Ребёнок произнёс звук/слово', type: 'communication' });
+  if (text.includes('сказал') || text.includes('произнес') || text.includes('произнёс')) {
+    events.push({
+      timestamp: findTime(events.length),
+      title: 'Коммуникация',
+      description: 'Похоже, ребёнок использовал речь или звук для коммуникации.',
+      type: 'communication',
+    });
   }
 
   const insight = events.length > 0
-    ? `Похоже, в наблюдении ${events.length} ${events.length === 1 ? 'событие' : 'событий'}. Это гипотеза, не диагноз. Можно обсудить со специалистом.`
-    : 'Не удалось выделить события. Это наблюдение, не диагноз.';
+    ? `Похоже, в наблюдении выделено ${events.length} ${events.length === 1 ? 'событие' : 'события'}. Это гипотеза. Это наблюдение, не диагноз.`
+    : 'Не удалось уверенно выделить события. Это наблюдение, не диагноз.';
 
   return {
     events,
     insight,
     clarificationQuestions: [
-      { id: 'water-amount', question: 'Сколько воды выпил?', options: ['Мало', 'Нормально', 'Много', 'Не знаю'] },
-      { id: 'mood-after', question: 'Каким было настроение после?', options: ['Спокойное', 'Возбуждённое', 'Плакал', 'Не заметил(а)'] },
+      {
+        id: 'context',
+        question: 'Что происходило перед этим?',
+        options: ['Еда', 'Игра', 'Прогулка', 'Не знаю'],
+      },
+      {
+        id: 'after',
+        question: 'Как ребёнок выглядел после?',
+        options: ['Спокойно', 'Устал(а)', 'Возбуждённо', 'Не заметил(а)'],
+      },
     ],
   };
+}
+
+function parseResponseText(text: string): ParsedToolInput {
+  const trimmed = text.trim();
+  if (!trimmed) return { events: [] };
+  return JSON.parse(trimmed) as ParsedToolInput;
 }
 
 export const llmService = {
   enabled: env.enabled,
   model: env.model,
 
-  /** Health/status для /api/ai/health endpoint. */
-  status(): { enabled: boolean; model: string; source: 'claude' | 'mock' } {
-    return { enabled: env.enabled, model: env.model, source: env.enabled ? 'claude' : 'mock' };
+  status(): { enabled: boolean; model: string; source: LLMSource } {
+    return { enabled: env.enabled, model: env.model, source: env.enabled ? 'openai' : 'mock' };
   },
 
-  /**
-   * Парсит транскрипт в структурированные события.
-   * Использует Claude если ANTHROPIC_API_KEY задан, иначе mock fallback.
-   */
-  async parseTranscript(input: AIParserInput): Promise<AIParserResult & { source: 'claude' | 'mock' }> {
+  async parseTranscript(input: AIParserInput): Promise<AIParserResult & { source: LLMSource }> {
     const transcript = (input?.transcript ?? '').trim();
     if (!transcript) {
       return {
         events: [],
         insight: 'Транскрипт пустой. Это наблюдение, не диагноз.',
         clarificationQuestions: [],
-        source: env.enabled ? 'claude' : 'mock',
+        source: env.enabled ? 'openai' : 'mock',
       };
     }
 
@@ -255,36 +294,35 @@ export const llmService = {
     }
 
     try {
-      const response = await env.client.messages.create({
+      const response = await env.client.chat.completions.create({
         model: env.model,
-        max_tokens: 1500,
-        system: SYSTEM_PROMPT,
-        tools: [PARSE_TOOL],
-        tool_choice: { type: 'tool', name: 'parse_observation' },
+        temperature: 0.2,
+        response_format: {
+          type: 'json_schema',
+          json_schema: JSON_SCHEMA,
+        },
         messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
           {
             role: 'user',
-            content: `Расшифровка голосового наблюдения от родителя (ru-RU):\n\n"${transcript}"\n\nПреврати в структурированные события дня через инструмент parse_observation.`,
+            content: `Расшифровка голосового наблюдения (${input.language ?? 'ru'}):\n\n${transcript}\n\nВерни только JSON по схеме parse_observation.`,
           },
         ],
       });
 
-      // Извлекаем tool_use блок
-      const toolBlock = response.content.find((block) => block.type === 'tool_use');
-      if (!toolBlock || toolBlock.type !== 'tool_use') {
-        throw new Error('No tool_use block in Claude response');
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('OpenAI response did not include JSON content');
       }
-      const input2 = toolBlock.input as ParsedToolInput;
-      const normalized = validateAndNormalize(input2);
-      return { ...normalized, source: 'claude' };
+      const normalized = validateAndNormalize(parseResponseText(content));
+      return { ...normalized, source: 'openai' };
     } catch (err) {
-      console.error('[llm] Claude parse failed, fallback to mock:', err instanceof Error ? err.message : err);
+      console.error('[llm] OpenAI parse failed, fallback to mock:', err instanceof Error ? err.message : err);
       return { ...parseMock(transcript), source: 'mock' };
     }
   },
 };
 
-/** Helper: генерирует уникальный id для события (timestamp + nanoid). */
 export function genEventId(): string {
   return `${Date.now()}-${randomUUID().slice(0, 8)}`;
 }

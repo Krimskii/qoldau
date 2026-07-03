@@ -1,7 +1,7 @@
 /**
  * sttService (v0.6.3) — Speech-to-Text с opt-in Whisper API.
  *
- * Opt-in: использует WHISPER_API_KEY env. Если ключа нет — fallback
+ * Opt-in: uses WHISPER_API_KEY or OPENAI_API_KEY env. If no key is present, fallback
  * на mock с фиксированным демо-транскриптом.
  *
  * В production body ожидает { audio: base64-encoded file }. Сейчас принимает
@@ -66,7 +66,7 @@ function createWhisperClient(apiKey: string, model: string): WhisperClient {
 }
 
 function loadEnv(): ServiceEnv {
-  const apiKey = process.env.WHISPER_API_KEY?.trim() || null;
+  const apiKey = process.env.WHISPER_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim() || null;
   const model = process.env.WHISPER_MODEL?.trim() || 'whisper-1';
   if (!apiKey) {
     return { apiKey: null, enabled: false, model, client: null };
