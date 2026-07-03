@@ -44,35 +44,28 @@
 - Лёгкое добавление фильтров
 - Единую аналитику
 
-### STT Abstraction Layer
+### STT — реально реализовано (v0.6.3+)
 
-```
-src/lib/
-  sttClient.types.ts    — интерфейс
-  sttClient.mock.ts     — mock
-  sttClient.future.ts   — пример интеграции
-```
+**STT = OpenAI Whisper**, opt-in через `WHISPER_API_KEY` (mock fallback без ключа).
 
-Для перехода к реальному STT:
-1. Заменить `mockSTTClient` в `sttClient.mock.ts`
-2. Использовать `STTTranscriptionRequest/Response` types
-3. Файл `sttClient.future.ts` содержит пример интеграции
+- Backend: `apps/api/src/services/sttService.ts` — вызывает
+  `https://api.openai.com/v1/audio/transcriptions` (`whisper-1`, override через
+  `WHISPER_MODEL`). `sttService.status()` → `source: 'whisper' | 'mock'`.
+- Frontend абстракция (mock/demo path) сохранена: `src/lib/stt/sttClient.*` +
+  `useSpeechRecognition` (Web Speech API как браузерный fallback).
 
-### AI Parser Abstraction
+### AI Parser (LLM) — реально реализовано (v0.6.0+)
 
-```
-src/lib/aiParser.mock.ts
-```
+**LLM = Anthropic Claude**, opt-in через `ANTHROPIC_API_KEY` (mock fallback без ключа).
 
-Mock парсер возвращает:
-- parsed events
-- AI insight
-- clarification questions
+- Backend: `apps/api/src/services/llmService.ts` — `@anthropic-ai/sdk`, модель
+  `claude-3-5-haiku-20241022` (override через `ANTHROPIC_MODEL`), structured
+  output через `tool_use`. `llmService.status()` → `source: 'claude' | 'mock'`.
+- Возвращает: parsed events, AI insight, clarification questions.
+- Frontend mock-парсер (`src/lib/ai/aiParser.mock.ts`) остаётся для demo/offline.
 
-Для перехода к реальному LLM:
-1. Вызвать LLM API с transcript
-2. Парсить ответ в `AIParsedObservation` формат
-3. Сохранить совместимость интерфейса
+> ⚠️ OpenAI используется **только** для Whisper STT. LLM-парсинг идёт через
+> Anthropic Claude, не через OpenAI. `ANTHROPIC_API_KEY` ≠ `WHISPER_API_KEY`.
 
 ### Дизайн-токены
 

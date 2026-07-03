@@ -33,20 +33,26 @@ cp apps/api/.env.example apps/api/.env
 
 Ключевые переменные (см. полный список в `apps/api/.env.example`):
 
-| Переменная         | Назначение                                   |
-| ------------------ | -------------------------------------------- |
-| `OPENAI_API_KEY`   | LLM-парсер наблюдений (real AI)              |
-| `OPENAI_LLM_MODEL` | модель LLM                                    |
-| `WHISPER_API_KEY`  | STT (распознавание речи)                     |
-| `WHISPER_MODEL`    | модель Whisper                                |
-| `DATABASE_URL`     | Prisma (SQLite по умолчанию в Phase 1)       |
-| `AUDIO_MAX_MB`     | лимит размера аудио (по умолчанию 25)        |
-| `JSON_BODY_LIMIT`  | лимит JSON body (по умолчанию 35mb)          |
-| `PORT`             | порт backend (по умолчанию 4000)             |
-| `CORS_ORIGIN`      | origin фронтенда для CORS                    |
+| Переменная          | Назначение                                                  |
+| ------------------- | ----------------------------------------------------------- |
+| `ANTHROPIC_API_KEY` | LLM-парсер наблюдений — **Anthropic Claude** (real AI)      |
+| `ANTHROPIC_MODEL`   | модель Claude (default `claude-3-5-haiku-20241022`)         |
+| `WHISPER_API_KEY`   | STT — **OpenAI Whisper** (распознавание речи)              |
+| `WHISPER_MODEL`     | модель Whisper (default `whisper-1`)                        |
+| `DATABASE_URL`      | Prisma (SQLite по умолчанию в Phase 1)                      |
+| `JWT_SECRET`        | секрет для auth (magic-link)                                |
+| `SENTRY_DSN`        | error tracking (опционально, пусто = выкл)                 |
+| `AUDIO_MAX_MB`      | лимит размера аудио (по умолчанию 25)                       |
+| `PORT`              | порт backend (по умолчанию 4000)                            |
+| `CORS_ORIGIN`       | origin(ы) фронтенда для CORS                                |
 
-> ⚠️ `OPENAI_API_KEY` и `WHISPER_API_KEY` кладутся **только** в `apps/api/.env` на локальной
-> машине. Никогда не коммить этот файл (он в `.gitignore`).
+> ⚠️ **Провайдеры (сверено с кодом):** LLM — Anthropic Claude (`@anthropic-ai/sdk`,
+> `llmService.ts`); STT — OpenAI Whisper (`sttService.ts`, вызывает
+> `api.openai.com/v1/audio/transcriptions`). Оба **opt-in**: без своего ключа
+> соответствующий сервис работает в mock-режиме (это штатный fallback, не ошибка).
+>
+> ⚠️ `ANTHROPIC_API_KEY` и `WHISPER_API_KEY` кладутся **только** в `apps/api/.env` на
+> локальной машине. Никогда не коммить этот файл (он в `.gitignore`).
 
 ### Frontend — `apps/prototype/.env` (опционально)
 
@@ -99,15 +105,26 @@ npm run dev        # http://localhost:5173
 ```bash
 curl http://localhost:4000/api/ai/health
 curl http://localhost:4000/api/stt/health
+curl http://localhost:4000/api/audio/health
 ```
 
-**Ожидаемо при корректных ключах:**
+**Ожидаемо при корректных ключах** (поле называется `mode`):
 
-- `/api/ai/health` → `source: "openai"` (не `"mock"`)
-- `/api/stt/health` → `source: "whisper"` (не `"mock"`)
+- `/api/ai/health` → `{ "ok": true, "service": "ai", "enabled": true, "mode": "claude", "model": "claude-3-5-haiku-20241022" }`
+- `/api/stt/health` → `{ "ok": true, "service": "stt", "enabled": true, "mode": "whisper", "model": "whisper-1" }`
+- `/api/audio/health` → `{ "ok": true, "service": "audio-pipeline", "mode": "sync", "maxAudioMb": 25 }`
 
-Если видишь `"mock"` — значит соответствующий ключ не задан в `apps/api/.env`, приложение
+Если `mode: "mock"` — значит соответствующий ключ не задан в `apps/api/.env`, приложение
 работает на заглушках (это штатный fallback, не ошибка).
+
+### Режимы работы
+
+| Режим        | Условие                                        | Что работает                        |
+| ------------ | ---------------------------------------------- | ----------------------------------- |
+| Full real    | есть `ANTHROPIC_API_KEY` **и** `WHISPER_API_KEY` | real STT + real LLM                 |
+| STT-only     | есть `WHISPER_API_KEY`, нет `ANTHROPIC_API_KEY`  | real распознавание, mock-структуризация |
+| LLM-only     | есть `ANTHROPIC_API_KEY`, нет `WHISPER_API_KEY`  | mock-транскрипт, real-структуризация |
+| Mock         | нет ни одного ключа                            | полностью на заглушках, demo не ломается |
 
 ### Проверка полного audio pipeline
 

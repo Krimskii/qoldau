@@ -97,7 +97,11 @@ npm run dev
 ```bash
 # Backend health
 curl http://localhost:4000/api/health
-# → {"ok":true,"version":"0.7.4","ai":"mock","stt":"mock","db":"ok",...}
+
+# Real voice pipeline health (v0.7.6) — поле mode показывает real vs mock:
+curl http://localhost:4000/api/ai/health      # → mode:"claude"  (real) или "mock"
+curl http://localhost:4000/api/stt/health     # → mode:"whisper" (real) или "mock"
+curl http://localhost:4000/api/audio/health   # → {service:"audio-pipeline", mode:"sync", maxAudioMb}
 
 # Backend tests
 cd apps/api && npm test
@@ -122,6 +126,20 @@ cd apps/prototype && npm run build
 4. **Tutor / Specialist**: аналитика, ABC-анализ, события
 5. **Theme toggle**: light/dark/system
 6. **Language**: ru / kk / en переключение в шапке
+
+### Real voice pipeline (v0.7.6)
+
+Полный голосовой flow: `Parent → VoiceObservation → запись (MediaRecorder) →
+POST /api/audio/ingest → STT (Whisper) → LLM (Claude) → Event → Timeline`.
+
+- `VoiceObservation.tsx` использует `MediaRecorder`, если он доступен в браузере;
+  иначе (или при недоступном backend) — fallback на Web Speech / demo-flow, demo
+  не ломается.
+- Провайдеры opt-in: без `ANTHROPIC_API_KEY`/`WHISPER_API_KEY` соответствующий
+  этап работает в mock-режиме (штатный fallback).
+- Детали, режимы (full/STT-only/LLM-only/mock), контракт client/hook и
+  smoke-test — в [docs/HANDOFF_PC_SETUP.md](docs/HANDOFF_PC_SETUP.md) и
+  [docs/AGENT_WORKFLOW.md](docs/AGENT_WORKFLOW.md).
 
 ---
 
