@@ -41,6 +41,7 @@ type AudioPipelinePhase =
   | 'uploading'
   | 'success'
   | 'fallback'
+  | 'ai_unavailable'
   | 'error';
 
 /** Что доступно в браузере для записи аудио. */
@@ -169,6 +170,23 @@ export const VoiceObservation: React.FC = () => {
         });
         setPipelineResult(result);
 
+        // v1.0rc — honest «AI недоступен» state.
+        // Если backend живой (HTTP прошёл), но STT/LLM вернулись в mock-режиме
+        // (нет ключа или quota), не выдаём mock-события за реальные. Показываем
+        // мягкое сообщение «распознавание недоступно» + manual save / retry.
+        // Обычный fallback (backend упал) → flow ниже в catch.
+        const sttMocked = result.sttMode === 'mock';
+        const aiMocked = result.aiMode === 'mock';
+        if (sttMocked || aiMocked) {
+          setPipelineError(
+            aiMocked
+              ? 'Сервер подключён, но AI-анализ сейчас недоступен. Сохраню как есть.'
+              : 'Сервер подключён, но распознавание речи сейчас недоступно. Сохраню текстом.',
+          );
+          setPhase('ai_unavailable');
+          return;
+        }
+
         // v0.8 (per-device): backend — stateless-прокси, не пишет в БД и
         // не шлёт realtime. События НЕ приходят с id с сервера. Фронт сам
         // генерирует id и вставляет в локальный стор — единственный
@@ -295,6 +313,22 @@ export const VoiceObservation: React.FC = () => {
     setPipelineResult(null);
     setPipelineError(null);
   }, [recorder, resetStore, timer]);
+
+  // v1.0rc — manual save из honest «AI недоступен» state.
+  // Если backend прислал транскрипт (stt работал, но AI был mock) — заполним
+  // редактор им, пометив как draft. Если stt тоже mock — откроем пустой ввод.
+  const handleManualSaveFromAiDown = useCallback(async () => {
+    const result = pipelineResult;
+    const draftText =
+      result && result.sttMode !== 'mock' && result.transcript
+        ? result.transcript
+        : '';
+    await transcribeManual(draftText);
+    enterEditingTranscript();
+    setPhase('idle');
+    setPipelineResult(null);
+    setPipelineError(null);
+  }, [pipelineResult, transcribeManual, enterEditingTranscript]);
 
   // ===== UI flags =====
 
@@ -441,6 +475,49 @@ export const VoiceObservation: React.FC = () => {
                   Можно продолжить в демо-режиме или ввести текст вручную.
                 </p>
               </div>
+            </div>
+          </QoldauCard>
+        )}
+
+        {/* v1.0rc — honest «AI недоступен» card.
+            Backend живой (HTTP прошёл), но STT/LLM вернули mock. Не выдаём
+            mock-события за реальные — даём manual save или retry. */}
+        {phase === 'ai_unavailable' && (
+          <QoldauCard variant="tinted-yellow" padding="md" className="w-full">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-yellow-soft flex items-center justify-center shrink-0">
+                <AppIcon component={AlertCircle} size={20} colorClass="text-yellow-dark" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-ink">
+                  Распознавание сейчас недоступно
+                </p>
+                <p className="text-xs text-ink-2 mt-1 leading-relaxed">
+                  Сервер подключён, но AI-анализ сейчас не работает. Можно
+                  сохранить наблюдение текстом вручную или попробовать записать
+                  позже.
+                </p>
+                {pipelineResult?.sttMode === 'mock' && (
+                  <p className="text-[11px] text-muted mt-2 italic">
+                    (распознавание речи тоже в режиме демо)
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <PrimaryAction
+                label="Сохранить вручную"
+                onClick={handleManualSaveFromAiDown}
+                variant="soft"
+                icon={<Keyboard size={16} />}
+              />
+              <button
+                onClick={handleNew}
+                className="min-h-12 px-4 rounded-2xl bg-white border border-line text-ink hover:bg-bg active:scale-[0.99] transition-all text-sm font-bold flex items-center justify-center gap-1.5"
+              >
+                <Mic size={16} />
+                Повторить запись
+              </button>
             </div>
           </QoldauCard>
         )}

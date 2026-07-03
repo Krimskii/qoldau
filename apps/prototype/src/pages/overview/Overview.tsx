@@ -33,6 +33,7 @@ import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { DemoControlsCard } from '@/components/ui/DemoControlsCard';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { FamilySetupCard } from '@/components/ui/FamilySetupCard';
+import { FirstRunTutorial } from '@/components/tutorial/FirstRunTutorial';
 import { getFamilyChildName } from '@/data/demoDataset';
 import type { UserRole } from '@/types/qoldau';
 
@@ -64,6 +65,28 @@ export const Overview: React.FC = () => {
     setFamilyChildNameState(getFamilyChildName());
   }, []);
   const isFirstRun = !familyChildName;
+
+  // v1.0rc — мини-туториал после первой настройки семьи.
+  // FamilySetupCard ставит `qoldau-tutorial-pending-v1` перед reload.
+  // Здесь показываем туториал один раз, потом удаляем флаг pending.
+  // Отдельный флаг `qoldau-tutorial-seen-v1` (ставит FirstRunTutorial.completeTutorial)
+  // хранит факт прохождения, чтобы туториал не показывался при следующих визитах.
+  const [showTutorial, setShowTutorial] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const pending = window.localStorage.getItem('qoldau-tutorial-pending-v1');
+    const seen = window.localStorage.getItem('qoldau-tutorial-seen-v1');
+    if (pending === '1' && seen !== '1') {
+      // Небольшая задержка чтобы landing успел отрисоваться.
+      const id = window.setTimeout(() => {
+        setShowTutorial(true);
+        // Очищаем pending — он одноразовый.
+        window.localStorage.removeItem('qoldau-tutorial-pending-v1');
+      }, 400);
+      return () => window.clearTimeout(id);
+    }
+    return undefined;
+  }, []);
 
   const handleStartDemo = () => {
     setRole('parent');
@@ -332,6 +355,9 @@ export const Overview: React.FC = () => {
           <strong className="text-ink">{t('landing.importantLabel')}</strong> {t('landing.disclaimer')}
         </div>
       </section>
+
+      {/* v1.0rc — мини-туториал после первой настройки семьи. */}
+      {showTutorial && <FirstRunTutorial onSkip={() => setShowTutorial(false)} />}
     </div>
   );
 };

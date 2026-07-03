@@ -22,6 +22,15 @@ export const FamilySetupCard: React.FC = () => {
   const handleSave = () => {
     if (!input.trim()) return;
     setFamilyChildName(input);
+    // v1.0rc — ставим флаг для FirstRunTutorial, который покажется
+    // после reload в Overview (useEffect проверяет флаг).
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem('qoldau-tutorial-pending-v1', '1');
+      } catch {
+        // localStorage недоступен — туториал просто пропустится.
+      }
+    }
     window.location.reload();
   };
 
