@@ -17,9 +17,11 @@ import { AppIcon } from '@/components/ui/AppIcon';
 import { useVoiceObservationStore } from '@/store/useVoiceObservationStore';
 import { useEventStore } from '@/store/useEventStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useConsentStore } from '@/store/useConsentStore';
 import { VoiceWaveIcon } from '@/components/icons';
 import { VoiceWave } from '@/components/ui/VoiceWave';
 import { PrimaryAction } from '@/components/ui/Primitives';
+import { ConsentGate } from '@/components/privacy/ConsentGate';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { useSpeechRecognition } from '@/lib/stt/useSpeechRecognition';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
@@ -104,10 +106,38 @@ export const VoiceObservation: React.FC = () => {
   const apiMode = useEventStore((s) => s.apiMode);
   const addEventsLocally = useEventStore((s) => s.addEvents);
   const authUser = useAuthStore((s) => s.user);
+  const hasConsent = useConsentStore((s) => s.hasConsent());
   const userRole: 'parent' | 'tutor' | 'specialist' =
     (authUser?.role as 'parent' | 'tutor' | 'specialist' | undefined) ?? 'parent';
   // apiMode is informational for future WebSocket diagnostics; not blocking here.
   void apiMode;
+
+  // v1.0 — consent gate. Если пользователь ещё не дал согласие,
+  // первая попытка записи (MediaRecorder path) открывает ConsentGate.
+  // Web Speech fallback consent не требует (аудио не уходит в прокси —
+  // распознаётся в браузере).
+  const [consentGateOpen, setConsentGateOpen] = useState(false);
+  // Действие, которое нужно запустить после принятия согласия.
+  const pendingStartRef = useRef<(() => void) | null>(null);
+
+  const requireConsentThen = useCallback(
+    (action: () => void) => {
+      if (hasConsent) {
+        action();
+      } else {
+        pendingStartRef.current = action;
+        setConsentGateOpen(true);
+      }
+    },
+    [hasConsent],
+  );
+
+  const handleConsentAccepted = useCallback(() => {
+    setConsentGateOpen(false);
+    const pending = pendingStartRef.current;
+    pendingStartRef.current = null;
+    if (pending) pending();
+  }, []);
 
   // Если MediaRecorder стал доступен / исчез — перерендеримся.
   useEffect(() => {
@@ -195,6 +225,13 @@ export const VoiceObservation: React.FC = () => {
     startStoreRecording({ speakerRole: 'parent', childId: DEMO_PRIMARY_CHILD.id });
     await recorder.startRecording();
   }, [recorder, startStoreRecording, timer]);
+
+  // Обёртка для UI: проверяет consent перед запуском MediaRecorder.
+  const handleStartWithConsent = useCallback(() => {
+    requireConsentThen(() => {
+      void handleAudioStart();
+    });
+  }, [requireConsentThen, handleAudioStart]);
 
   const handleAudioStop = useCallback(async () => {
     setPhase('stopping');
@@ -322,7 +359,7 @@ export const VoiceObservation: React.FC = () => {
                 if (phase === 'recording') {
                   void handleAudioStop();
                 } else if (phase === 'idle' || phase === 'fallback') {
-                  void handleAudioStart();
+                  handleStartWithConsent();
                 }
               } else if (timer.isActive) {
                 void handleFallbackStop();
@@ -604,6 +641,17 @@ export const VoiceObservation: React.FC = () => {
         >
           Записать ещё одно
         </button>
+      )}
+
+      {/* v1.0 — Consent gate (одноразовый, до первой записи через MediaRecorder). */}
+      {consentGateOpen && (
+        <ConsentGate
+          onAccept={handleConsentAccepted}
+          onDismiss={() => {
+            setConsentGateOpen(false);
+            pendingStartRef.current = null;
+          }}
+        />
       )}
     </div>
   );
