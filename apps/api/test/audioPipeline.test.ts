@@ -83,6 +83,7 @@ describe('POST /api/audio/ingest', () => {
     expect(res.body.events[0]).not.toHaveProperty('childId');
     expect(res.body).not.toHaveProperty('recording');
     expect(res.body.insight).toBeTruthy();
+    expect(res.body.insight.toLowerCase()).toContain('наблюдение, не диагноз');
     expect(Array.isArray(res.body.questions)).toBe(true);
   });
 });
