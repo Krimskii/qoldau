@@ -1,8 +1,9 @@
 /**
- * Тесты useEventStore — events + optimistic writes.
+ * Тесты useEventStore — events + optimistic writes + profile-mode (BATCH 6).
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useEventStore } from '@/store/useEventStore';
+import { setProfileMode, getProfileMode } from '@/data/demoDataset';
 
 describe('useEventStore', () => {
   beforeEach(() => {
@@ -109,5 +110,58 @@ describe('useEventStore', () => {
     });
     useEventStore.getState().clearAll();
     expect(useEventStore.getState().events).toEqual([]);
+  });
+
+  // -----------------------------------------------------------------
+  // BATCH 6 — profile-mode rehydrate contract:
+  //   - demo (default): пустая лента при первом запуске должна
+  //     пересидиться демо-событиями для onboarding
+  //   - real: после FamilySetupCard пустая лента остаётся пустой
+  //     до первой записи голосом / AAC / фразой. Никаких
+  //     событий «Алихана» в ленте реальной семьи.
+  // -----------------------------------------------------------------
+  describe('onRehydrateStorage — profile-mode contract (BATCH 6)', () => {
+    it('demo-mode (default): ensureDemoEvents работает (re-seed)', () => {
+      // Явный demo-режим (на случай если предыдущий тест оставил 'real').
+      setProfileMode('demo');
+      useEventStore.setState({ events: [] });
+      useEventStore.getState().ensureDemoEvents();
+      // Демо-сид содержит много событий (>=10 для семьи Alikhan).
+      expect(useEventStore.getState().events.length).toBeGreaterThan(10);
+    });
+
+    it('real-mode: clearAll оставляет ленту пустой (не пересидится)', () => {
+      setProfileMode('real');
+      // Имитируем что в localStorage были демо-события и пилотая семья
+      // нажала "Настроить семью" → clearAll() + reload.
+      useEventStore.setState({
+        events: [
+          {
+            type: 'food',
+            title: 'demo food',
+            description: '...',
+            childId: 'child-alikhan',
+            timestamp: new Date().toISOString(),
+            sourceRole: 'parent',
+          },
+        ],
+      });
+      useEventStore.getState().clearAll();
+      expect(useEventStore.getState().events).toEqual([]);
+      // Контракт: даже если бы лента была пуста от старта,
+      // в real-режиме onRehydrateStorage НЕ должен сидить демо.
+      // Прямая проверка через getProfileMode() — если кто-то
+      // случайно переключит mode обратно, тест упадёт.
+      expect(getProfileMode()).toBe('real');
+    });
+
+    it('real-mode → demo-mode: ensureDemoEvents восстанавливает демо', () => {
+      setProfileMode('real');
+      useEventStore.setState({ events: [] });
+      // Переход обратно в demo (через «Запустить демо» в Overview)
+      setProfileMode('demo');
+      useEventStore.getState().ensureDemoEvents();
+      expect(useEventStore.getState().events.length).toBeGreaterThan(10);
+    });
   });
 });

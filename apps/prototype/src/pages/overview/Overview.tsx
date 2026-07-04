@@ -34,7 +34,9 @@ import { DemoControlsCard } from '@/components/ui/DemoControlsCard';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { FamilySetupCard } from '@/components/ui/FamilySetupCard';
 import { FirstRunTutorial } from '@/components/tutorial/FirstRunTutorial';
-import { getFamilyChildName } from '@/data/demoDataset';
+import { getFamilyChildName, setProfileMode } from '@/data/demoDataset';
+import { useEventStore } from '@/store/useEventStore';
+import { useRecordingsStore } from '@/store/useRecordingsStore';
 import type { UserRole } from '@/types/qoldau';
 
 interface RoleDef {
@@ -89,6 +91,21 @@ export const Overview: React.FC = () => {
   }, []);
 
   const handleStartDemo = () => {
+    // v1.0.x (Batch 6) — явно переключаем профиль в 'demo' и пересидируем
+    // события, чтобы кнопка «Запустить демо» всегда давала полноценный
+    // демо-прогон, даже если до этого семья выбрала real и почистила
+    // ленту через FamilySetupCard.
+    setProfileMode('demo');
+    try {
+      useEventStore.getState().clearAll();
+      useRecordingsStore.getState().clearAll();
+      // После clearAll onRehydrateStorage не сработает (он уже отработал),
+      // поэтому явно пересидируем демо-сценарий.
+      useEventStore.getState().ensureDemoEvents();
+    } catch {
+      // Стор недоступен — навигация всё равно произойдёт, события
+      // добавятся через onRehydrateStorage при следующей гидратации.
+    }
     setRole('parent');
     startDemo();
     navigate('/parent/home');
