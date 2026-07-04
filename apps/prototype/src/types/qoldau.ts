@@ -21,6 +21,183 @@ export type EventType =
 export type EventStatus = 'draft' | 'ai_parsed' | 'confirmed' | 'corrected' | 'rejected';
 
 /**
+ * EventPayloadMap — типизированный payload для каждого EventType.
+ *
+ * v1.5+ (wave 2): раньше `payload` был Record<string, unknown> — приходилось
+ * делать ручные касты в UI. Теперь payload типизирован по `type` через
+ * дженерик QoldauEvent<T>. Для типов без специальной схемы — fallback на
+ * Record<string, unknown>.
+ *
+ * Конвенция:
+ *   - поля camelCase
+ *   - опциональные поля помечены `?`
+ *   - id'шники — string, ISO-timestamp'ы — string
+ *   - числа — где нужны единицы измерения, лежат в названии поля
+ *     (`durationSec`, `volumeMl` и т.д.)
+ *
+ * Для типов, у которых нет специальной схемы (sensory, sleep, …) —
+ * `Record<string, unknown>` разрешает любой payload (для обратной
+ * совместимости с существующими вызовами).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyPayload = Record<string, any>;
+
+export interface FoodPayload {
+  foodName?: string;
+  foodDetails?: string;
+  amount?: string;
+  ateWell?: boolean;
+  newFood?: boolean;
+  volumeMl?: number;
+  /** Кастомные поля, которые вызывающий код может добавлять (legacy). */
+  [key: string]: unknown;
+}
+
+export interface WaterPayload {
+  waterAmount?: string;
+  volumeMl?: number;
+  askedFor?: boolean;
+  [key: string]: unknown;
+}
+
+export interface ToiletPayload {
+  /** Свободная строка: 'pee' / 'poop' / 'dry' / 'accident' / 'toilet' / ... */
+  action?: string;
+  notes?: string;
+  durationSec?: number;
+  selfInitiated?: boolean;
+  [key: string]: unknown;
+}
+
+export interface BehaviorPayload {
+  antecedent?: string;
+  behavior?: string;
+  consequence?: string;
+  mood?: string;
+  durationSec?: number;
+  intensity?: number;
+  [key: string]: unknown;
+}
+
+export interface CommunicationPayload {
+  kind?: string;
+  utterance?: string;
+  addressedTo?: string;
+  initiated?: boolean;
+  [key: string]: unknown;
+}
+
+export interface StatePayload {
+  stateName?: string;
+  source?: string;
+  [key: string]: unknown;
+}
+
+export interface AACPayload {
+  cardId?: string;
+  cardLabel?: string;
+  intent?: string;
+  /** Legacy поле — какое действие было (для совместимости с v3-кодом). */
+  action?: string;
+  [key: string]: unknown;
+}
+
+export interface PhrasePayload {
+  phrase?: string;
+  cards?: Array<{ id: string; label: string }>;
+  /** Legacy: откуда пришла фраза. */
+  source?: string;
+  [key: string]: unknown;
+}
+
+export interface MediaRequestPayload {
+  cardId?: string;
+  cardLabel?: string;
+  assetId?: string;
+  assetType?: string;
+  [key: string]: unknown;
+}
+
+export interface CalmModePayload {
+  triggeredBy?: string;
+  durationSec?: number;
+  startedAt?: string;
+  [key: string]: unknown;
+}
+
+export interface SOSPayload {
+  triggeredBy?: string;
+  note?: string;
+  addressedTo?: string;
+  [key: string]: unknown;
+}
+
+export interface VoiceObservationPayload {
+  sttSource?: string;
+  aiInsight?: string;
+  safetyDisclaimer?: string;
+  originalTranscript?: string;
+  editedTranscript?: string;
+  clarificationAnswers?: Record<string, string>;
+  extractedLocalIds?: string[];
+  [key: string]: unknown;
+}
+
+export interface TutorNotePayload {
+  sttSource?: string;
+  clarificationAnswers?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+export interface SpecialistNotePayload {
+  sttSource?: string;
+  clarificationAnswers?: Record<string, string>;
+  abcSummary?: string;
+  [key: string]: unknown;
+}
+
+export interface SensoryPayload {
+  modalities?: string[];
+  reaction?: string;
+  trigger?: string;
+  [key: string]: unknown;
+}
+
+export interface SleepPayload {
+  durationSec?: number;
+  quality?: string;
+  kind?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Мапа type → payload-тип. Типы без специальной схемы маппятся на
+ * AnyPayload (без ограничений).
+ */
+export interface EventPayloadMap {
+  voice_observation: VoiceObservationPayload;
+  food: FoodPayload;
+  water: WaterPayload;
+  toilet: ToiletPayload;
+  sleep: SleepPayload;
+  behavior: BehaviorPayload;
+  sensory: SensoryPayload;
+  communication: CommunicationPayload;
+  aac_card: AACPayload;
+  phrase: PhrasePayload;
+  media_request: MediaRequestPayload;
+  sos: SOSPayload;
+  calm_mode: CalmModePayload;
+  tutor_note: TutorNotePayload;
+  specialist_note: SpecialistNotePayload;
+  state: StatePayload;
+}
+
+/** Хелпер: payload-тип для конкретного EventType. */
+export type PayloadOf<T extends EventType> =
+  T extends keyof EventPayloadMap ? EventPayloadMap[T] : AnyPayload;
+
+/**
  * Источник события — кто/что его создало. v1.5+: заменил «sourceRole»
  * (роль оператора) на «source» (конвейер). Старые события мигрируются
  * на основе sourceRole (см. useEventStore.migrate).
@@ -70,52 +247,51 @@ export interface Signal {
   lastSeenAt: string;
 }
 
-export interface QoldauEvent {
+/**
+ * QoldauEvent<T extends EventType = EventType> — единое событие с
+ * типизированным payload по типу.
+ *
+ * По умолчанию T = EventType, и payload типизирован как union всех
+ * возможных payload-типов. Если вызывающему коду известен конкретный тип
+ * (например, после switch по `type`), он может уточнить:
+ *
+ *   const e: QoldauEvent<'food'> = ...;
+ *   const food = e.payload?.foodName; // строго типизировано
+ *
+ * Старое поле `timestamp` оставлено как алиас `occurredAt` для
+ * обратной совместимости с v2/v3-миграциями. НЕ УДАЛЯТЬ пока живут
+ * пилоты (см. тикет docs/tickets/MINIMAX_v1.5_typed_payload.md).
+ */
+export interface QoldauEvent<T extends EventType = EventType> {
   id: string;
   childId: string;
-  type: EventType;
+  type: T;
   title: string;
   description: string;
   /**
-   * Время записи в UI (когда пользователь нажал «сохранить»).
-   * Заполняется ВСЕГДА. Эквивалентно старому полю «timestamp».
-   * @deprecated Используйте {@link occurredAt} для времени самого события,
-   *           {@link recordedAt} для времени сохранения. Поле оставлено
-   *           обязательным для обратной совместимости с v2-payload'ами.
+   * Алиас occurredAt, оставлен для обратной совместимости с миграциями
+   * v2 → v3. См. JSDoc у occurredAt. НЕ УДАЛЯТЬ.
    */
   timestamp: string;
-  /**
-   * Когда событие реально произошло (по наблюдению родителя / ребёнка).
-   * Может совпадать с recordedAt, если событие задним числом не правили.
-   * v1.5+: формализованное поле для тепловой карты недели и ABC-аналитики.
-   */
+  /** Когда событие произошло (по наблюдению). */
   occurredAt: string;
-  /**
-   * Когда событие было записано в локальный стор (Date.now()).
-   * Используется для сортировки и для «добавлено N минут назад».
-   */
+  /** Когда событие было записано в стор. */
   recordedAt: string;
-  /**
-   * Конвейер-источник: кто/что создал событие. v1.5+ заменяет
-   * канонический смысл «sourceRole» (роль оператора).
-   */
+  /** Конвейер-источник (manual/voice/child_ui/import). */
   source: EventSource;
-  /**
-   * Роль оператора (кто нажал кнопку). Сохранено для UI/логов;
-   * для аналитики использовать {@link source}.
-   */
+  /** Роль оператора (parent/child/tutor/specialist/device/ai). */
   sourceRole: 'parent' | 'child' | 'tutor' | 'specialist' | 'device' | 'ai';
   status: EventStatus;
-  /**
-   * Версия схемы события. v1.5 = 3. Используется миграцией zustand-persist.
-   * Любой код, читающий QoldauEvent, может полагаться на schemaVersion.
-   */
+  /** Версия схемы (3 для wave 2). */
   schemaVersion: number;
   confidence?: number;
   rawText?: string;
   linkedEventIds?: string[];
   tags?: string[];
-  payload?: Record<string, unknown>;
+  /** Типизированный payload: форма зависит от `type`.
+   *  Partial — все поля опциональны, и допускаются кастомные поля
+   *  (наследуются от index signature в конкретных payload-интерфейсах). */
+  payload?: Partial<PayloadOf<T>>;
   /** ABC-аналитика поведения (опционально). */
   abc?: EventAbc;
   /** Сенсорный контекст (звук/свет/прикосновение/…) — массив меток. */
