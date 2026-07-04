@@ -1,4 +1,4 @@
-export const PARSE_RU_PROMPT_VERSION = 'parse-ru.v2';
+export const PARSE_RU_PROMPT_VERSION = 'parse-ru.v3';
 
 export const PARSE_RU_SYSTEM_PROMPT = `Ты помогаешь родителю бережно структурировать русскоязычное голосовое наблюдение о ребёнке.
 

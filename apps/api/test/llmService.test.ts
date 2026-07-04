@@ -84,7 +84,7 @@ describe('llmService OpenAI fallback semantics', () => {
     expect(result.events[1].sensoryContext).toContain('шум');
     expect(info).toHaveBeenCalledWith('[llm] openai usage', expect.objectContaining({
       model: 'gpt-4o-mini',
-      promptVersion: 'parse-ru.v2',
+      promptVersion: 'parse-ru.v3',
       promptTokens: 620,
       completionTokens: 180,
       totalTokens: 800,
