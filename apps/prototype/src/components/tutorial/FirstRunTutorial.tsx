@@ -96,7 +96,7 @@ export const FirstRunTutorial: React.FC<FirstRunTutorialProps> = ({ onSkip }) =>
             aria-label={t('common.cancel')}
             className="text-xs font-bold text-muted hover:text-ink transition-colors px-2 py-1"
           >
-            {t('tutorial.skip')}
+            {t('v10rc.tutorial.skip')}
           </button>
         </div>
 
@@ -111,10 +111,10 @@ export const FirstRunTutorial: React.FC<FirstRunTutorialProps> = ({ onSkip }) =>
                 id="tutorial-title"
                 className="text-lg font-black text-ink leading-tight mb-1.5"
               >
-                {t('tutorial.step1Title')}
+                {t('v10rc.tutorial.step1Title')}
               </h2>
               <p className="text-sm text-ink-2 leading-relaxed">
-                {t('tutorial.step1Body')}
+                {t('v10rc.tutorial.step1Body')}
               </p>
 
               {/* Визуальная подсказка — 3 шага записи */}
@@ -124,7 +124,7 @@ export const FirstRunTutorial: React.FC<FirstRunTutorialProps> = ({ onSkip }) =>
                     1
                   </span>
                   <p className="text-sm text-ink-2 leading-snug pt-0.5">
-                    {t('tutorial.step1Item1')}
+                    {t('v10rc.tutorial.step1Item1')}
                   </p>
                 </li>
                 <li className="flex items-start gap-3">
@@ -132,7 +132,7 @@ export const FirstRunTutorial: React.FC<FirstRunTutorialProps> = ({ onSkip }) =>
                     2
                   </span>
                   <p className="text-sm text-ink-2 leading-snug pt-0.5">
-                    {t('tutorial.step1Item2')}
+                    {t('v10rc.tutorial.step1Item2')}
                   </p>
                 </li>
                 <li className="flex items-start gap-3">
@@ -140,7 +140,7 @@ export const FirstRunTutorial: React.FC<FirstRunTutorialProps> = ({ onSkip }) =>
                     3
                   </span>
                   <p className="text-sm text-ink-2 leading-snug pt-0.5">
-                    {t('tutorial.step1Item3')}
+                    {t('v10rc.tutorial.step1Item3')}
                   </p>
                 </li>
               </ol>
@@ -154,10 +154,10 @@ export const FirstRunTutorial: React.FC<FirstRunTutorialProps> = ({ onSkip }) =>
                 id="tutorial-title"
                 className="text-lg font-black text-ink leading-tight mb-1.5"
               >
-                {t('tutorial.step2Title')}
+                {t('v10rc.tutorial.step2Title')}
               </h2>
               <p className="text-sm text-ink-2 leading-relaxed">
-                {t('tutorial.step2Body')}
+                {t('v10rc.tutorial.step2Body')}
               </p>
 
               {/* Что происходит — 3 пункта с акцентом на «наблюдение, не диагноз» */}
@@ -169,7 +169,7 @@ export const FirstRunTutorial: React.FC<FirstRunTutorialProps> = ({ onSkip }) =>
                     colorClass="text-teal shrink-0 mt-0.5"
                   />
                   <p className="text-sm text-ink-2 leading-snug">
-                    {t('tutorial.step2Item1')}
+                    {t('v10rc.tutorial.step2Item1')}
                   </p>
                 </li>
                 <li className="flex items-start gap-3">
@@ -179,7 +179,7 @@ export const FirstRunTutorial: React.FC<FirstRunTutorialProps> = ({ onSkip }) =>
                     colorClass="text-teal shrink-0 mt-0.5"
                   />
                   <p className="text-sm text-ink-2 leading-snug">
-                    {t('tutorial.step2Item2')}
+                    {t('v10rc.tutorial.step2Item2')}
                   </p>
                 </li>
                 <li className="flex items-start gap-3">
@@ -189,8 +189,8 @@ export const FirstRunTutorial: React.FC<FirstRunTutorialProps> = ({ onSkip }) =>
                     colorClass="text-teal shrink-0 mt-0.5"
                   />
                   <p className="text-sm text-ink-2 leading-snug">
-                    <strong>{t('tutorial.step2Item3')}</strong>{' '}
-                    {t('tutorial.step2Item3Hint')}
+                    <strong>{t('v10rc.tutorial.step2Item3')}</strong>{' '}
+                    {t('v10rc.tutorial.step2Item3Hint')}
                   </p>
                 </li>
               </ul>
@@ -206,11 +206,11 @@ export const FirstRunTutorial: React.FC<FirstRunTutorialProps> = ({ onSkip }) =>
           >
             {step === 0 ? (
               <>
-                {t('tutorial.next')}
+                {t('v10rc.tutorial.next')}
                 <ChevronRight size={16} />
               </>
             ) : (
-              <>{t('tutorial.gotIt')}</>
+              <>{t('v10rc.tutorial.gotIt')}</>
             )}
           </button>
         </div>

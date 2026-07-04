@@ -41,7 +41,13 @@ export const DemoIndicator: React.FC = () => {
     getProgress,
   } = useDemoStore();
 
-  const [expanded, setExpanded] = useState(false);
+  // v1.5+ bugfix: после «Запустить демо» панель должна сразу
+  // показывать подсказку для текущего шага, а не свёрнутый handle
+  // (пользователь жмёт «Демо» и видит «гайд внизу с пробелом» —
+  // пустой handle выглядит как пустая плашка без смысла).
+  // Пользователь сам сворачивает, если ему мешает; переключение
+  // шага состояние панели НЕ меняет.
+  const [expanded, setExpanded] = useState(true);
 
   const progress = getProgress();
   const currentStep = DEMO_STEPS[currentStepIndex];
@@ -56,9 +62,10 @@ export const DemoIndicator: React.FC = () => {
     }
   }, [isDemoMode, isLiveScreen, currentStepIndex, currentStep.path, currentPath, navigate]);
 
-  // Reset expansion при любом изменении isDemoMode.
+  // При выходе из демо — сбросить expanded, чтобы в следующий раз
+  // стартовать развёрнутым.
   useEffect(() => {
-    setExpanded(false);
+    if (!isDemoMode) setExpanded(false);
   }, [isDemoMode]);
 
   // Не показываем панель когда демо не активно ИЛИ мы на живом экране.
