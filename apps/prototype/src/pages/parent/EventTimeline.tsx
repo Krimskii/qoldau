@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { EventTypeBadge, EventStatusBadge } from '@/components/ui/Primitives';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { useEventStore } from '@/store/useEventStore';
+import { useEventQuery } from '@/lib/storage/eventStorage';
 import { EventTimelineIcon } from '@/components/icons';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { QoldauEvent } from '@/types/qoldau';
@@ -111,11 +111,12 @@ const FilterChip: React.FC<{
 
 export const EventTimeline: React.FC = () => {
   const navigate = useNavigate();
-  const { events } = useEventStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
-  // v0.8 (per-device): события приходят только из локального стора.
-  // Backend stateless-прокси, WebSocket-дубли убраны — источник правды один.
+  // v1.5+ — читаем через EventStorage.query: soft-delete фильтруется,
+  // сортировка по recordedAt. Подписка на стор через useEventQuery
+  // триггерит ре-рендер на любое изменение стора.
+  const events = useEventQuery();
 
   const filtered = useMemo(() => {
     if (activeFilter === 'all') return events;

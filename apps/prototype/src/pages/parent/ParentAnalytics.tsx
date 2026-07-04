@@ -3,12 +3,13 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
-import { useEventStore } from '@/store/useEventStore';
+import { useEventQuery } from '@/lib/storage/eventStorage';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { TrendingUp, BarChart3, Sparkles } from 'lucide-react';
 
 export const ParentAnalytics: React.FC = () => {
-  const { events } = useEventStore();
+  // v1.5+ — читаем через EventStorage.query (soft-delete + сортировка).
+  const events = useEventQuery({ childId: DEMO_PRIMARY_CHILD.id });
 
   const summary = useMemo(() => {
     const childEvents = events.filter((e) => e.childId === DEMO_PRIMARY_CHILD.id);

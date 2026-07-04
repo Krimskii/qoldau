@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { FileText, Download, Mail, Calendar, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Button } from '@/components/ui/Button';
 import { useToastStore } from '@/store/useToastStore';
-import { useEventStore } from '@/store/useEventStore';
+import { useEventQuery } from '@/lib/storage/eventStorage';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
 import { DEMO_CHILDREN, getFamilyChildName } from '@/data/demoDataset';
 import { formatDate } from '@/utils/dateFormat';
@@ -27,22 +27,19 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const Reports: React.FC = () => {
   const { showToast } = useToastStore();
-  const { events } = useEventStore();
   const { selectedChildId } = useDemoControlsStore();
   const currentChild =
     DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
   // Реальное имя ребёнка (с учётом семейной настройки через FamilySetupCard).
   const childName = getFamilyChildName() ?? currentChild.name;
 
-  // Все события выбранного ребёнка за последнюю неделю.
-  const weekEvents = useMemo(() => {
-    const since = Date.now() - WEEK_MS;
-    return events.filter(
-      (e) =>
-        e.childId === currentChild.id &&
-        new Date(e.timestamp).getTime() >= since,
-    );
-  }, [events, currentChild.id]);
+  // v1.5+ — все события выбранного ребёнка за последнюю неделю через
+  // EventStorage.query (soft-delete фильтруется, since — по occurredAt).
+  const since = new Date(Date.now() - WEEK_MS).toISOString();
+  const weekEvents = useEventQuery({
+    childId: currentChild.id,
+    since,
+  });
 
   const total = weekEvents.length;
   const aacCount = weekEvents.filter(
