@@ -73,6 +73,21 @@ describe('POST /api/ai/parse', () => {
     expect(res.body.events).toEqual([]);
     expect(res.body.aiFallback).toBe(false);
   });
+
+  it('returns a safe specialist referral template for red-flag transcripts', async () => {
+    const res = await request(app)
+      .post('/api/ai/parse')
+      .send({ transcript: 'Ребёнок бил себя головой об стену и это выглядело опасно.' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.safetyFlag).toBe(true);
+    expect(res.body.insight).toContain('обратитесь к специалисту');
+    expect(res.body.insight.toLowerCase()).toContain('наблюдение, не диагноз');
+    expect(res.body.insight.toLowerCase()).not.toContain('отвлек');
+    expect(res.body.insight.toLowerCase()).not.toContain('дайте воду');
+    expect(res.body.insight.toLowerCase()).not.toContain('поиграйте');
+  });
 });
 
 describe('GET /api/ai/health', () => {

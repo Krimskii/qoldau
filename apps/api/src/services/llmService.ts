@@ -48,6 +48,7 @@ export interface AIParserResponse extends AIParserResult {
   source: LLMSource;
   aiFallback: boolean;
   aiError?: AIErrorCode;
+  safetyFlag?: boolean;
 }
 
 export interface AIDigestInput {
@@ -102,6 +103,22 @@ interface ParsedToolInput {
 
 const EVENT_TYPES = ['food', 'water', 'sleep', 'toilet', 'sensory', 'behavior', 'communication', 'state'] as const;
 const SAFE_INSIGHT_SUFFIX = 'Это наблюдение, не диагноз.';
+const RED_FLAG_INSIGHT = 'Похоже, в наблюдении есть признаки возможной опасности или самоповреждения. Пожалуйста, обратитесь к специалисту или в экстренную службу, если риск сохраняется. Это наблюдение, не диагноз.';
+const RED_FLAG_PATTERNS = [
+  /самоповрежд/iu,
+  /себя\s+(удар|бь|царап|кус)/iu,
+  /ударил[аи]?\s+себя/iu,
+  /бил[аи]?\s+себя/iu,
+  /кусал[аи]?\s+себя/iu,
+  /царапал[аи]?\s+себя/iu,
+  /головой\s+(об|о|в)/iu,
+  /бил[аи]?\s+себя\s+головой/iu,
+  /ударил[аи]?\s+себя\s+головой/iu,
+  /опасн/iu,
+  /угроза/iu,
+  /убежал[аи]?\s+на\s+дорогу/iu,
+  /выбежал[аи]?\s+на\s+дорогу/iu,
+];
 
 function loadEnv(): ServiceEnv {
   const apiKey = process.env.OPENAI_API_KEY?.trim() || null;
@@ -218,6 +235,10 @@ function hasContent(transcript: string): boolean {
 
 function hasAny(text: string, patterns: RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
+}
+
+function hasRedFlag(transcript: string): boolean {
+  return hasAny(transcript.toLowerCase(), RED_FLAG_PATTERNS);
 }
 
 function safeSentence(description: string): string {
@@ -445,6 +466,16 @@ export const llmService = {
         clarificationQuestions: [],
         source: env.enabled ? 'openai' : 'mock',
         aiFallback: false,
+      };
+    }
+    if (hasRedFlag(transcript)) {
+      return {
+        events: [],
+        insight: RED_FLAG_INSIGHT,
+        clarificationQuestions: [],
+        source: env.enabled ? 'openai' : 'mock',
+        aiFallback: false,
+        safetyFlag: true,
       };
     }
     if (!env.client) return { ...parseMock(transcript), source: 'mock', aiFallback: false };

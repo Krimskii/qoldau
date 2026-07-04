@@ -64,6 +64,7 @@ aiRouter.post('/parse', aiRateLimit, async (req, res) => {
     aiSource: result.source,
     aiFallback: result.aiFallback,
     aiError: result.aiError,
+    safetyFlag: result.safetyFlag,
     model: llmService.model,
   });
 });
