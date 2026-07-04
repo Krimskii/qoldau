@@ -7,6 +7,7 @@ import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { formatTime as formatClock } from '@/utils/dateFormat';
 import { useSpeechRecognition } from '@/lib/stt/useSpeechRecognition';
+import { speak, stopSpeaking } from '@/lib/tts/speak';
 
 const MAX_RECORDING_SEC = 30;
 
@@ -184,6 +185,8 @@ export const ChildSpeak: React.FC = () => {
     // Иначе fallback на случайный mock label.
     const recognized = speech.transcript.trim();
     const label = recognized || DEMO_LABELS[Math.floor(Math.random() * DEMO_LABELS.length)];
+    // Озвучиваем что распознали — feedback для ребёнка.
+    speak(label);
 
     // Сохранить в recordings store
     const newRec = addRecording({
@@ -216,8 +219,11 @@ export const ChildSpeak: React.FC = () => {
   const togglePlay = (rec: Recording) => {
     if (playingId === rec.id) {
       setPlayingId(null);
+      stopSpeaking();
     } else {
       setPlayingId(rec.id);
+      // Озвучиваем label записи — feedback «вот что я сказал».
+      speak(rec.label);
       if (playbackProgress[rec.id] === undefined) {
         setPlaybackProgress((p) => ({ ...p, [rec.id]: 0 }));
       }
@@ -253,6 +259,8 @@ export const ChildSpeak: React.FC = () => {
 
     scheduleTimeoutsRef.current[rec.id] = timeoutId;
     setScheduledAt((prev) => ({ ...prev, [rec.id]: new Date(fireAt).toISOString() }));
+    // Озвучиваем подтверждение что запись поставлена.
+    speak(`${rec.label} через ${minutes} минут`);
   };
 
   const cancelSchedule = (recId: string) => {

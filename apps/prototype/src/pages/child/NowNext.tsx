@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackArrowIcon, Now2DIcon, Cartoon2DIcon, Music2DIcon } from '@/components/icons/child2d';
+import { speak } from '@/lib/tts/speak';
 
 interface ScheduleItem {
   id: string;
@@ -41,7 +42,10 @@ export const NowNext: React.FC = () => {
     return () => clearInterval(id);
   }, [running]);
 
-  const toggle = () => setRunning((r) => !r);
+  const toggle = () => {
+    setRunning((r) => !r);
+    speak(running ? 'Таймер на паузе' : 'Таймер запущен');
+  };
 
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
@@ -63,16 +67,19 @@ export const NowNext: React.FC = () => {
       <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] gap-1.5 items-stretch px-5 pt-4">
         {SCHEDULE.map((item, i) => (
           <React.Fragment key={item.id}>
-            <div
-              className="rounded-2xl p-3 flex flex-col items-center justify-center gap-2 min-h-[140px] border-0 shadow-card"
+            <button
+              type="button"
+              onClick={() => speak(item.text)}
+              className="rounded-2xl p-3 flex flex-col items-center justify-center gap-2 min-h-[140px] border-0 shadow-card active:scale-[0.97] transition-transform"
               style={{ background: item.gradient }}
+              aria-label={`${item.label}: ${item.text}`}
             >
               <span className="text-xs font-bold text-muted">{item.label}</span>
               <div className="w-14 h-14 rounded-3xl bg-white flex items-center justify-center">
                 <item.Icon size={42} />
               </div>
               <span className={`text-sm font-black text-center ${item.textColor}`}>{item.text}</span>
-            </div>
+            </button>
             {i < SCHEDULE.length - 1 && (
               <div className="flex items-center justify-center px-1">
                 <span className="text-2xl font-black text-teal" aria-hidden="true">→</span>

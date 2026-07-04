@@ -5,6 +5,7 @@ import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { BackArrowIcon } from '@/components/icons/child2d';
 import { ChevronRight } from 'lucide-react';
 import { QUICK_NEEDS, CATEGORIES } from '@/data/categories';
+import { speak } from '@/lib/tts/speak';
 
 /**
  * ChildCards (v0.3.25) — «Быстрые карточки».
@@ -44,6 +45,7 @@ export const ChildCards: React.FC = () => {
       {/* Featured — top card (slightly larger) */}
       <button
         onClick={() => {
+          speak(featured.title);
           addEvent({
             childId: DEMO_PRIMARY_CHILD.id,
             type: 'phrase',
@@ -84,7 +86,10 @@ export const ChildCards: React.FC = () => {
           {QUICK_NEEDS.map((need) => (
             <button
               key={need.id}
-              onClick={() => navigate(need.go)}
+              onClick={() => {
+                speak(need.title);
+                navigate(need.go);
+              }}
               className="bg-white border border-line rounded-[20px] p-3 flex flex-col items-center gap-2 shadow-card-soft active:scale-[0.95] transition-transform"
               aria-label={need.title}
             >
@@ -108,6 +113,7 @@ export const ChildCards: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => {
+                speak(cat.title);
                 addEvent({
                   childId: DEMO_PRIMARY_CHILD.id,
                   type: 'phrase',

@@ -6,6 +6,7 @@ import { useRoleStore } from '@/store/useRoleStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { AssetPicker } from '@/components/assets/AssetPicker';
 import { QoldauCard } from '@/components/ui/QoldauCard';
+import { speak } from '@/lib/tts/speak';
 import {
   BackArrowIcon,
   Cartoon2DIcon,
@@ -60,6 +61,7 @@ export const ChildFavorites: React.FC = () => {
     const asset = getAsset(config);
     if (!asset) return;
     setSelected(config.id);
+    speak(config.label);
     addEvent({
       childId: DEMO_PRIMARY_CHILD.id,
       type: 'media_request',

@@ -7,6 +7,7 @@ import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { layout } from '@/styles/tokens';
 import { useElapsedTimer } from '@/hooks/useElapsedTimer';
 import { formatDuration } from '@/utils/formatDuration';
+import { speak } from '@/lib/tts/speak';
 
 /** Грамматическая функция слова (определяет цвет плитки-иконки). */
 export type WordFunc = 'pron' | 'verb' | 'noun' | 'soc';
@@ -110,6 +111,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
     } else {
       setPhrase((prev) => [...prev, text]);
       setSpeaking(text);
+      speak(text);
       setTimeout(() => setSpeaking((cur) => (cur === text ? null : cur)), 320);
     }
   };
@@ -140,6 +142,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
         voiceDurationSec: mic.seconds,
       },
     });
+    speak(phraseText || config.eventTitle);
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);
@@ -152,10 +155,12 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
     navigate(-1);
   };
 
-  /** Озвучить фразу — просто визуальный feedback (мигание phrase strip). */
+  /** Озвучить собранную фразу — TTS + визуальный feedback. */
   const handleSpeak = () => {
     if (phrase.length === 0) return;
+    const phraseText = phrase.join(' ');
     setSpeaking('__speak__');
+    speak(phraseText);
     setTimeout(() => setSpeaking(null), 600);
   };
 

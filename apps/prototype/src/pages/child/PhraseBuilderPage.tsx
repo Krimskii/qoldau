@@ -4,6 +4,7 @@ import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { BackArrowIcon } from '@/components/icons/child2d';
 import { Trash2, Delete, Volume2 } from 'lucide-react';
+import { speak } from '@/lib/tts/speak';
 import {
   User2DIcon,
   Mom2DIcon,
@@ -230,10 +231,12 @@ export const PhraseBuilderPage: React.FC = () => {
   /** Поиск иконки и функции по тексту (для рендера chips в phrase strip). */
   const findWord = (text: string): Word | null => VOCAB.find((w) => w.text === text) ?? null;
 
-  /** Tap по preset phrase — заполняет phrase strip всеми словами пресета. */
+  /** Tap по preset phrase — заполняет phrase strip всеми словами пресета + озвучивает. */
   const handleSelectPreset = (words: string[]) => {
     setPhrase(words);
     setRemoving(null);
+    // Озвучиваем всю фразу целиком (реакция ребёнку «эта фраза собрана»).
+    speak(words.join(' '));
     // Подсветим все слова пресета (speak-pulse последовательно).
     words.forEach((w, idx) => {
       setTimeout(() => {
@@ -261,6 +264,8 @@ export const PhraseBuilderPage: React.FC = () => {
     } else {
       setPhrase((prev) => [...prev, text]);
       setSpeaking(text);
+      // Озвучиваем слово (sensory-safe rate), чтобы ребёнок слышал что нажал.
+      speak(text);
       setTimeout(() => setSpeaking((cur) => (cur === text ? null : cur)), 320);
     }
   };
