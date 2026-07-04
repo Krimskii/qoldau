@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { EventTypeBadge, EventStatusBadge } from '@/components/ui/Primitives';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { EventListSkeleton } from '@/components/ui/Skeleton';
 import { useEventStore } from '@/store/useEventStore';
 import { EventTimelineIcon } from '@/components/icons';
 import { AppIcon } from '@/components/ui/AppIcon';
@@ -112,7 +111,7 @@ const FilterChip: React.FC<{
 
 export const EventTimeline: React.FC = () => {
   const navigate = useNavigate();
-  const { events, isLoading, error } = useEventStore();
+  const { events } = useEventStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   // v0.8 (per-device): события приходят только из локального стора.
@@ -212,18 +211,9 @@ export const EventTimeline: React.FC = () => {
         )}
       </div>
 
-      {/* Timeline by day */}
-      {isLoading && events.length === 0 ? (
-        <EventListSkeleton count={4} />
-      ) : error && events.length === 0 ? (
-        <QoldauCard variant="tinted-warm" padding="md">
-          <p className="text-sm font-black text-coral-dark">Не удалось загрузить наблюдения</p>
-          <p className="text-xs text-ink-2 mt-1 leading-relaxed">
-            {error}
-            {' '}Можно попробовать перезагрузить страницу.
-          </p>
-        </QoldauCard>
-      ) : grouped.length === 0 ? (
+      {/* Timeline by day. Данные per-device и синхронные — состояний
+          загрузки/ошибки нет, только пустая лента или события. */}
+      {grouped.length === 0 ? (
         <EmptyState
           icon="📋"
           title="Нет событий этого типа"
