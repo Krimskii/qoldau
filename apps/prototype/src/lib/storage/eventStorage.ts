@@ -19,6 +19,7 @@
  * Soft-delete: query/getAll исключают deleted:true события. История
  * остаётся в сторе для аналитики/ABC-исследований.
  */
+import { useMemo } from 'react';
 import type { EventType, QoldauEvent } from '@/types/qoldau';
 import { useEventStore } from '@/store/useEventStore';
 
@@ -147,20 +148,27 @@ export const eventStorage: EventStorage = {
  *   const events = useEventQuery({ childId, types: ['food'] });
  */
 export function useEventQuery(q: EventQuery = {}): QoldauEvent[] {
-  // Подписка на любое изменение стора через selector возвращающий свежий
-  // query-результат. Мемоизация не нужна — query дешёвый (≤несколько сотен
-  // событий на устройстве), фильтрация in-memory.
-  return useEventStore((s) => {
-    if (!s.events) return [];
-    return s.events
+  // ВАЖНО: подписываемся на СТАБИЛЬНУЮ ссылку `s.events` (меняется только при
+  // реальном изменении стора). Фильтрацию/сортировку выносим в useMemo.
+  // Если возвращать новый массив прямо из селектора — Zustand сравнивает по
+  // ссылке (Object.is), видит «изменение» на каждом рендере → бесконечный
+  // re-render (React #185: Maximum update depth exceeded).
+  const events = useEventStore((s) => s.events);
+  const { childId, types, since, until, limit } = q;
+  const typesKey = types ? types.join(',') : '';
+  return useMemo(() => {
+    const list = events ?? [];
+    return list
       .filter(isLive)
-      .filter((e) => matchesQuery(e, q))
+      .filter((e) => matchesQuery(e, { childId, types, since, until, limit }))
       .slice()
       .sort((a, b) =>
         (b.recordedAt ?? b.timestamp).localeCompare(
           a.recordedAt ?? a.timestamp,
         ),
       )
-      .slice(0, q.limit && q.limit > 0 ? q.limit : Infinity);
-  });
+      .slice(0, limit && limit > 0 ? limit : Infinity);
+    // typesKey представляет содержимое types как стабильную зависимость.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, childId, typesKey, since, until, limit]);
 }
