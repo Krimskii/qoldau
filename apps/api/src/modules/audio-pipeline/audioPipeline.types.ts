@@ -37,9 +37,11 @@ export interface AudioPipelineAIResult {
 
 export interface AudioPipelineEvent {
   timestamp?: string;
+  occurredAt?: string;
   title: string;
   description: string;
   type: string;
+  source?: 'voice';
   sourceRole: SourceRole;
   abc?: {
     antecedent?: string;

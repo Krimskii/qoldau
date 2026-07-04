@@ -63,10 +63,27 @@ describe('POST /api/audio/ingest', () => {
       expect(typeof res.body.aiError).toBe('string');
     }
     expect(Array.isArray(res.body.events)).toBe(true);
+    expect(res.body.events[0]).toEqual(expect.objectContaining({
+      title: expect.any(String),
+      description: expect.any(String),
+      type: expect.any(String),
+      source: 'voice',
+      sourceRole: 'parent',
+    }));
+    if ('abc' in res.body.events[0]) {
+      expect(typeof res.body.events[0].abc).toBe('object');
+    }
+    if ('sensoryContext' in res.body.events[0]) {
+      expect(Array.isArray(res.body.events[0].sensoryContext)).toBe(true);
+    }
+    if ('occurredAt' in res.body.events[0]) {
+      expect(typeof res.body.events[0].occurredAt).toBe('string');
+    }
     expect(res.body.events[0]).not.toHaveProperty('id');
     expect(res.body.events[0]).not.toHaveProperty('childId');
     expect(res.body).not.toHaveProperty('recording');
     expect(res.body.insight).toBeTruthy();
+    expect(res.body.insight.toLowerCase()).toContain('наблюдение, не диагноз');
     expect(Array.isArray(res.body.questions)).toBe(true);
   });
 });

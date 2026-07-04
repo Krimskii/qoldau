@@ -76,6 +76,10 @@ function normalizeEventType(type: string): EventType {
   return VALID_EVENT_TYPES.includes(type as EventType) ? (type as EventType) : 'voice_observation';
 }
 
+function toOccurredAt(timestamp?: string): string | undefined {
+  return timestamp && timestamp !== '00:00' ? timestamp : undefined;
+}
+
 function toStatelessEvent(params: {
   parsed: {
     timestamp?: string;
@@ -96,6 +100,8 @@ function toStatelessEvent(params: {
     title: params.parsed.title,
     description: params.parsed.description,
     timestamp: params.parsed.timestamp,
+    occurredAt: toOccurredAt(params.parsed.timestamp),
+    source: 'voice',
     sourceRole: params.sourceRole,
     abc: params.parsed.abc,
     sensoryContext: params.parsed.sensoryContext,

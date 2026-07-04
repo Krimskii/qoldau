@@ -138,6 +138,40 @@ describe('llmService OpenAI fallback semantics', () => {
     expect(result.events.length).toBeGreaterThan(0);
   });
 
+  it('keeps safety disclaimer in insight when OpenAI omits it', async () => {
+    const { llmService } = await loadServiceWithOpenAIMock(async () => ({
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: 80,
+        total_tokens: 180,
+      },
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              events: [
+                {
+                  timestamp: '10:00',
+                  title: 'Питьё',
+                  description: 'Похоже, ребёнок попил воду.',
+                  type: 'water',
+                  abc: null,
+                  sensoryContext: [],
+                },
+              ],
+              insight: 'Похоже, стоит уточнить контекст питья.',
+              clarificationQuestions: [],
+            }),
+          },
+        },
+      ],
+    }));
+
+    const result = await llmService.parseTranscript({ transcript: 'Ребёнок попил воду.' });
+    expect(result.aiFallback).toBe(false);
+    expect(result.insight.toLowerCase()).toContain('наблюдение, не диагноз');
+  });
+
   it('falls back to mock when OpenAI returns no events for meaningful transcript', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { llmService } = await loadServiceWithOpenAIMock(async () => ({
