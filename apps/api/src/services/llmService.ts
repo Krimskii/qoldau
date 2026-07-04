@@ -50,6 +50,21 @@ export interface AIParserResponse extends AIParserResult {
   aiError?: AIErrorCode;
 }
 
+export interface AIDigestInput {
+  windowLabel?: string;
+  eventCounts?: Record<string, number>;
+  topTypes?: string[];
+  safetyFlags?: string[];
+  notes?: string[];
+}
+
+export interface AIDigestResponse {
+  digest: string;
+  source: LLMSource;
+  aiFallback: boolean;
+  aiError?: AIErrorCode;
+}
+
 interface ServiceEnv {
   apiKey: string | null;
   model: string;
@@ -388,6 +403,30 @@ function classifyOpenAIError(err: unknown): AIErrorCode {
   return 'provider_error';
 }
 
+function summarizeCounts(eventCounts: Record<string, number> | undefined): string {
+  const entries = Object.entries(eventCounts ?? {})
+    .filter(([, count]) => Number.isFinite(count) && count > 0)
+    .sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) return 'событий пока немного';
+  return entries.slice(0, 3).map(([type, count]) => `${type}: ${count}`).join(', ');
+}
+
+function buildMockDigest(input: AIDigestInput): string {
+  const windowLabel = input.windowLabel?.trim() || 'за выбранный период';
+  const counts = summarizeCounts(input.eventCounts);
+  const topTypes = (input.topTypes ?? []).filter(Boolean).slice(0, 3);
+  const focus = topTypes.length > 0 ? topTypes.join(', ') : counts;
+  const safety = (input.safetyFlags ?? []).filter(Boolean);
+  const parts = [
+    `Похоже, ${windowLabel} чаще всего отмечались: ${focus}.`,
+    safety.length > 0
+      ? 'В наблюдениях есть сигналы, которые лучше спокойно обсудить со специалистом.'
+      : 'Возможная картина требует подтверждения по следующим наблюдениям.',
+    'Это наблюдение, не диагноз.',
+  ];
+  return parts.join(' ');
+}
+
 export const llmService = {
   enabled: env.enabled,
   model: env.model,
@@ -441,6 +480,47 @@ export const llmService = {
         status: typeof err === 'object' && err !== null && 'status' in err ? (err as { status?: unknown }).status : undefined,
       });
       return { ...parseMock(transcript), source: 'mock', aiFallback: true, aiError };
+    }
+  },
+
+  async digestAggregates(input: AIDigestInput): Promise<AIDigestResponse> {
+    if (!env.client) {
+      return { digest: buildMockDigest(input), source: 'mock', aiFallback: false };
+    }
+
+    try {
+      const response = await env.client.chat.completions.create({
+        model: env.model,
+        temperature: 0.1,
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты кратко суммируешь обезличенные агрегаты наблюдений. Верни 2-4 русские фразы. Тон осторожный: "Похоже..." или "Возможно...". Обязательно добавь "Это наблюдение, не диагноз." Не ставь диагнозы и не делай медицинских обещаний.',
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              windowLabel: input.windowLabel,
+              eventCounts: input.eventCounts,
+              topTypes: input.topTypes,
+              safetyFlags: input.safetyFlags,
+              notes: input.notes?.slice(0, 5),
+            }),
+          },
+        ],
+      });
+      const digest = response.choices[0]?.message?.content?.trim();
+      if (!digest) throw new Error('OpenAI digest did not include content');
+      return { digest: ensureSafeInsight(digest), source: 'openai', aiFallback: false };
+    } catch (err) {
+      const aiError = classifyOpenAIError(err);
+      console.warn('[llm] OpenAI digest failed, fallback to mock', {
+        model: env.model,
+        promptVersion: PARSE_RU_PROMPT_VERSION,
+        aiError,
+        status: typeof err === 'object' && err !== null && 'status' in err ? (err as { status?: unknown }).status : undefined,
+      });
+      return { digest: buildMockDigest(input), source: 'mock', aiFallback: true, aiError };
     }
   },
 };
