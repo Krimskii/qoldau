@@ -73,6 +73,21 @@ describe('POST /api/ai/parse', () => {
     expect(res.body.events).toEqual([]);
     expect(res.body.aiFallback).toBe(false);
   });
+
+  it('returns a safe specialist referral template for red-flag transcripts', async () => {
+    const res = await request(app)
+      .post('/api/ai/parse')
+      .send({ transcript: 'Ребёнок бил себя головой об стену и это выглядело опасно.' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.safetyFlag).toBe(true);
+    expect(res.body.insight).toContain('обратитесь к специалисту');
+    expect(res.body.insight.toLowerCase()).toContain('наблюдение, не диагноз');
+    expect(res.body.insight.toLowerCase()).not.toContain('отвлек');
+    expect(res.body.insight.toLowerCase()).not.toContain('дайте воду');
+    expect(res.body.insight.toLowerCase()).not.toContain('поиграйте');
+  });
 });
 
 describe('GET /api/ai/health', () => {
@@ -85,6 +100,48 @@ describe('GET /api/ai/health', () => {
     expect(res.status).toBe(200);
     expect(res.body.service).toBe('ai');
     expect(res.body.model).toBeDefined();
-    expect(res.body.promptVersion).toBe('parse-ru.v2');
+    expect(res.body.promptVersion).toBe('parse-ru.v3');
+  });
+});
+
+describe('POST /api/ai/digest', () => {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/ai', aiRouter);
+
+  it('returns cautious RU digest from aggregate-only payload', async () => {
+    const res = await request(app)
+      .post('/api/ai/digest')
+      .send({
+        windowLabel: 'за неделю',
+        eventCounts: { sensory: 4, communication: 3, food: 2 },
+        topTypes: ['sensory', 'communication'],
+        safetyFlags: [],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(expect.objectContaining({
+      ok: true,
+      digest: expect.any(String),
+      aiSource: 'mock',
+      aiFallback: false,
+      model: expect.any(String),
+    }));
+    expect(res.body.digest).toMatch(/Похоже|Возможно/);
+    expect(res.body.digest.toLowerCase()).toContain('наблюдение, не диагноз');
+    expect(res.body.digest.split(/[.!?]+/).filter(Boolean).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('rejects raw transcripts and PII-like fields', async () => {
+    const res = await request(app)
+      .post('/api/ai/digest')
+      .send({
+        eventCounts: { behavior: 1 },
+        transcript: 'сырой текст не должен уходить в digest',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.error).toContain('aggregates only');
   });
 });

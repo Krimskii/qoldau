@@ -1,35 +1,44 @@
 import { describe, expect, it } from 'vitest';
-import { loadGoldenSet, runEval, scoreCase } from './runEval';
+import { fieldBreakdown, loadGoldenSet, runEval, scoreCase } from './runEval';
 
 describe('golden RU eval harness', () => {
-  it('loads the golden set', () => {
+  it('loads the expanded golden set', () => {
     const cases = loadGoldenSet();
-    expect(cases.length).toBeGreaterThanOrEqual(15);
-    expect(cases[0]).toHaveProperty('transcript');
-    expect(cases[0]).toHaveProperty('expect.minEvents');
+    expect(cases.length).toBe(28);
+    expect(cases.some((item) => item.expect.safetyFlag)).toBe(true);
+    expect(cases.some((item) => item.expect.sensory.length > 0)).toBe(true);
   });
 
-  it('scores case fields', () => {
-    const row = scoreCase(
-      {
-        transcript: 'В магазине было громко, ребёнок плакал.',
-        expect: {
-          minEvents: 2,
-          types: ['sensory', 'behavior'],
-          hasAbc: true,
-          sensory: ['шум'],
-        },
-      },
-      [
-        { type: 'sensory', title: 'Сенсорика', sensoryContext: ['шум или громкий звук'] },
+  it('scores per-field breakdown', () => {
+    const rows = [
+      scoreCase(
         {
-          type: 'behavior',
-          title: 'Реакция',
-          abc: { antecedent: 'В магазине было громко.', behavior: 'Плакал.', consequence: '' },
+          transcript: 'В магазине было громко, ребёнок плакал.',
+          expect: { minEvents: 2, types: ['sensory', 'behavior'], hasAbc: true, sensory: ['шум'], safetyFlag: false },
         },
-      ],
-    );
-    expect(row.passed).toBe(true);
+        [
+          { type: 'sensory', title: 'Сенсорика', sensoryContext: ['шум или громкий звук'] },
+          { type: 'behavior', title: 'Реакция', abc: { antecedent: 'Шум.', behavior: 'Плакал.', consequence: '' } },
+        ],
+        false,
+      ),
+      scoreCase(
+        {
+          transcript: 'Ребёнок бил себя головой.',
+          expect: { minEvents: 0, types: [], hasAbc: false, sensory: [], safetyFlag: true },
+        },
+        [],
+        true,
+      ),
+    ];
+    expect(rows.every((row) => row.passed)).toBe(true);
+    expect(fieldBreakdown(rows)).toEqual({
+      minEvents: 100,
+      types: 100,
+      abc: 100,
+      sensory: 100,
+      safety: 100,
+    });
   });
 
   it('runs on mock parser without live OpenAI', async () => {
@@ -39,9 +48,10 @@ describe('golden RU eval harness', () => {
     const result = await runEval({ live: false });
 
     process.env.OPENAI_API_KEY = previousKey;
-    expect(result.rows.length).toBeGreaterThanOrEqual(15);
+    expect(result.rows.length).toBe(28);
     expect(result.scorePct).toBeGreaterThanOrEqual(0);
     expect(result.scorePct).toBeLessThanOrEqual(100);
+    expect(result.breakdown.safety).toBeGreaterThan(0);
     expect(result.rows.some((row) => row.passed)).toBe(true);
   });
 });

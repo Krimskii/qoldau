@@ -48,6 +48,22 @@ export interface AIParserResponse extends AIParserResult {
   source: LLMSource;
   aiFallback: boolean;
   aiError?: AIErrorCode;
+  safetyFlag?: boolean;
+}
+
+export interface AIDigestInput {
+  windowLabel?: string;
+  eventCounts?: Record<string, number>;
+  topTypes?: string[];
+  safetyFlags?: string[];
+  notes?: string[];
+}
+
+export interface AIDigestResponse {
+  digest: string;
+  source: LLMSource;
+  aiFallback: boolean;
+  aiError?: AIErrorCode;
 }
 
 interface ServiceEnv {
@@ -87,6 +103,22 @@ interface ParsedToolInput {
 
 const EVENT_TYPES = ['food', 'water', 'sleep', 'toilet', 'sensory', 'behavior', 'communication', 'state'] as const;
 const SAFE_INSIGHT_SUFFIX = 'Это наблюдение, не диагноз.';
+const RED_FLAG_INSIGHT = 'Похоже, в наблюдении есть признаки возможной опасности или самоповреждения. Пожалуйста, обратитесь к специалисту или в экстренную службу, если риск сохраняется. Это наблюдение, не диагноз.';
+const RED_FLAG_PATTERNS = [
+  /самоповрежд/iu,
+  /себя\s+(удар|бь|царап|кус)/iu,
+  /ударил[аи]?\s+себя/iu,
+  /бил[аи]?\s+себя/iu,
+  /кусал[аи]?\s+себя/iu,
+  /царапал[аи]?\s+себя/iu,
+  /головой\s+(об|о|в)/iu,
+  /бил[аи]?\s+себя\s+головой/iu,
+  /ударил[аи]?\s+себя\s+головой/iu,
+  /опасн/iu,
+  /угроза/iu,
+  /убежал[аи]?\s+на\s+дорогу/iu,
+  /выбежал[аи]?\s+на\s+дорогу/iu,
+];
 
 function loadEnv(): ServiceEnv {
   const apiKey = process.env.OPENAI_API_KEY?.trim() || null;
@@ -203,6 +235,10 @@ function hasContent(transcript: string): boolean {
 
 function hasAny(text: string, patterns: RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
+}
+
+function hasRedFlag(transcript: string): boolean {
+  return hasAny(transcript.toLowerCase(), RED_FLAG_PATTERNS);
 }
 
 function safeSentence(description: string): string {
@@ -388,6 +424,30 @@ function classifyOpenAIError(err: unknown): AIErrorCode {
   return 'provider_error';
 }
 
+function summarizeCounts(eventCounts: Record<string, number> | undefined): string {
+  const entries = Object.entries(eventCounts ?? {})
+    .filter(([, count]) => Number.isFinite(count) && count > 0)
+    .sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) return 'событий пока немного';
+  return entries.slice(0, 3).map(([type, count]) => `${type}: ${count}`).join(', ');
+}
+
+function buildMockDigest(input: AIDigestInput): string {
+  const windowLabel = input.windowLabel?.trim() || 'за выбранный период';
+  const counts = summarizeCounts(input.eventCounts);
+  const topTypes = (input.topTypes ?? []).filter(Boolean).slice(0, 3);
+  const focus = topTypes.length > 0 ? topTypes.join(', ') : counts;
+  const safety = (input.safetyFlags ?? []).filter(Boolean);
+  const parts = [
+    `Похоже, ${windowLabel} чаще всего отмечались: ${focus}.`,
+    safety.length > 0
+      ? 'В наблюдениях есть сигналы, которые лучше спокойно обсудить со специалистом.'
+      : 'Возможная картина требует подтверждения по следующим наблюдениям.',
+    'Это наблюдение, не диагноз.',
+  ];
+  return parts.join(' ');
+}
+
 export const llmService = {
   enabled: env.enabled,
   model: env.model,
@@ -406,6 +466,16 @@ export const llmService = {
         clarificationQuestions: [],
         source: env.enabled ? 'openai' : 'mock',
         aiFallback: false,
+      };
+    }
+    if (hasRedFlag(transcript)) {
+      return {
+        events: [],
+        insight: RED_FLAG_INSIGHT,
+        clarificationQuestions: [],
+        source: env.enabled ? 'openai' : 'mock',
+        aiFallback: false,
+        safetyFlag: true,
       };
     }
     if (!env.client) return { ...parseMock(transcript), source: 'mock', aiFallback: false };
@@ -441,6 +511,47 @@ export const llmService = {
         status: typeof err === 'object' && err !== null && 'status' in err ? (err as { status?: unknown }).status : undefined,
       });
       return { ...parseMock(transcript), source: 'mock', aiFallback: true, aiError };
+    }
+  },
+
+  async digestAggregates(input: AIDigestInput): Promise<AIDigestResponse> {
+    if (!env.client) {
+      return { digest: buildMockDigest(input), source: 'mock', aiFallback: false };
+    }
+
+    try {
+      const response = await env.client.chat.completions.create({
+        model: env.model,
+        temperature: 0.1,
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты кратко суммируешь обезличенные агрегаты наблюдений. Верни 2-4 русские фразы. Тон осторожный: "Похоже..." или "Возможно...". Обязательно добавь "Это наблюдение, не диагноз." Не ставь диагнозы и не делай медицинских обещаний.',
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              windowLabel: input.windowLabel,
+              eventCounts: input.eventCounts,
+              topTypes: input.topTypes,
+              safetyFlags: input.safetyFlags,
+              notes: input.notes?.slice(0, 5),
+            }),
+          },
+        ],
+      });
+      const digest = response.choices[0]?.message?.content?.trim();
+      if (!digest) throw new Error('OpenAI digest did not include content');
+      return { digest: ensureSafeInsight(digest), source: 'openai', aiFallback: false };
+    } catch (err) {
+      const aiError = classifyOpenAIError(err);
+      console.warn('[llm] OpenAI digest failed, fallback to mock', {
+        model: env.model,
+        promptVersion: PARSE_RU_PROMPT_VERSION,
+        aiError,
+        status: typeof err === 'object' && err !== null && 'status' in err ? (err as { status?: unknown }).status : undefined,
+      });
+      return { digest: buildMockDigest(input), source: 'mock', aiFallback: true, aiError };
     }
   },
 };
