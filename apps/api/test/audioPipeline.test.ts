@@ -51,6 +51,17 @@ describe('POST /api/audio/ingest', () => {
     expect(res.body.transcript).toBeTruthy();
     expect(res.body.sttMode).toBe('mock');
     expect(res.body.aiMode).toBe('mock');
+    expect(res.body).toEqual(expect.objectContaining({
+      transcript: expect.any(String),
+      events: expect.any(Array),
+      insight: expect.any(String),
+      aiMode: 'mock',
+      sttMode: 'mock',
+      aiFallback: false,
+    }));
+    if ('aiError' in res.body) {
+      expect(typeof res.body.aiError).toBe('string');
+    }
     expect(Array.isArray(res.body.events)).toBe(true);
     expect(res.body.events[0]).not.toHaveProperty('id');
     expect(res.body.events[0]).not.toHaveProperty('childId');

@@ -27,14 +27,14 @@ describe('llmService OpenAI fallback semantics', () => {
     process.env.OPENAI_LLM_MODEL = '';
   });
 
-  it('returns openai source and logs token usage without transcript text', async () => {
+  it('returns openai source and logs token usage with prompt version without transcript text', async () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => {});
-    const transcript = 'Ребёнок поел кашу и попил воду.';
-    const { llmService } = await loadServiceWithOpenAIMock(async () => ({
+    const transcript = 'Ребёнок поел кашу, попил воду, потом в магазине закрывал уши от шума и плакал.';
+    const { llmService, create } = await loadServiceWithOpenAIMock(async () => ({
       usage: {
-        prompt_tokens: 100,
-        completion_tokens: 40,
-        total_tokens: 140,
+        prompt_tokens: 620,
+        completion_tokens: 180,
+        total_tokens: 800,
       },
       choices: [
         {
@@ -46,10 +46,30 @@ describe('llmService OpenAI fallback semantics', () => {
                   title: 'Приём пищи',
                   description: 'Похоже, был зафиксирован приём пищи.',
                   type: 'food',
+                  abc: null,
+                  sensoryContext: [],
+                },
+                {
+                  timestamp: '08:35',
+                  title: 'Сенсорная реакция',
+                  description: 'Возможно, шум в магазине был важным контекстом реакции.',
+                  type: 'sensory',
+                  abc: {
+                    antecedent: 'В магазине было шумно.',
+                    behavior: 'Ребёнок закрывал уши и плакал.',
+                    consequence: '',
+                  },
+                  sensoryContext: ['шум', 'магазин'],
                 },
               ],
-              insight: 'Похоже, наблюдение зафиксировано. Это наблюдение, не диагноз.',
-              clarificationQuestions: [],
+              insight: 'Похоже, шум мог быть важным контекстом реакции. Это наблюдение, не диагноз.',
+              clarificationQuestions: [
+                {
+                  id: 'after',
+                  question: 'Что помогло ребёнку успокоиться?',
+                  options: ['Тишина', 'Уход из магазина'],
+                },
+              ],
             }),
           },
         },
@@ -59,14 +79,24 @@ describe('llmService OpenAI fallback semantics', () => {
     const result = await llmService.parseTranscript({ transcript });
     expect(result.source).toBe('openai');
     expect(result.aiFallback).toBe(false);
-    expect(result.events).toHaveLength(1);
+    expect(result.events).toHaveLength(2);
+    expect(result.events[1].abc?.behavior).toContain('закрывал уши');
+    expect(result.events[1].sensoryContext).toContain('шум');
     expect(info).toHaveBeenCalledWith('[llm] openai usage', expect.objectContaining({
       model: 'gpt-4o-mini',
-      promptTokens: 100,
-      completionTokens: 40,
-      totalTokens: 140,
+      promptVersion: 'parse-ru.v2',
+      promptTokens: 620,
+      completionTokens: 180,
+      totalTokens: 800,
     }));
     expect(JSON.stringify(info.mock.calls)).not.toContain(transcript);
+
+    const request = create.mock.calls[0]?.[0] as {
+      response_format?: { json_schema?: { schema?: { properties?: { events?: { minItems?: number } } } } };
+      messages?: Array<{ role: string; content: string }>;
+    };
+    expect(request.response_format?.json_schema?.schema?.properties?.events?.minItems).toBe(1);
+    expect(request.messages?.[0]?.content).toContain('Цель: извлечь полный набор наблюдаемых событий');
   });
 
   it('sets aiFallback and quota error when OpenAI quota/rate call fails', async () => {
@@ -102,6 +132,36 @@ describe('llmService OpenAI fallback semantics', () => {
     }));
 
     const result = await llmService.parseTranscript({ transcript: 'Ребёнок попил воду.' });
+    expect(result.source).toBe('mock');
+    expect(result.aiFallback).toBe(true);
+    expect(result.aiError).toBe('invalid_json');
+    expect(result.events.length).toBeGreaterThan(0);
+  });
+
+  it('falls back to mock when OpenAI returns no events for meaningful transcript', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { llmService } = await loadServiceWithOpenAIMock(async () => ({
+      usage: {
+        prompt_tokens: 20,
+        completion_tokens: 19,
+        total_tokens: 39,
+      },
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              events: [],
+              insight: 'Похоже, нужно уточнение. Это наблюдение, не диагноз.',
+              clarificationQuestions: [],
+            }),
+          },
+        },
+      ],
+    }));
+
+    const result = await llmService.parseTranscript({
+      transcript: 'После громкой музыки ребёнок закрыл уши, плакал, потом сказал мама и попросил воды.',
+    });
     expect(result.source).toBe('mock');
     expect(result.aiFallback).toBe(true);
     expect(result.aiError).toBe('invalid_json');

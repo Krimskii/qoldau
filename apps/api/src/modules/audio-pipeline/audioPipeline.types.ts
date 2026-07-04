@@ -41,6 +41,12 @@ export interface AudioPipelineEvent {
   description: string;
   type: string;
   sourceRole: SourceRole;
+  abc?: {
+    antecedent?: string;
+    behavior?: string;
+    consequence?: string;
+  };
+  sensoryContext?: string[];
 }
 
 export interface AudioPipelineResult {
