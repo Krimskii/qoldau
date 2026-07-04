@@ -21,6 +21,30 @@ const ACCENT_CLASSES: Record<string, { bg: string; text: string; pill: string }>
 
 export const Reports: React.FC = () => {
   const { showToast } = useToastStore();
+
+  const handleShareReport = async () => {
+    const shareData = {
+      title: 'Qoldau — отчёт наблюдений',
+      text: 'Отчёт наблюдений Qoldau (профиль наблюдений, не диагноз).',
+    };
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // Пользователь закрыл системный лист — это не ошибка.
+      }
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(shareData.text);
+        showToast('Текст отчёта скопирован', 'success');
+      } catch {
+        showToast('Не удалось скопировать', 'info');
+      }
+    } else {
+      showToast('Поделиться недоступно на этом устройстве', 'info');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -104,11 +128,11 @@ export const Reports: React.FC = () => {
         </div>
       </QoldauCard>
 
-      {/* Действия — в Wave 0 кнопки помечают ограничение, чтобы не быть тупиком. */}
+      {/* Действия — реальные: печать/сохранение в PDF и системное «Поделиться». */}
       <div className="grid grid-cols-2 gap-2.5">
         <Button
           className="flex items-center justify-center gap-2"
-          onClick={() => showToast('Скачивание PDF появится в следующей версии', 'info')}
+          onClick={() => window.print()}
         >
           <Download className="w-4 h-4" />
           Скачать PDF
@@ -116,7 +140,7 @@ export const Reports: React.FC = () => {
         <Button
           variant="secondary"
           className="flex items-center justify-center gap-2"
-          onClick={() => showToast('Отправка появится в следующей версии', 'info')}
+          onClick={handleShareReport}
         >
           <Mail className="w-4 h-4" />
           Отправить
