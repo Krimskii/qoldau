@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { QoldauEvent, EventType } from '@/types/qoldau';
 import { DEMO_EVENTS, seedDemoEvents } from '@/data/demoScenario';
+import { getProfileMode } from '@/data/demoDataset';
 
 interface ClarifyingAnswers {
   [question: string]: string;
@@ -110,8 +111,16 @@ export const useEventStore = create<EventState>()(
         clarifyingAnswers: state.clarifyingAnswers,
       }),
       onRehydrateStorage: () => (state) => {
-        // Если событий нет (первый запуск) — сидим демо-сценарий для onboarding.
-        if (state && state.events.length === 0) {
+        // Если событий нет (первый запуск) И профиль в demo-режиме —
+        // сидим демо-сценарий для onboarding. В real-режиме (пилотная
+        // семья прошла FamilySetupCard) пустая лента остаётся пустой
+        // до первой записи голосом / AAC / фразой. См. ticket
+        // docs/tickets/MINIMAX_v1.0.x_real_family_clean_start.md.
+        if (
+          state &&
+          state.events.length === 0 &&
+          getProfileMode() !== 'real'
+        ) {
           state.events = seedDemoEvents(DEMO_EVENTS);
         }
       },

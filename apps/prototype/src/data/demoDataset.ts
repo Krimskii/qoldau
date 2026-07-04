@@ -90,6 +90,34 @@ export function clearFamilyChildName(): void {
   localStorage.removeItem(FAMILY_CHILD_NAME_KEY);
 }
 
+// =====================================================================
+// PROFILE MODE — demo | real
+// ---------------------------------------------------------------------
+// Хранит режим профиля устройства:
+//   'demo' — стенд/демо. Event Timeline заполняется seed-данными
+//           («Алихан, 60 событий») при первом запуске / hydrate.
+//   'real' — реальная семья. Никакого seed-а; пустая лента до первой
+//           записи голосом / AAC-карточкой / фразой.
+// Default = 'demo' для обратной совместимости с уже существующими
+// пилотами. После FamilySetupCard (или явного «Запустить демо»)
+// режим переключается через setProfileMode().
+// =====================================================================
+export type ProfileMode = 'demo' | 'real';
+
+const PROFILE_MODE_KEY = 'qoldau-profile-mode-v1';
+
+export function getProfileMode(): ProfileMode {
+  if (typeof window === 'undefined') return 'demo';
+  const v = window.localStorage.getItem(PROFILE_MODE_KEY);
+  return v === 'real' ? 'real' : 'demo';
+}
+
+export function setProfileMode(mode: ProfileMode): void {
+  if (typeof window === 'undefined') return;
+  if (mode !== 'demo' && mode !== 'real') return;
+  window.localStorage.setItem(PROFILE_MODE_KEY, mode);
+}
+
 const familyChildName = getFamilyChildName();
 if (familyChildName) {
   DEMO_CHILDREN[0] = { ...DEMO_CHILDREN[0], name: familyChildName };

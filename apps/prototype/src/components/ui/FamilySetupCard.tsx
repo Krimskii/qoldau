@@ -11,7 +11,13 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heart, Check } from 'lucide-react';
-import { getFamilyChildName, setFamilyChildName } from '@/data/demoDataset';
+import {
+  getFamilyChildName,
+  setFamilyChildName,
+  setProfileMode,
+} from '@/data/demoDataset';
+import { useEventStore } from '@/store/useEventStore';
+import { useRecordingsStore } from '@/store/useRecordingsStore';
 
 export const FamilySetupCard: React.FC = () => {
   const { t } = useTranslation();
@@ -22,6 +28,18 @@ export const FamilySetupCard: React.FC = () => {
   const handleSave = () => {
     if (!input.trim()) return;
     setFamilyChildName(input);
+    // v1.0.x (Batch 6) — переключаем профиль в 'real' и стираем любые
+    // события/записи, которые могли остаться от демо-сценария. Иначе
+    // пилотная семья увидит 60 событий «Алихана» в своей ленте.
+    setProfileMode('real');
+    try {
+      useEventStore.getState().clearAll();
+      useRecordingsStore.getState().clearAll();
+    } catch {
+      // Сторы не успели инициализироваться (SSR / edge-case) — события
+      // будут записаны, но при следующей гидратации onRehydrateStorage
+      // не пересидит демо, потому что mode === 'real'.
+    }
     // v1.0rc — ставим флаг для FirstRunTutorial, который покажется
     // после reload в Overview (useEffect проверяет флаг).
     if (typeof window !== 'undefined') {
