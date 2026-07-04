@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { QoldauEvent, EventType } from '@/types/qoldau';
+import { QoldauEvent, EventType, EventSource } from '@/types/qoldau';
 import { DEMO_EVENTS, seedDemoEvents } from '@/data/demoScenario';
 import { getProfileMode } from '@/data/demoDataset';
 
@@ -21,9 +21,31 @@ interface EventState {
 
   // Actions
   setEvents: (events: QoldauEvent[]) => void;
-  addEvent: (event: Omit<QoldauEvent, 'id'>) => QoldauEvent;
-  addEvents: (events: Omit<QoldauEvent, 'id'>[]) => QoldauEvent[];
+  /**
+   * v1.5+: поля schemaVersion/occurredAt/recordedAt/source/timestamp
+   * автоматически заполняются дефолтами, если не переданы — вызывающий
+   * код остаётся компактным.
+   */
+  addEvent: (
+    event: Omit<
+      QoldauEvent,
+      'id' | 'schemaVersion' | 'occurredAt' | 'recordedAt' | 'source' | 'timestamp'
+    > & { timestamp?: string; source?: QoldauEvent['source'] },
+  ) => QoldauEvent;
+  addEvents: (
+    events: Array<
+      Omit<
+        QoldauEvent,
+        'id' | 'schemaVersion' | 'occurredAt' | 'recordedAt' | 'source' | 'timestamp'
+      > & { timestamp?: string; source?: QoldauEvent['source'] }
+    >,
+  ) => QoldauEvent[];
   updateEvent: (id: string, updates: Partial<QoldauEvent>) => void;
+  /**
+   * Soft-delete: помечает событие как deleted=true. Данные остаются в сторе,
+   * но {@link useEventQuery} (EventStorage) их не возвращает. История
+   * сохраняется для аналитики/ABC.
+   */
   deleteEvent: (id: string) => void;
   getEventsByType: (type: EventType) => QoldauEvent[];
   getEventsByTypeAndDate: (types: EventType[], date: string) => QoldauEvent[];
@@ -57,19 +79,38 @@ export const useEventStore = create<EventState>()(
       setEvents: (events) => set({ events }),
 
       addEvent: (eventData) => {
+        // v1.5+: гарантируем schemaVersion/occurredAt/recordedAt/source.
+        // Если вызывающий код не передал их явно — проставляем дефолты.
+        const now = new Date().toISOString();
+        const partial = eventData as Partial<QoldauEvent> & { sourceRole: QoldauEvent['sourceRole'] };
         const newEvent: QoldauEvent = {
           ...eventData,
           id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          schemaVersion: partial.schemaVersion ?? 3,
+          occurredAt: partial.occurredAt ?? partial.timestamp ?? now,
+          recordedAt: partial.recordedAt ?? now,
+          source: partial.source ?? defaultSourceFromRole(eventData.sourceRole),
+          // timestamp остаётся обязательным (обратная совместимость).
+          timestamp: partial.timestamp ?? partial.occurredAt ?? now,
         };
         set((state) => ({ events: [newEvent, ...state.events] }));
         return newEvent;
       },
 
       addEvents: (eventsData) => {
-        const newEvents = eventsData.map((eventData) => ({
-          ...eventData,
-          id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        }));
+        const now = new Date().toISOString();
+        const newEvents = eventsData.map((eventData) => {
+          const partial = eventData as Partial<QoldauEvent> & { sourceRole: QoldauEvent['sourceRole'] };
+          return {
+            ...eventData,
+            id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            schemaVersion: partial.schemaVersion ?? 3,
+            occurredAt: partial.occurredAt ?? partial.timestamp ?? now,
+            recordedAt: partial.recordedAt ?? now,
+            source: partial.source ?? defaultSourceFromRole(eventData.sourceRole),
+            timestamp: partial.timestamp ?? partial.occurredAt ?? now,
+          } as QoldauEvent;
+        });
         set((state) => ({ events: [...newEvents, ...state.events] }));
         return newEvents;
       },
@@ -81,13 +122,24 @@ export const useEventStore = create<EventState>()(
       },
 
       deleteEvent: (id) => {
-        set((state) => ({ events: state.events.filter((e) => e.id !== id) }));
+        // Soft-delete: помечаем, не удаляем. EventStorage.query фильтрует.
+        set((state) => ({
+          events: state.events.map((e) =>
+            e.id === id ? { ...e, deleted: true } : e,
+          ),
+        }));
       },
 
-      getEventsByType: (type) => get().events.filter((e) => e.type === type),
+      getEventsByType: (type) =>
+        get().events.filter((e) => e.type === type && !e.deleted),
 
       getEventsByTypeAndDate: (types, date) =>
-        get().events.filter((e) => types.includes(e.type) && e.timestamp.startsWith(date)),
+        get().events.filter(
+          (e) =>
+            types.includes(e.type) &&
+            !e.deleted &&
+            e.timestamp.startsWith(date),
+        ),
 
       setClarifyingAnswer: (question, answer) =>
         set((state) => ({
@@ -124,9 +176,65 @@ export const useEventStore = create<EventState>()(
           state.events = seedDemoEvents(DEMO_EVENTS);
         }
       },
-      version: 2,
+      version: 3,
+      // v1.5+ — миграция v2 → v3: добавляем обязательные поля
+      // schemaVersion/occurredAt/recordedAt/source. Старые события не
+      // теряются и не дублируются. v0/v1 не рассматриваем (устаревшие
+      // до zustand-persist migrate).
+      migrate: (persistedState: unknown, fromVersion: number) => {
+        const state = (persistedState ?? {}) as {
+          events?: QoldauEvent[];
+          clarifyingAnswers?: Record<string, string>;
+        };
+        if (fromVersion < 3 && Array.isArray(state.events)) {
+          state.events = state.events.map((e) => migrateEvent(e as unknown as Record<string, unknown>));
+        }
+        return state;
+      },
     },
   ),
 );
 
-export { DEMO_BASE_DATE };
+/**
+ * Миграция одного события v0/v1/v2 → v3.
+ * - timestamp сохраняется как fallback и как поле совместимости.
+ * - occurredAt/recordedAt по умолчанию = timestamp (мы не знаем точнее).
+ * - source выводится из sourceRole: child→child_ui, ai/voice_observation→voice,
+ *   остальное→manual.
+ */
+function migrateEvent(e: Record<string, unknown>): QoldauEvent {
+  const ts = (e.timestamp as string) ?? new Date().toISOString();
+  const sourceRole = e.sourceRole as QoldauEvent['sourceRole'] | undefined;
+  return {
+    ...(e as unknown as QoldauEvent),
+    schemaVersion: 3,
+    occurredAt: (e.occurredAt as string) ?? ts,
+    recordedAt: (e.recordedAt as string) ?? ts,
+    source: (e.source as EventSource) ?? defaultSourceFromRole(sourceRole),
+    timestamp: ts,
+  };
+}
+
+/**
+ * Дефолтный EventSource на основе sourceRole.
+ * Используется в addEvent/addEvents/migrate как fallback.
+ */
+function defaultSourceFromRole(
+  role: QoldauEvent['sourceRole'] | undefined,
+): EventSource {
+  switch (role) {
+    case 'child':
+      return 'child_ui';
+    case 'ai':
+      return 'voice';
+    case 'parent':
+    case 'tutor':
+    case 'specialist':
+    case 'device':
+    case undefined:
+    default:
+      return 'manual';
+  }
+}
+
+export { DEMO_BASE_DATE, migrateEvent, defaultSourceFromRole };

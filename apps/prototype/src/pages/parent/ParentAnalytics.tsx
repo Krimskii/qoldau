@@ -3,12 +3,18 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
-import { useEventStore } from '@/store/useEventStore';
+import { useEventQuery } from '@/lib/storage/eventStorage';
+import {
+  dayHourHeatmap,
+  heatmapMax,
+  heatmapTotal,
+} from '@/lib/insights/weeklyPatterns';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { TrendingUp, BarChart3, Sparkles } from 'lucide-react';
 
 export const ParentAnalytics: React.FC = () => {
-  const { events } = useEventStore();
+  // v1.5+ — читаем через EventStorage.query (soft-delete + сортировка).
+  const events = useEventQuery({ childId: DEMO_PRIMARY_CHILD.id });
 
   const summary = useMemo(() => {
     const childEvents = events.filter((e) => e.childId === DEMO_PRIMARY_CHILD.id);
@@ -68,6 +74,43 @@ export const ParentAnalytics: React.FC = () => {
     return `conic-gradient(${stops.join(', ')})`;
   })();
 
+  // v1.5+ — Weekly heatmap: 7×24 матрица интенсивности событий за неделю.
+  // Без AI, без диагнозов. Это наблюдательная визуализация плотности
+  // событий по дню недели и часу. Пустые недели показывают empty-state.
+  const heatmap = useMemo(
+    () =>
+      dayHourHeatmap(events, DEMO_PRIMARY_CHILD.id, new Date()),
+    [events],
+  );
+  const heatMax = heatmapMax(heatmap);
+  const heatTotal = heatmapTotal(heatmap);
+  const heatmapDayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+  // v1.5+ (wave 2): sensoryCounts — сколько событий помечено каждым
+  // сенсорным тегом. Используется в sensory-секции ниже.
+  const sensoryCounts = useMemo(() => {
+    const tags = ['sound', 'light', 'touch', 'smell', 'temperature'] as const;
+    const out: Record<string, number> = {};
+    for (const t of tags) {
+      out[t] = events.filter((e) => {
+        if (e.sensoryContext?.some((s) => s.toLowerCase() === t)) return true;
+        const mods = (e.payload as { modalities?: string[] } | undefined)
+          ?.modalities;
+        return mods?.some((m) => m.toLowerCase() === t) ?? false;
+      }).length;
+    }
+    return out;
+  }, [events]);
+  const sensoryTotal = Object.values(sensoryCounts).reduce((a, b) => a + b, 0);
+
+  const SENSORY_LABELS: Record<string, string> = {
+    sound: 'Звук',
+    light: 'Свет',
+    touch: 'Тактильно',
+    smell: 'Запах',
+    temperature: 'Температура',
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title="Аналитика" subtitle="Демо-данные за 7 дней" />
@@ -95,6 +138,114 @@ export const ParentAnalytics: React.FC = () => {
             ))}
           </div>
         </div>
+      </SectionCard>
+
+      {/* v1.5+ — Weekly heatmap */}
+      <SectionCard
+        title="Тепловая карта недели"
+        accent="blue"
+        action={<BarChart3 className="w-5 h-5 text-blue" />}
+      >
+        {heatTotal === 0 ? (
+          <p className="text-sm text-muted italic py-2">
+            Пока мало наблюдений — добавьте голосом или AAC-карточкой, и здесь появится плотность событий по часам.
+          </p>
+        ) : (
+          <>
+            <div className="overflow-x-auto pb-2">
+              <table className="border-separate" style={{ borderSpacing: 2 }}>
+                <thead>
+                  <tr>
+                    <th className="w-7" aria-hidden="true" />
+                    {Array.from({ length: 24 }, (_, h) => (
+                      <th
+                        key={h}
+                        className="text-[9px] font-normal text-muted w-3.5 text-center"
+                      >
+                        {h % 6 === 0 ? h : ''}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {heatmap.map((row: number[], rowIdx: number) => (
+                    <tr key={heatmapDayLabels[rowIdx]}>
+                      <th
+                        scope="row"
+                        className="text-[10px] text-muted pr-1.5 text-right"
+                      >
+                        {heatmapDayLabels[rowIdx]}
+                      </th>
+                      {row.map((v: number, colIdx: number) => {
+                        const intensity = heatMax > 0 ? v / heatMax : 0;
+                        // 4 уровня интенсивности: пусто/слабо/средне/сильно.
+                        const cls =
+                          v === 0
+                            ? 'bg-bg'
+                            : intensity > 0.66
+                              ? 'bg-teal'
+                              : intensity > 0.33
+                                ? 'bg-teal/60'
+                                : 'bg-teal/30';
+                        return (
+                          <td
+                            key={colIdx}
+                            className={`w-3.5 h-3.5 rounded-sm ${cls}`}
+                            title={`${heatmapDayLabels[rowIdx]} ${colIdx}:00 — ${v} событий`}
+                            aria-label={`${heatmapDayLabels[rowIdx]} ${colIdx} часов: ${v} событий`}
+                          />
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-muted mt-2">
+              <span>Меньше</span>
+              <div className="flex gap-1" aria-hidden="true">
+                <span className="w-3.5 h-3.5 rounded-sm bg-bg" />
+                <span className="w-3.5 h-3.5 rounded-sm bg-teal/30" />
+                <span className="w-3.5 h-3.5 rounded-sm bg-teal/60" />
+                <span className="w-3.5 h-3.5 rounded-sm bg-teal" />
+              </div>
+              <span>Больше</span>
+            </div>
+            <p className="text-[11px] text-muted mt-3 italic">
+              Наблюдение плотности событий по часам. Это не медицинский диагноз — можно продолжить наблюдать, чтобы увидеть динамику.
+            </p>
+          </>
+        )}
+      </SectionCard>
+
+      {/* v1.5+ (wave 2): Sensory — сколько событий с сенсорными тегами. */}
+      <SectionCard title="Сенсорный контекст" accent="yellow">
+        {sensoryTotal === 0 ? (
+          <p className="text-sm text-muted italic py-2">
+            Пока нет событий с сенсорными тегами — можно отмечать при записи голосом.
+          </p>
+        ) : (
+          <div className="grid grid-cols-5 gap-2">
+            {(['sound', 'light', 'touch', 'smell', 'temperature'] as const).map(
+              (tag) => (
+                <div
+                  key={tag}
+                  className="flex flex-col items-center justify-center py-3 px-1 rounded-2xl bg-yellow-soft"
+                >
+                  <span className="text-xl font-black text-yellow">
+                    {sensoryCounts[tag] ?? 0}
+                  </span>
+                  <span className="text-[10px] text-muted mt-0.5 text-center">
+                    {SENSORY_LABELS[tag]}
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+        )}
+        <p className="text-[11px] text-muted mt-3 italic">
+          Наблюдение за сенсорными стимулами. Не медицинский диагноз.
+        </p>
       </SectionCard>
 
       {/* Triggers */}

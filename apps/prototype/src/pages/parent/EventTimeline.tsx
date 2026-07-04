@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { EventTypeBadge, EventStatusBadge } from '@/components/ui/Primitives';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { useEventStore } from '@/store/useEventStore';
+import { useEventQuery } from '@/lib/storage/eventStorage';
 import { EventTimelineIcon } from '@/components/icons';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { QoldauEvent } from '@/types/qoldau';
@@ -13,6 +13,16 @@ import { eventTypeColors, toneToColor, type EventTone } from '@/styles/tokens';
 import { formatDate, formatTime } from '@/utils/dateFormat';
 
 type FilterType = 'all' | string;
+
+const SENSORY_TAGS = ['sound', 'light', 'touch', 'smell', 'temperature'];
+
+const SENSORY_LABELS: Record<string, string> = {
+  sound: 'Звук',
+  light: 'Свет',
+  touch: 'Тактильно',
+  smell: 'Запах',
+  temperature: 'Температура',
+};
 
 const FILTERS: Array<{ key: FilterType; label: string; tone: EventTone }> = [
   { key: 'all', label: 'Все', tone: 'teal' },
@@ -111,14 +121,26 @@ const FilterChip: React.FC<{
 
 export const EventTimeline: React.FC = () => {
   const navigate = useNavigate();
-  const { events } = useEventStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
-  // v0.8 (per-device): события приходят только из локального стора.
-  // Backend stateless-прокси, WebSocket-дубли убраны — источник правды один.
+  // v1.5+ — читаем через EventStorage.query: soft-delete фильтруется,
+  // сортировка по recordedAt. Подписка на стор через useEventQuery
+  // триггерит ре-рендер на любое изменение стора.
+  const events = useEventQuery();
 
   const filtered = useMemo(() => {
     if (activeFilter === 'all') return events;
+    // v1.5+ (wave 2): sensory-фильтры имеют формат 'sensory:<tag>'.
+    // Для них матчим по sensoryContext (включая payload.modalities).
+    if (activeFilter.startsWith('sensory:')) {
+      const tag = activeFilter.slice('sensory:'.length);
+      return events.filter((e) => {
+        if (e.sensoryContext?.some((s) => s.toLowerCase() === tag)) return true;
+        const mods = (e.payload as { modalities?: string[] } | undefined)
+          ?.modalities;
+        return mods?.some((m) => m.toLowerCase() === tag) ?? false;
+      });
+    }
     return events.filter((e) => e.type === activeFilter);
   }, [events, activeFilter]);
 
@@ -161,6 +183,20 @@ export const EventTimeline: React.FC = () => {
     return m;
   }, [events]);
 
+  // v1.5+ (wave 2): counts по сенсорным тегам.
+  const sensoryCounts = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const tag of SENSORY_TAGS) {
+      out[tag] = events.filter((e) => {
+        if (e.sensoryContext?.some((s) => s.toLowerCase() === tag)) return true;
+        const mods = (e.payload as { modalities?: string[] } | undefined)
+          ?.modalities;
+        return mods?.some((m) => m.toLowerCase() === tag) ?? false;
+      }).length;
+    }
+    return out;
+  }, [events]);
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -198,6 +234,16 @@ export const EventTimeline: React.FC = () => {
             onClick={() => setActiveFilter(f.key)}
             label={f.label}
             count={counts[f.key]}
+          />
+        ))}
+        {/* v1.5+ (wave 2): сенсорные фильтры — отдельная группа чипов. */}
+        {SENSORY_TAGS.map((tag) => (
+          <FilterChip
+            key={`sensory:${tag}`}
+            active={activeFilter === `sensory:${tag}`}
+            onClick={() => setActiveFilter(`sensory:${tag}`)}
+            label={SENSORY_LABELS[tag] ?? tag}
+            count={sensoryCounts[tag]}
           />
         ))}
         {activeFilter !== 'all' && (

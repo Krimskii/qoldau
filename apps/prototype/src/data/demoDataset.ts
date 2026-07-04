@@ -337,22 +337,39 @@ const SEED: SeedEvent[] = [
   { id: 'evt-1-16', day: 6, hour: 15, minute: 30, type: 'phrase', title: 'Фраза: «Я хочу есть»', description: 'Собрал фразу «Я хочу есть»', sourceRole: 'child', status: 'confirmed' },
 ];
 
-// Build DEMO_EVENTS — события только для primary child
-export const DEMO_EVENTS: QoldauEvent[] = SEED.map((s) => ({
-  id: s.id,
-  childId: alikhan,
-  type: s.type,
-  title: s.title,
-  description: s.description,
-  timestamp: iso(s.day, s.hour, s.minute),
-  sourceRole: s.sourceRole,
-  status: s.status ?? 'confirmed',
-  confidence: s.confidence,
-  rawText: s.rawText,
-  linkedEventIds: s.linkedEventIds,
-  tags: s.tags,
-  payload: s.payload,
-}));
+// Build DEMO_EVENTS — события только для primary child.
+// v1.5+: добавляем формализованные occurredAt/recordedAt/source/schemaVersion
+// из SEED. occurredAt = timestamp (дата самого события), recordedAt = та же,
+// source = voice для AI-распознанных, child_ui для нажатий ребёнка, manual
+// для всего остального. Все демо-события помечены schemaVersion=3.
+export const DEMO_EVENTS: QoldauEvent[] = SEED.map((s) => {
+  const ts = iso(s.day, s.hour, s.minute);
+  const source: QoldauEvent['source'] =
+    s.sourceRole === 'child'
+      ? 'child_ui'
+      : s.sourceRole === 'ai'
+        ? 'voice'
+        : 'manual';
+  return {
+    id: s.id,
+    childId: alikhan,
+    type: s.type,
+    title: s.title,
+    description: s.description,
+    timestamp: ts,
+    occurredAt: ts,
+    recordedAt: ts,
+    source,
+    sourceRole: s.sourceRole,
+    status: s.status ?? 'confirmed',
+    schemaVersion: 3,
+    confidence: s.confidence,
+    rawText: s.rawText,
+    linkedEventIds: s.linkedEventIds,
+    tags: s.tags,
+    payload: s.payload,
+  };
+});
 
 // =====================================================================
 // Helpers

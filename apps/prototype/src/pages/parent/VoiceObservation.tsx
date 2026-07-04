@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   WifiOff,
   Loader2,
+  HelpCircle,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
@@ -42,7 +43,11 @@ type AudioPipelinePhase =
   | 'success'
   | 'fallback'
   | 'ai_unavailable'
-  | 'error';
+  | 'error'
+  /** v1.5+ (wave 2): мягкая карточка с уточняющими вопросами от backend.
+   *  Без принуждения — можно пропустить. Ответы сохраняются в
+   *  payload.clarificationAnswers и в useEventStore.clarifyingAnswers. */
+  | 'clarification_questions';
 
 /** Что доступно в браузере для записи аудио. */
 function detectMediaRecorderSupport(): boolean {
@@ -140,6 +145,97 @@ export const VoiceObservation: React.FC = () => {
     if (pending) pending();
   }, []);
 
+  // v1.5+ (wave 2): состояние ответов на clarificationQuestions от backend.
+  const [clarificationAnswers, setClarificationAnswers] = useState<
+    Record<string, string>
+  >({});
+  const setClarificationAnswer = useCallback((qid: string, answer: string) => {
+    setClarificationAnswers((prev) => ({ ...prev, [qid]: answer }));
+  }, []);
+
+  /**
+   * commitPipelineEvents — добавляет распознанные backend-события в
+   * локальный стор. Вызывается:
+   *   - сразу после успешной загрузки, если backend не прислал
+   *     clarificationQuestions;
+   *   - после ответа на clarificationQuestions (или после «Пропустить»).
+   *
+   * Параметр answers прокидывается в payload.clarificationAnswers
+   * каждого события + в useEventStore.clarifyingAnswers.
+   */
+  const commitPipelineEvents = useCallback(
+    (
+      result: AudioPipelineResponse,
+      answers?: Record<string, string>,
+    ) => {
+      if (Array.isArray(result.events) && result.events.length > 0) {
+        const baseTs = Date.now();
+        const recordedAt = new Date().toISOString();
+        const local: Omit<QoldauEvent, 'id'>[] = result.events.map(
+          (e, idx) => {
+            const occurredAt = new Date(baseTs + idx * 1000).toISOString();
+            const raw = e as {
+              type?: string;
+              title?: string;
+              description?: string;
+              sourceRole?: QoldauEvent['sourceRole'];
+              abc?: QoldauEvent['abc'];
+              sensoryContext?: string[];
+            };
+            return {
+              childId: DEMO_PRIMARY_CHILD.id,
+              type: (raw.type ?? 'voice_observation') as QoldauEvent['type'],
+              title: raw.title ?? 'Голосовое наблюдение',
+              description: raw.description ?? result.insight ?? '',
+              timestamp: occurredAt,
+              occurredAt,
+              recordedAt,
+              source: 'voice',
+              sourceRole: (raw.sourceRole ?? 'parent') as QoldauEvent['sourceRole'],
+              status: 'ai_parsed',
+              schemaVersion: 3,
+              rawText: result.transcript,
+              abc: raw.abc,
+              sensoryContext: raw.sensoryContext,
+              // v1.5+ (wave 2): ответы на уточняющие вопросы — в payload.
+              payload: {
+                sttSource: result.sttMode,
+                aiInsight: result.insight,
+                originalTranscript: result.transcript,
+                clarificationAnswers: answers ?? {},
+              },
+            };
+          },
+        );
+        addEventsLocally(local);
+        if (answers) {
+          for (const [qid, ans] of Object.entries(answers)) {
+            useEventStore.getState().setClarifyingAnswer(qid, ans);
+          }
+        }
+      }
+      setPhase('success');
+      window.setTimeout(() => {
+        navigate('/parent/events');
+      }, 1200);
+    },
+    [addEventsLocally, navigate],
+  );
+
+  const handleClarificationSubmit = useCallback(() => {
+    if (pipelineResult) {
+      commitPipelineEvents(pipelineResult, clarificationAnswers);
+    }
+    setClarificationAnswers({});
+  }, [pipelineResult, clarificationAnswers, commitPipelineEvents]);
+
+  const handleClarificationSkip = useCallback(() => {
+    if (pipelineResult) {
+      commitPipelineEvents(pipelineResult, {});
+    }
+    setClarificationAnswers({});
+  }, [pipelineResult, commitPipelineEvents]);
+
   // Если MediaRecorder стал доступен / исчез — перерендеримся.
   useEffect(() => {
     /* no-op, рефлект через ref */
@@ -187,43 +283,19 @@ export const VoiceObservation: React.FC = () => {
           return;
         }
 
-        // v0.8 (per-device): backend — stateless-прокси, не пишет в БД и
-        // не шлёт realtime. События НЕ приходят с id с сервера. Фронт сам
-        // генерирует id и вставляет в локальный стор — единственный
-        // источник правды. Дубли исключены: нет WebSocket-вещания.
-        if (Array.isArray(result.events) && result.events.length > 0) {
-          // Небольшой offset чтобы избежать коллизий timestamp в пределах одного ответа.
-          const baseTs = Date.now();
-          const local: Omit<QoldauEvent, 'id'>[] = result.events.map(
-            (e, idx) => ({
-              childId: DEMO_PRIMARY_CHILD.id,
-              type: ((e as { type?: string }).type ?? 'voice_observation') as QoldauEvent['type'],
-              title: (e as { title?: string }).title ?? 'Голосовое наблюдение',
-              description:
-                (e as { description?: string }).description ?? result.insight ?? '',
-              // Сервер не задаёт timestamp — ставим локальное время,
-              // чуть сдвигаем каждый event для упорядочивания.
-              timestamp: new Date(baseTs + idx * 1000).toISOString(),
-              sourceRole:
-                ((e as { sourceRole?: QoldauEvent['sourceRole'] }).sourceRole ??
-                'parent') as QoldauEvent['sourceRole'],
-              status: 'ai_parsed',
-              rawText: result.transcript,
-            }),
-          );
-          // addEvents генерирует id локально и сохраняет в localStorage
-          // через persist middleware — фронт становится единственным
-          // источником правды для событий на этом устройстве.
-          addEventsLocally(local);
+        // v1.5+ (wave 2): мягкие уточняющие вопросы от backend.
+        // Если AI вернул clarificationQuestions — показываем карточку
+        // с вопросами (без принуждения, можно пропустить). События
+        // НЕ вставляются в стор сразу — ждём ответа или пропуска.
+        const questions =
+          result.ai?.clarificationQuestions ?? result.questions ?? [];
+        if (Array.isArray(questions) && questions.length > 0) {
+          setPhase('clarification_questions');
+          return;
         }
 
-        setPhase('success');
-        // Через 1.2s уходим в ленту событий, чтобы пользователь увидел
-        // "Наблюдение распознано". Роут таймлайна — /parent/events (не
-        // /parent/timeline, которого нет в router → 404).
-        window.setTimeout(() => {
-          navigate('/parent/events');
-        }, 1200);
+        // Нет уточняющих вопросов → сразу сохраняем через общий путь.
+        commitPipelineEvents(result);
       } catch (err) {
         // Backend недоступен / ошибка сети / прокси упал.
         // Fallback на Web Speech flow — приложение не ломается.
@@ -234,7 +306,7 @@ export const VoiceObservation: React.FC = () => {
         speech.start();
       }
     },
-    [addEventsLocally, navigate, speech, userRole],
+    [addEventsLocally, navigate, speech, userRole, commitPipelineEvents],
   );
 
   const handleAudioStart = useCallback(async () => {
@@ -484,6 +556,94 @@ export const VoiceObservation: React.FC = () => {
         {/* v1.0rc — honest «AI недоступен» card.
             Backend живой (HTTP прошёл), но STT/LLM вернули mock. Не выдаём
             mock-события за реальные — даём manual save или retry. */}
+        {/* v1.5+ (wave 2): мягкая карточка с уточняющими вопросами.
+    Без принуждения — можно ответить или пропустить. */}
+        {phase === 'clarification_questions' &&
+          pipelineResult &&
+          (() => {
+            const questions =
+              pipelineResult.ai?.clarificationQuestions ??
+              pipelineResult.questions ??
+              [];
+            if (questions.length === 0) return null;
+            return (
+              <QoldauCard variant="tinted-blue" padding="md" className="w-full">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-soft flex items-center justify-center shrink-0">
+                    <HelpCircle className="w-5 h-5 text-blue" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-ink">
+                      Уточнения — помогут точнее понять ситуацию
+                    </p>
+                    <p className="text-xs text-ink-2 mt-1 leading-relaxed">
+                      AI заметил несколько возможных интерпретаций. Можно
+                      ответить коротко — или пропустить, события сохранятся.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 mb-3">
+                  {questions.map((q, qIdx) => {
+                    const qid = q.id ?? `q-${qIdx}`;
+                    const answer = clarificationAnswers[qid];
+                    return (
+                      <div key={qid} className="flex flex-col gap-1.5">
+                        <p className="text-sm font-bold text-ink">{q.text}</p>
+                        {q.options && q.options.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {q.options.map((opt) => {
+                              const active = answer === opt;
+                              return (
+                                <button
+                                  key={opt}
+                                  type="button"
+                                  onClick={() =>
+                                    setClarificationAnswer(qid, opt)
+                                  }
+                                  className={`min-h-9 px-3 rounded-full text-xs font-bold border transition-colors ${
+                                    active
+                                      ? 'bg-blue text-white border-blue'
+                                      : 'bg-white border-line text-ink hover:border-blue/40'
+                                  }`}
+                                >
+                                  {opt}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            value={answer ?? ''}
+                            onChange={(e) =>
+                              setClarificationAnswer(qid, e.target.value)
+                            }
+                            placeholder="Короткий ответ…"
+                            className="h-10 px-3 rounded-2xl border border-line focus:border-blue/60 focus:outline-none text-sm"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleClarificationSkip}
+                    className="min-h-12 px-4 rounded-2xl bg-white border border-line text-ink hover:bg-bg active:scale-[0.99] transition-all text-sm font-bold"
+                  >
+                    Пропустить
+                  </button>
+                  <PrimaryAction
+                    label="Сохранить ответы"
+                    onClick={handleClarificationSubmit}
+                    variant="primary"
+                  />
+                </div>
+              </QoldauCard>
+            );
+          })()}
+
         {phase === 'ai_unavailable' && (
           <QoldauCard variant="tinted-yellow" padding="md" className="w-full">
             <div className="flex items-start gap-3 mb-3">

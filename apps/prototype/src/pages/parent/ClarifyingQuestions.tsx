@@ -117,7 +117,7 @@ export const ClarifyingQuestions: React.FC = () => {
       addEvents([...batch.extracted, batch.observation]);
     } else {
       // Fallback — сохраняем как одно observation-событие.
-      const event: Omit<QoldauEvent, 'id'> = {
+      const event = {
         childId: childId || DEMO_PRIMARY_CHILD.id,
         type: 'voice_observation' as EventType,
         title: 'Голосовое наблюдение',
@@ -131,7 +131,7 @@ export const ClarifyingQuestions: React.FC = () => {
           clarificationAnswers: { ...answers },
           source: 'voice_observation',
         },
-      };
+      } as unknown as Omit<QoldauEvent, 'id'>;
       addEvents([event]);
     }
 
