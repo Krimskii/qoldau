@@ -14,6 +14,16 @@ import { formatDate, formatTime } from '@/utils/dateFormat';
 
 type FilterType = 'all' | string;
 
+const SENSORY_TAGS = ['sound', 'light', 'touch', 'smell', 'temperature'];
+
+const SENSORY_LABELS: Record<string, string> = {
+  sound: 'Звук',
+  light: 'Свет',
+  touch: 'Тактильно',
+  smell: 'Запах',
+  temperature: 'Температура',
+};
+
 const FILTERS: Array<{ key: FilterType; label: string; tone: EventTone }> = [
   { key: 'all', label: 'Все', tone: 'teal' },
   { key: 'voice_observation', label: 'Голос', tone: 'teal' },
@@ -120,6 +130,17 @@ export const EventTimeline: React.FC = () => {
 
   const filtered = useMemo(() => {
     if (activeFilter === 'all') return events;
+    // v1.5+ (wave 2): sensory-фильтры имеют формат 'sensory:<tag>'.
+    // Для них матчим по sensoryContext (включая payload.modalities).
+    if (activeFilter.startsWith('sensory:')) {
+      const tag = activeFilter.slice('sensory:'.length);
+      return events.filter((e) => {
+        if (e.sensoryContext?.some((s) => s.toLowerCase() === tag)) return true;
+        const mods = (e.payload as { modalities?: string[] } | undefined)
+          ?.modalities;
+        return mods?.some((m) => m.toLowerCase() === tag) ?? false;
+      });
+    }
     return events.filter((e) => e.type === activeFilter);
   }, [events, activeFilter]);
 
@@ -162,6 +183,20 @@ export const EventTimeline: React.FC = () => {
     return m;
   }, [events]);
 
+  // v1.5+ (wave 2): counts по сенсорным тегам.
+  const sensoryCounts = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const tag of SENSORY_TAGS) {
+      out[tag] = events.filter((e) => {
+        if (e.sensoryContext?.some((s) => s.toLowerCase() === tag)) return true;
+        const mods = (e.payload as { modalities?: string[] } | undefined)
+          ?.modalities;
+        return mods?.some((m) => m.toLowerCase() === tag) ?? false;
+      }).length;
+    }
+    return out;
+  }, [events]);
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -199,6 +234,16 @@ export const EventTimeline: React.FC = () => {
             onClick={() => setActiveFilter(f.key)}
             label={f.label}
             count={counts[f.key]}
+          />
+        ))}
+        {/* v1.5+ (wave 2): сенсорные фильтры — отдельная группа чипов. */}
+        {SENSORY_TAGS.map((tag) => (
+          <FilterChip
+            key={`sensory:${tag}`}
+            active={activeFilter === `sensory:${tag}`}
+            onClick={() => setActiveFilter(`sensory:${tag}`)}
+            label={SENSORY_LABELS[tag] ?? tag}
+            count={sensoryCounts[tag]}
           />
         ))}
         {activeFilter !== 'all' && (

@@ -6,6 +6,9 @@ import {
   FileText,
   Lightbulb,
   Copy,
+  Ear,
+  Sun,
+  Hand,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
@@ -16,6 +19,25 @@ import { useToastStore } from '@/store/useToastStore';
 import { VoiceWaveIcon, EventTimelineIcon } from '@/components/icons';
 import { eventTypeColors, toneToColor, type EventTone } from '@/styles/tokens';
 import { formatDate, formatTime } from '@/utils/dateFormat';
+
+/**
+ * Иконки для sensory-чипов. Если метка не распознана — fallback текстом.
+ */
+const SENSORY_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
+  sound: Ear,
+  light: Sun,
+  touch: Hand,
+  smell: Sun,
+  temperature: Sun,
+};
+
+const SENSORY_LABEL: Record<string, string> = {
+  sound: 'Звук',
+  light: 'Свет',
+  touch: 'Тактильно',
+  smell: 'Запах',
+  temperature: 'Температура',
+};
 
 const SOURCE_LABEL: Record<string, string> = {
   parent: 'Записано родителем',
@@ -219,6 +241,82 @@ export const EventDetails: React.FC = () => {
         </div>
         <p className="text-sm text-ink-2 leading-relaxed">{aiHypothesis}</p>
       </QoldauCard>
+
+      {/* v1.5+ (wave 2) — ABC-секция: «что было до / произошло / после».
+        Показывается только если есть хотя бы одно из полей abc. Без
+        диагнозов — это наблюдательная структура для родителя/специалиста. */}
+      {event.abc &&
+        (event.abc.antecedent ||
+          event.abc.behavior ||
+          event.abc.consequence) && (
+          <QoldauCard variant="tinted-purple" padding="md">
+            <div className="flex items-center gap-2 mb-3">
+              <p className="text-xs font-black text-purple uppercase tracking-wide">
+                ABC — что было
+              </p>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              {event.abc.antecedent && (
+                <div className="flex gap-2">
+                  <span className="text-xs font-black text-purple uppercase w-12 flex-shrink-0 pt-0.5">
+                    До
+                  </span>
+                  <p className="text-sm text-ink-2 leading-relaxed flex-1">
+                    {event.abc.antecedent}
+                  </p>
+                </div>
+              )}
+              {event.abc.behavior && (
+                <div className="flex gap-2">
+                  <span className="text-xs font-black text-purple uppercase w-12 flex-shrink-0 pt-0.5">
+                    Что
+                  </span>
+                  <p className="text-sm text-ink-2 leading-relaxed flex-1">
+                    {event.abc.behavior}
+                  </p>
+                </div>
+              )}
+              {event.abc.consequence && (
+                <div className="flex gap-2">
+                  <span className="text-xs font-black text-purple uppercase w-12 flex-shrink-0 pt-0.5">
+                    После
+                  </span>
+                  <p className="text-sm text-ink-2 leading-relaxed flex-1">
+                    {event.abc.consequence}
+                  </p>
+                </div>
+              )}
+            </div>
+            <p className="text-[11px] text-muted mt-3 italic">
+              Наблюдение, не диагноз. Можно обсудить со специалистом.
+            </p>
+          </QoldauCard>
+        )}
+
+      {/* v1.5+ (wave 2) — sensory context чипы (звук/свет/тактильно/...). */}
+      {event.sensoryContext && event.sensoryContext.length > 0 && (
+        <QoldauCard variant="default" padding="md">
+          <p className="text-xs font-black text-muted uppercase tracking-wide mb-2">
+            Сенсорный контекст
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {event.sensoryContext.map((s) => {
+              const key = s.toLowerCase().trim();
+              const Icon = SENSORY_ICON[key];
+              const label = SENSORY_LABEL[key] ?? s;
+              return (
+                <span
+                  key={s}
+                  className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-xs font-bold border border-line bg-yellow-soft text-yellow"
+                >
+                  {Icon && <Icon className="w-3.5 h-3.5" />}
+                  {label}
+                </span>
+              );
+            })}
+          </div>
+        </QoldauCard>
+      )}
 
       {/* Suggestions — осторожный disclaimer */}
       <QoldauCard variant="tinted-warm" padding="md">

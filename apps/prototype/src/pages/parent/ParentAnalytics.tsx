@@ -86,6 +86,31 @@ export const ParentAnalytics: React.FC = () => {
   const heatTotal = heatmapTotal(heatmap);
   const heatmapDayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
+  // v1.5+ (wave 2): sensoryCounts — сколько событий помечено каждым
+  // сенсорным тегом. Используется в sensory-секции ниже.
+  const sensoryCounts = useMemo(() => {
+    const tags = ['sound', 'light', 'touch', 'smell', 'temperature'] as const;
+    const out: Record<string, number> = {};
+    for (const t of tags) {
+      out[t] = events.filter((e) => {
+        if (e.sensoryContext?.some((s) => s.toLowerCase() === t)) return true;
+        const mods = (e.payload as { modalities?: string[] } | undefined)
+          ?.modalities;
+        return mods?.some((m) => m.toLowerCase() === t) ?? false;
+      }).length;
+    }
+    return out;
+  }, [events]);
+  const sensoryTotal = Object.values(sensoryCounts).reduce((a, b) => a + b, 0);
+
+  const SENSORY_LABELS: Record<string, string> = {
+    sound: 'Звук',
+    light: 'Свет',
+    touch: 'Тактильно',
+    smell: 'Запах',
+    temperature: 'Температура',
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title="Аналитика" subtitle="Демо-данные за 7 дней" />
@@ -191,6 +216,36 @@ export const ParentAnalytics: React.FC = () => {
             </p>
           </>
         )}
+      </SectionCard>
+
+      {/* v1.5+ (wave 2): Sensory — сколько событий с сенсорными тегами. */}
+      <SectionCard title="Сенсорный контекст" accent="yellow">
+        {sensoryTotal === 0 ? (
+          <p className="text-sm text-muted italic py-2">
+            Пока нет событий с сенсорными тегами — можно отмечать при записи голосом.
+          </p>
+        ) : (
+          <div className="grid grid-cols-5 gap-2">
+            {(['sound', 'light', 'touch', 'smell', 'temperature'] as const).map(
+              (tag) => (
+                <div
+                  key={tag}
+                  className="flex flex-col items-center justify-center py-3 px-1 rounded-2xl bg-yellow-soft"
+                >
+                  <span className="text-xl font-black text-yellow">
+                    {sensoryCounts[tag] ?? 0}
+                  </span>
+                  <span className="text-[10px] text-muted mt-0.5 text-center">
+                    {SENSORY_LABELS[tag]}
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+        )}
+        <p className="text-[11px] text-muted mt-3 italic">
+          Наблюдение за сенсорными стимулами. Не медицинский диагноз.
+        </p>
       </SectionCard>
 
       {/* Triggers */}
