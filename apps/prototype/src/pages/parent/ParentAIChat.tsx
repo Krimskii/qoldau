@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, Send } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { DEMO_PRIMARY_CHILD, getDemoTimelineSummary } from '@/data/demoDataset';
+import { DEMO_PRIMARY_CHILD, getFamilyChildName, getDemoTimelineSummary } from '@/data/demoDataset';
 
 interface Message {
   role: 'user' | 'ai';
@@ -22,7 +22,16 @@ const initialMessages: Message[] = [
   },
 ];
 
-function generateAnswer(question: string, summary: ReturnType<typeof getDemoTimelineSummary>): string {
+function generateAnswer(
+  question: string,
+  summary: ReturnType<typeof getDemoTimelineSummary>,
+  hasData: boolean,
+): string {
+  // Если данных пока нет — честный ответ вместо выдуманных чисел.
+  if (!hasData) {
+    return 'Похоже, наблюдений пока немного — добавьте голосом или AAC-карточкой, и я смогу ответить точнее. Это наблюдение, не диагноз.';
+  }
+
   const lower = question.toLowerCase();
   if (lower.includes('повторялос') || lower.includes('чаще')) {
     return `Похоже, в последние дни чаще всего встречаются события типа «Вода» (${summary.byType.water}) и «AAC-карточки» (${summary.byType.aac_card}). Это наблюдение, не диагноз.`;
@@ -44,6 +53,9 @@ export const ParentAIChat: React.FC = () => {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const summary = getDemoTimelineSummary(DEMO_PRIMARY_CHILD.id);
+  const hasData = summary.total > 0;
+  // Реальное имя ребёнка (если семья настроила через FamilySetupCard).
+  const childName = getFamilyChildName() ?? DEMO_PRIMARY_CHILD.name;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -55,7 +67,10 @@ export const ParentAIChat: React.FC = () => {
     setMessages((prev) => [...prev, { role: 'user', text: question }]);
     setInput('');
     setTimeout(() => {
-      setMessages((prev) => [...prev, { role: 'ai', text: generateAnswer(question, summary) }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'ai', text: generateAnswer(question, summary, hasData) },
+      ]);
     }, 600);
   };
 
@@ -63,7 +78,7 @@ export const ParentAIChat: React.FC = () => {
     <div className="flex flex-col gap-3 h-[calc(100vh-180px)]">
       <PageHeader
         title="AI-помощник"
-        subtitle={`Спросите по наблюдениям ${DEMO_PRIMARY_CHILD.name}`}
+        subtitle={`Спросите по наблюдениям ${childName}`}
         showBack
         rightAction={<Sparkles className="w-5 h-5 text-teal" />}
       />

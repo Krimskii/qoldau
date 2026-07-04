@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { FileText, Download, Mail, Calendar, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Button } from '@/components/ui/Button';
 import { useToastStore } from '@/store/useToastStore';
+import { useEventStore } from '@/store/useEventStore';
+import { useDemoControlsStore } from '@/store/useDemoControlsStore';
+import { DEMO_CHILDREN, getFamilyChildName } from '@/data/demoDataset';
+import { formatDate } from '@/utils/dateFormat';
 
 const REPORT_TYPES = [
   { key: 'weekly', title: 'Недельный отчёт', subtitle: 'Итоги за неделю', icon: Calendar, accent: 'teal' },
@@ -19,13 +23,57 @@ const ACCENT_CLASSES: Record<string, { bg: string; text: string; pill: string }>
   green: { bg: 'bg-green-soft', text: 'text-green', pill: 'bg-green text-white' },
 };
 
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
 export const Reports: React.FC = () => {
   const { showToast } = useToastStore();
+  const { events } = useEventStore();
+  const { selectedChildId } = useDemoControlsStore();
+  const currentChild =
+    DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
+  // Реальное имя ребёнка (с учётом семейной настройки через FamilySetupCard).
+  const childName = getFamilyChildName() ?? currentChild.name;
+
+  // Все события выбранного ребёнка за последнюю неделю.
+  const weekEvents = useMemo(() => {
+    const since = Date.now() - WEEK_MS;
+    return events.filter(
+      (e) =>
+        e.childId === currentChild.id &&
+        new Date(e.timestamp).getTime() >= since,
+    );
+  }, [events, currentChild.id]);
+
+  const total = weekEvents.length;
+  const aacCount = weekEvents.filter(
+    (e) => e.type === 'aac_card' || e.type === 'phrase',
+  ).length;
+  const calmCount = weekEvents.filter((e) => e.type === 'calm_mode').length;
+  // «Новых сигналов» = уникальные title за период (грубая оценка).
+  const newSignals = new Set(
+    weekEvents.map((e) => `${e.type}:${e.title}`),
+  ).size;
+
+  const hasData = total > 0;
+
+  // Период отчёта — от самой ранней до самой поздней записи, либо текущая неделя.
+  const periodLabel = (() => {
+    if (weekEvents.length === 0) {
+      const today = formatDate(new Date());
+      return `${today} · Недельный`;
+    }
+    const timestamps = weekEvents
+      .map((e) => new Date(e.timestamp).getTime())
+      .sort((a, b) => a - b);
+    const from = formatDate(new Date(timestamps[0]));
+    const to = formatDate(new Date(timestamps[timestamps.length - 1]));
+    return `${from} – ${to} · Недельный`;
+  })();
 
   const handleShareReport = async () => {
     const shareData = {
       title: 'Qoldau — отчёт наблюдений',
-      text: 'Отчёт наблюдений Qoldau (профиль наблюдений, не диагноз).',
+      text: `Профиль наблюдений ${childName} (Qoldau). Это наблюдения, не диагноз.`,
     };
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
@@ -49,7 +97,7 @@ export const Reports: React.FC = () => {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Отчёты"
-        subtitle="Пример отчёта (демо)"
+        subtitle="По данным Event Timeline"
         showBack
       />
 
@@ -60,8 +108,10 @@ export const Reports: React.FC = () => {
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
               <p className="text-xs font-black uppercase tracking-wide opacity-80">Qoldau AI · Отчёт</p>
-              <h2 className="text-2xl font-black mt-1 leading-tight">Алихан, 4 года</h2>
-              <p className="text-sm opacity-90 mt-1">24–30 июня 2026 · Недельный</p>
+              <h2 className="text-2xl font-black mt-1 leading-tight">
+                {childName}, {currentChild.age} лет
+              </h2>
+              <p className="text-sm opacity-90 mt-1">{periodLabel}</p>
             </div>
             <span className="px-2.5 py-1 rounded-full bg-white/20 text-xs font-black flex-shrink-0">
               MVP
@@ -70,53 +120,79 @@ export const Reports: React.FC = () => {
         </div>
 
         <div className="p-5 space-y-5">
-          {/* Итоги недели */}
+          {/* Итоги недели — реальные данные */}
           <section>
             <SectionHeader number="1" title="Итоги недели" />
-            <p className="text-sm text-ink-2 leading-relaxed">
-              Зафиксировано 32 события от родителя, тьютора и ребёнка. Алихан хорошо
-              адаптировался к новому расписанию. Замечено 12 эпизодов нервозности,
-              преимущественно связанных с шумом и переходами.
-            </p>
+            {hasData ? (
+              <p className="text-sm text-ink-2 leading-relaxed">
+                Зафиксировано {total} событий за неделю
+                {total > 0 && ' от родителя, тьютора и ребёнка'}. Это наблюдения,
+                не диагноз. Можно продолжить наблюдать, чтобы увидеть динамику.
+              </p>
+            ) : (
+              <p className="text-sm text-ink-2 leading-relaxed">
+                Пока мало наблюдений — добавьте голосом или AAC-карточкой, и
+                здесь появятся итоги недели. Это наблюдения, не диагноз.
+              </p>
+            )}
           </section>
 
-          {/* KPI grid */}
+          {/* KPI grid — реальные подсчёты */}
           <section>
             <SectionHeader number="2" title="Ключевые показатели" />
             <div className="grid grid-cols-3 gap-2.5">
-              <KpiCard label="AAC карточек" value="+15%" sub="за неделю" color="teal" />
-              <KpiCard label="Спокойный режим" value="5 раз" sub="помог в 80%" color="green" />
-              <KpiCard label="Новых сигналов" value="+3" sub="звуки и слова" color="blue" />
+              <KpiCard
+                label="AAC / фраз"
+                value={hasData ? String(aacCount) : '—'}
+                sub="за неделю"
+                color="teal"
+              />
+              <KpiCard
+                label="Спокойный режим"
+                value={hasData ? `${calmCount} раз` : '—'}
+                sub="за неделю"
+                color="green"
+              />
+              <KpiCard
+                label="Новых сигналов"
+                value={hasData ? String(newSignals) : '—'}
+                sub="за неделю"
+                color="blue"
+              />
             </div>
           </section>
 
-          {/* Ключевые наблюдения */}
+          {/* Ключевые наблюдения — реальные события или empty state */}
           <section>
             <SectionHeader number="3" title="Ключевые наблюдения" />
-            <ul className="space-y-2 text-sm text-ink-2">
-              <Observation
-                label="Увеличилось использование AAC"
-                detail="Карточки «Вода», «Туалет», «Помощь» — без напоминания"
-              />
-              <Observation
-                label="Пауза помогает"
-                detail="В 4 из 5 эпизодов нервозности ребёнок успокоился после 2-3 мин"
-              />
-              <Observation
-                label="Новый звук «ва»"
-                detail="Подтверждён 4 раза в разных контекстах — связан с водой"
-              />
-            </ul>
+            {hasData ? (
+              <ul className="space-y-2 text-sm text-ink-2">
+                {weekEvents.slice(0, 4).map((e) => (
+                  <li key={e.id} className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal mt-2 flex-shrink-0" />
+                    <div>
+                      <p className="font-black text-ink">{e.title}</p>
+                      <p className="text-muted leading-relaxed line-clamp-2">{e.description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted leading-relaxed">
+                Пока нет наблюдений за неделю. Когда появятся — здесь будет
+                краткий обзор.
+              </p>
+            )}
           </section>
 
-          {/* Рекомендации */}
+          {/* Рекомендации — осторожные формулировки, без medical claims */}
           <section>
-            <SectionHeader number="4" title="Рекомендации" />
+            <SectionHeader number="4" title="Что можно попробовать" />
             <div className="bg-yellow-soft border border-yellow/20 rounded-2xl p-3">
               <p className="text-sm text-ink-2 leading-relaxed italic">
-                Похоже, шум является основным триггером. Рекомендуется усилить сенсорную
-                поддержку в групповых занятиях и предупреждать за 1-2 минуты до смены
-                активности. <strong className="not-italic">Это наблюдение, не диагноз.</strong>
+                Похоже, что повторяющиеся сигналы и контексты помогут увидеть
+                динамику. Можно продолжить наблюдать и обсудить с семьёй.{' '}
+                <strong className="not-italic">Это наблюдение, не диагноз.</strong>
               </p>
             </div>
           </section>
@@ -183,12 +259,12 @@ const SectionHeader: React.FC<{ number: string; title: string }> = ({ number, ti
   </div>
 );
 
-const KpiCard: React.FC<{ label: string; value: string; sub: string; color: 'teal' | 'blue' | 'green' }> = ({
-  label,
-  value,
-  sub,
-  color,
-}) => {
+const KpiCard: React.FC<{
+  label: string;
+  value: string;
+  sub: string;
+  color: 'teal' | 'blue' | 'green';
+}> = ({ label, value, sub, color }) => {
   const valueClass = {
     teal: 'text-teal-dark',
     blue: 'text-blue-dark',
@@ -202,13 +278,3 @@ const KpiCard: React.FC<{ label: string; value: string; sub: string; color: 'tea
     </div>
   );
 };
-
-const Observation: React.FC<{ label: string; detail: string }> = ({ label, detail }) => (
-  <li className="flex items-start gap-2">
-    <span className="w-1.5 h-1.5 rounded-full bg-teal mt-2 flex-shrink-0" />
-    <div>
-      <p className="font-black text-ink">{label}</p>
-      <p className="text-muted leading-relaxed">{detail}</p>
-    </div>
-  </li>
-);

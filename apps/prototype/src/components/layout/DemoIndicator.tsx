@@ -4,12 +4,30 @@ import { X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-rea
 import { useDemoStore, DEMO_STEPS } from '@/store/useDemoStore';
 
 /**
+ * Экраны, на которых демо-панель НЕ показывается и не навигирует
+ * автоматически. Это «живые» интерактивные экраны: запись голоса,
+ * consent gate, реальные действия ребёнка/тьютора. Демо-панель
+ * наезжает на эти экраны и мешает — поэтому скрываемся.
+ */
+const LIVE_PATHS = [
+  '/parent/voice',     // запись голоса
+  '/parent/clarify',   // уточняющие вопросы
+  '/parent/ai-review', // AI-разбор (форма принятия)
+  '/child/speak',      // голосовая запись ребёнка
+  '/child/voice',      // alias
+  '/child/calm',       // CalmMode — focus экран
+  '/child/favorites',  // редактирование избранного
+  '/auth/login',       // вход
+];
+
+/**
  * DemoIndicator — collapsible bottom bar with guided-tour controls.
  *
  * - Collapsed by default: shows only a small handle "Шаг X из Y · Title".
  * - Expanded: shows hint + progress bar + Назад/Далее buttons.
- * - «Назад» on the first step exits demo and returns to /overview
- *   (the previous behaviour was just disabled, which felt broken).
+ * - «Назад» on the first step exits demo and returns to /overview.
+ * - НЕ показывается на «живых» экранах (запись, consent, focus) —
+ *   чтобы не наезжать на запись голоса или кнопку SOS.
  */
 export const DemoIndicator: React.FC = () => {
   const navigate = useNavigate();
@@ -23,27 +41,29 @@ export const DemoIndicator: React.FC = () => {
     getProgress,
   } = useDemoStore();
 
-  // Persist collapsed state across renders but reset when demo starts
   const [expanded, setExpanded] = useState(false);
 
   const progress = getProgress();
   const currentStep = DEMO_STEPS[currentStepIndex];
   const currentPath = location.pathname;
+  const isLiveScreen = LIVE_PATHS.some((p) => currentPath.startsWith(p));
 
-  // Auto-navigate to the active demo step whenever it changes
+  // Авто-navigate только если мы НЕ на живом экране (запись/consent).
+  // Иначе демо может перехватить старт записи голоса.
   useEffect(() => {
-    if (isDemoMode && currentPath !== currentStep.path) {
+    if (isDemoMode && !isLiveScreen && currentPath !== currentStep.path) {
       navigate(currentStep.path);
     }
-  }, [isDemoMode, currentStepIndex, currentStep.path, currentPath, navigate]);
+  }, [isDemoMode, isLiveScreen, currentStepIndex, currentStep.path, currentPath, navigate]);
 
-  // Reset expansion to collapsed when demo mode toggles
+  // Reset expansion при любом изменении isDemoMode.
   useEffect(() => {
-    if (!isDemoMode) setExpanded(false);
-    else setExpanded(false);
+    setExpanded(false);
   }, [isDemoMode]);
 
+  // Не показываем панель когда демо не активно ИЛИ мы на живом экране.
   if (!isDemoMode) return null;
+  if (isLiveScreen) return null;
 
   const isLastStep = currentStepIndex === DEMO_STEPS.length - 1;
   const isFirstStep = currentStepIndex === 0;
@@ -55,7 +75,6 @@ export const DemoIndicator: React.FC = () => {
 
   const handleBack = () => {
     if (isFirstStep) {
-      // On the first step «Назад» means «exit demo».
       handleExit();
       return;
     }
@@ -65,10 +84,17 @@ export const DemoIndicator: React.FC = () => {
   return (
     <div
       className="fixed left-0 right-0 z-50 pointer-events-none"
-      style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
+      style={{
+        // Над BottomNav (bottom: 0, ~64px высота). 80px даёт
+        // зазор чтобы панель не залезала на nav.
+        bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+      }}
     >
       <div className="max-w-[430px] mx-auto pointer-events-auto">
-        <div className="bg-gradient-to-br from-teal to-teal-dark text-white shadow-card-hover" style={{ borderRadius: '16px 16px 0 0' }}>
+        <div
+          className="bg-gradient-to-br from-teal to-teal-dark text-white shadow-card-hover"
+          style={{ borderRadius: '16px 16px 0 0' }}
+        >
           {/* Handle — always visible */}
           <button
             onClick={() => setExpanded((v) => !v)}
