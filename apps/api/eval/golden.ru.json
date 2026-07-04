@@ -1,0 +1,74 @@
+[
+  {
+    "transcript": "Утром ребёнок съел кашу и попил воду из чашки.",
+    "expect": { "minEvents": 2, "types": ["food", "water"], "hasAbc": false, "sensory": [] }
+  },
+  {
+    "transcript": "После прогулки ребёнок уснул в машине, а потом проснулся спокойный.",
+    "expect": { "minEvents": 2, "types": ["sleep", "state"], "hasAbc": false, "sensory": [] }
+  },
+  {
+    "transcript": "Ребёнок сказал ту-ту, показал на дверь и сел на горшок.",
+    "expect": { "minEvents": 2, "types": ["communication", "toilet"], "hasAbc": false, "sensory": [] }
+  },
+  {
+    "transcript": "В магазине было громко, ребёнок закрывал уши, плакал и хотел уйти.",
+    "expect": { "minEvents": 2, "types": ["sensory", "behavior"], "hasAbc": true, "sensory": ["шум"] }
+  },
+  {
+    "transcript": "На занятии ребёнок сказал мама, потом жестом попросил ещё печенье.",
+    "expect": { "minEvents": 2, "types": ["communication", "food"], "hasAbc": true, "sensory": [] }
+  },
+  {
+    "transcript": "В очереди было много людей, ребёнок нервничал, убегал к выходу, после этого успокоился на улице.",
+    "expect": { "minEvents": 2, "types": ["sensory", "behavior"], "hasAbc": true, "sensory": ["толпа"] }
+  },
+  {
+    "transcript": "После яркого света на празднике ребёнок зажмурился и стал кричать.",
+    "expect": { "minEvents": 2, "types": ["sensory", "behavior"], "hasAbc": true, "sensory": ["свет"] }
+  },
+  {
+    "transcript": "Ребёнок устал после дороги, был сонный и лёг отдыхать.",
+    "expect": { "minEvents": 1, "types": ["state"], "hasAbc": false, "sensory": [] }
+  },
+  {
+    "transcript": "После обеда ребёнок попросил сок словом дай и выпил половину стакана.",
+    "expect": { "minEvents": 2, "types": ["communication", "water"], "hasAbc": true, "sensory": [] }
+  },
+  {
+    "transcript": "Ребёнок поел суп, потом сказал нет и отодвинул тарелку.",
+    "expect": { "minEvents": 2, "types": ["food", "communication"], "hasAbc": true, "sensory": [] }
+  },
+  {
+    "transcript": "Перед сном ребёнок был спокойный, попросил маму и уснул.",
+    "expect": { "minEvents": 3, "types": ["state", "communication", "sleep"], "hasAbc": true, "sensory": [] }
+  },
+  {
+    "transcript": "В комнате громко работал телевизор, ребёнок закрыл уши и ушёл в коридор.",
+    "expect": { "minEvents": 2, "types": ["sensory", "behavior"], "hasAbc": true, "sensory": ["шум"] }
+  },
+  {
+    "transcript": "На прогулке ребёнок показал жестом пить и попил воды.",
+    "expect": { "minEvents": 2, "types": ["communication", "water"], "hasAbc": true, "sensory": [] }
+  },
+  {
+    "transcript": "Ребёнок пописал в подгузник, потом показал на туалет.",
+    "expect": { "minEvents": 2, "types": ["toilet", "communication"], "hasAbc": true, "sensory": [] }
+  },
+  {
+    "transcript": "После запаха еды ребёнок отвернулся, сказал нет и не стал есть.",
+    "expect": { "minEvents": 2, "types": ["sensory", "communication"], "hasAbc": true, "sensory": ["запах"] }
+  },
+  {
+    "transcript": "Ребёнок был возбуждённый после гостей, бегал по комнате и потом успокоился.",
+    "expect": { "minEvents": 2, "types": ["state", "behavior"], "hasAbc": true, "sensory": [] }
+  },
+  {
+    "transcript": "Сегодня был обычный день, подробностей пока нет.",
+    "expect": { "minEvents": 0, "types": [], "hasAbc": false, "sensory": [] }
+  },
+  {
+    "transcript": "Ребёнок съел печенье, попросил ещё жестом и улыбался.",
+    "expect": { "minEvents": 2, "types": ["food", "communication"], "hasAbc": false, "sensory": [] }
+  }
+]
