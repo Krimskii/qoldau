@@ -77,7 +77,18 @@ function normalizeEventType(type: string): EventType {
 }
 
 function toStatelessEvent(params: {
-  parsed: { timestamp?: string; title: string; description: string; type: string };
+  parsed: {
+    timestamp?: string;
+    title: string;
+    description: string;
+    type: string;
+    abc?: {
+      antecedent?: string;
+      behavior?: string;
+      consequence?: string;
+    };
+    sensoryContext?: string[];
+  };
   sourceRole: SourceRole;
 }): AudioPipelineEvent {
   return {
@@ -86,6 +97,8 @@ function toStatelessEvent(params: {
     description: params.parsed.description,
     timestamp: params.parsed.timestamp,
     sourceRole: params.sourceRole,
+    abc: params.parsed.abc,
+    sensoryContext: params.parsed.sensoryContext,
   };
 }
 

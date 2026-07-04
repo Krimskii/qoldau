@@ -50,5 +50,6 @@ aiRouter.get('/health', (_req, res) => {
     enabled: status.enabled,
     mode: status.source,
     model: status.model,
+    promptVersion: status.promptVersion,
   });
 });
