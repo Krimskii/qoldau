@@ -194,22 +194,39 @@ export const VoiceObservation: React.FC = () => {
         if (Array.isArray(result.events) && result.events.length > 0) {
           // Небольшой offset чтобы избежать коллизий timestamp в пределах одного ответа.
           const baseTs = Date.now();
+          const recordedAt = new Date().toISOString();
           const local: Omit<QoldauEvent, 'id'>[] = result.events.map(
-            (e, idx) => ({
-              childId: DEMO_PRIMARY_CHILD.id,
-              type: ((e as { type?: string }).type ?? 'voice_observation') as QoldauEvent['type'],
-              title: (e as { title?: string }).title ?? 'Голосовое наблюдение',
-              description:
-                (e as { description?: string }).description ?? result.insight ?? '',
-              // Сервер не задаёт timestamp — ставим локальное время,
-              // чуть сдвигаем каждый event для упорядочивания.
-              timestamp: new Date(baseTs + idx * 1000).toISOString(),
-              sourceRole:
-                ((e as { sourceRole?: QoldauEvent['sourceRole'] }).sourceRole ??
-                'parent') as QoldauEvent['sourceRole'],
-              status: 'ai_parsed',
-              rawText: result.transcript,
-            }),
+            (e, idx) => {
+              const occurredAt = new Date(baseTs + idx * 1000).toISOString();
+              const raw = e as {
+                type?: string;
+                title?: string;
+                description?: string;
+                sourceRole?: QoldauEvent['sourceRole'];
+                abc?: QoldauEvent['abc'];
+                sensoryContext?: string[];
+              };
+              return {
+                childId: DEMO_PRIMARY_CHILD.id,
+                type: (raw.type ?? 'voice_observation') as QoldauEvent['type'],
+                title: raw.title ?? 'Голосовое наблюдение',
+                description: raw.description ?? result.insight ?? '',
+                // Сервер не задаёт timestamp — ставим локальное время,
+                // чуть сдвигаем каждый event для упорядочивания.
+                timestamp: occurredAt,
+                occurredAt,
+                recordedAt,
+                // v1.5+: явно 'voice' — пришло из голосового пайплайна.
+                source: 'voice',
+                sourceRole: (raw.sourceRole ?? 'parent') as QoldauEvent['sourceRole'],
+                status: 'ai_parsed',
+                schemaVersion: 3,
+                rawText: result.transcript,
+                // Прокидываем структурированные поля, если backend их прислал.
+                abc: raw.abc,
+                sensoryContext: raw.sensoryContext,
+              };
+            },
           );
           // addEvents генерирует id локально и сохраняет в localStorage
           // через persist middleware — фронт становится единственным

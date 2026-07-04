@@ -9,7 +9,7 @@
  * - было легко добавить persistence / telemetry в одном месте.
  */
 
-import { QoldauEvent, EventStatus } from '@/types/qoldau';
+import { QoldauEvent, EventStatus, EventSource } from '@/types/qoldau';
 import { AIParserResult, ClarificationQuestion, ParsedEvent } from '../ai/aiParser.types';
 import { STTSource } from '../stt/sttClient.types';
 
@@ -77,6 +77,8 @@ export function createEventsFromAIReview(
         ? toIsoFromShortTime(p.timestamp, timestamp)
         : timestamp,
       sourceRole: input.sourceRole,
+      // Voice pipeline — всегда source='voice'.
+      source: 'voice',
       status,
       confidence: p.confidence,
       rawText: finalTranscript,
@@ -101,6 +103,8 @@ export function createEventsFromAIReview(
     description: finalTranscript || 'Наблюдение без расшифровки',
     timestamp,
     sourceRole: input.sourceRole,
+    // Voice pipeline — всегда source='voice'.
+    source: 'voice',
     status,
     confidence: avgConfidence(input.parsed.events),
     rawText: finalTranscript,
@@ -157,6 +161,8 @@ export function createVoiceObservationEvent(args: {
     description: (args.editedTranscript ?? args.transcript) || 'Наблюдение без расшифровки',
     timestamp: new Date().toISOString(),
     sourceRole: args.sourceRole,
+    // Voice pipeline — всегда source='voice'.
+    source: 'voice',
     status: args.status ?? 'confirmed',
     confidence: 0.8,
     rawText: args.editedTranscript ?? args.transcript,
@@ -288,13 +294,35 @@ interface MakeEventInput {
   timestamp: string;
   sourceRole: QoldauEvent['sourceRole'];
   status: EventStatus;
+  /**
+   * Конвейер-источник события. v1.5+: если не передан,
+   * выводится из sourceRole (child→child_ui, иначе→manual).
+   */
+  source?: EventSource;
   confidence?: number;
   rawText?: string;
   linkedEventIds: string[];
   payload: Record<string, unknown>;
+  /** ABC (antecedent/behavior/consequence) — опционально. */
+  abc?: QoldauEvent['abc'];
+  /** Сенсорный контекст — массив меток (звук/свет/тач/…). */
+  sensoryContext?: string[];
+  /** AI-метаданные (если событие проходило через пайплайн). */
+  ai?: QoldauEvent['ai'];
+  /** Точное время события (по наблюдению). Если не передано — = timestamp. */
+  occurredAt?: string;
 }
 
 function makeEvent(i: MakeEventInput): QoldauEvent {
+  const recordedAt = new Date().toISOString();
+  const occurredAt = i.occurredAt ?? i.timestamp;
+  const source: EventSource =
+    i.source ??
+    (i.sourceRole === 'child'
+      ? 'child_ui'
+      : i.sourceRole === 'ai'
+        ? 'voice'
+        : 'manual');
   return {
     id: newId(),
     childId: i.childId,
@@ -302,12 +330,19 @@ function makeEvent(i: MakeEventInput): QoldauEvent {
     title: i.title,
     description: i.description,
     timestamp: i.timestamp,
+    occurredAt,
+    recordedAt,
+    source,
     sourceRole: i.sourceRole,
     status: i.status,
+    schemaVersion: 3,
     confidence: i.confidence,
     rawText: i.rawText,
     linkedEventIds: i.linkedEventIds,
     payload: i.payload,
+    abc: i.abc,
+    sensoryContext: i.sensoryContext,
+    ai: i.ai,
   };
 }
 
