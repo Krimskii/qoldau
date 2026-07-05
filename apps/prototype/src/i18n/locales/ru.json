@@ -110,7 +110,25 @@
     },
     "aiReview": {
       "title": "AI-разбор",
-      "subtitle": "Проверьте и подтвердите"
+      "subtitle": "Проверьте и подтвердите",
+      "processing": "AI обрабатывает:",
+      "processingHint": "Подождите немного.",
+      "transcriptLabel": "Исходная фраза",
+      "editBtn": "Изменить",
+      "noEvents": "AI не смог выделить события. Попробуйте описать подробнее.",
+      "needClarification": "Нужно уточнение",
+      "eventCount": "AI выделил {{count}} {{word}}",
+      "eventWordSingular": "событие",
+      "eventWordFew": "события",
+      "eventWordMany": "событий",
+      "defaultInsight": "Это наблюдение, не диагноз. Можно переформулировать или отклонить.",
+      "aiObservation": "AI-наблюдение",
+      "dislikeBtn": "Не нравится",
+      "saveBtn": "Уточнить и сохранить",
+      "discardBtn": "Не сохранять",
+      "hintFooter": "События появятся в Event Timeline после вашего подтверждения на следующем шаге.",
+      "ariaLabelEvent": "Событие: {{title}}",
+      "confidence": "Уверенность {{percent}}%"
     },
     "clarify": {
       "title": "Уточняем",
