@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Mic,
   ChevronRight,
@@ -16,18 +17,15 @@ import { useEventStore } from '@/store/useEventStore';
 import { formatTime } from '@/utils/dateFormat';
 import { DEMO_PRIMARY_CHILD, DEMO_TUTORS } from '@/data/demoDataset';
 
-const HINTS = [
-  'Перед переходом — предупреждайте за 1–2 минуты.',
-  'Пауза 2–3 минуты часто помогает при нервозности.',
-  'Используйте визуальное расписание для занятий.',
-  'AAC карточки «Туалет» и «Вода» подтверждены ребёнком.',
-];
-
 export const TutorHome: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const child = DEMO_PRIMARY_CHILD;
   const tutor = DEMO_TUTORS[0];
   const { events } = useEventStore();
+
+  // Локализованные подсказки
+  const hints = t('tutor.home.hints', { returnObjects: true }) as string[];
 
   const tutorEvents = useMemo(
     () =>
@@ -39,7 +37,10 @@ export const TutorHome: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title={`${child.name}, ${child.age} лет`} subtitle={tutor.scheduleToday.split('·')[0].trim() || 'Сегодня'} />
+      <PageHeader
+        title={`${child.name}, ${child.age} ${t('parent.profile.yearsOld', { defaultValue: 'лет' })}`}
+        subtitle={tutor.scheduleToday.split('·')[0].trim() || t('tutor.home.today')}
+      />
 
       {/* Status */}
       <QoldauCard variant="tinted-green" padding="md">
@@ -55,7 +56,7 @@ export const TutorHome: React.FC = () => {
       </QoldauCard>
 
       {/* Schedule */}
-      <SectionCard title="Расписание" accent="purple">
+      <SectionCard title={t('tutor.home.schedule')} accent="purple">
         <div className="flex items-start gap-3">
           <Calendar className="w-5 h-5 text-purple flex-shrink-0 mt-0.5" />
           <p className="text-sm text-ink-2 leading-relaxed flex-1">
@@ -68,23 +69,23 @@ export const TutorHome: React.FC = () => {
       <button
         onClick={() => navigate('/tutor/voice')}
         className="w-full rounded-3xl p-4 bg-gradient-to-br from-teal to-teal-dark text-white font-bold text-base flex items-center gap-3 shadow-card hover:shadow-card-hover transition-shadow active:scale-[0.98]"
-        aria-label="Наговорить событие"
+        aria-label={t('tutor.home.voiceCtaAria')}
       >
         <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
           <Mic className="w-6 h-6" />
         </div>
-        <span className="flex-1 text-left">Наговорить событие</span>
+        <span className="flex-1 text-left">{t('tutor.home.voiceCta')}</span>
         <ChevronRight className="w-5 h-5 opacity-90" />
       </button>
 
-      {/* Hints — общие рекомендации (демо, не персональные) */}
-      <SectionCard title={`Подсказки для ${child.name}`} accent="purple">
+      {/* Hints */}
+      <SectionCard title={t('tutor.home.hintsTitle', { childName: child.name })} accent="purple">
         <div className="flex items-start gap-2 mb-3">
           <CircleHelp className="w-4 h-4 text-purple flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-muted">Общие рекомендации · примеры (демо)</p>
+          <p className="text-xs text-muted">{t('tutor.home.statusHint')}</p>
         </div>
         <ul className="space-y-2">
-          {HINTS.map((hint, i) => (
+          {hints.map((hint, i) => (
             <li key={i} className="text-sm text-ink-2 leading-relaxed flex gap-2">
               <span className="text-purple mt-1">•</span>
               {hint}
@@ -94,10 +95,10 @@ export const TutorHome: React.FC = () => {
       </SectionCard>
 
       {/* Recent tutor events */}
-      <SectionCard title="Мои последние наблюдения" accent="teal">
+      <SectionCard title={t('tutor.home.recentTitle')} accent="teal">
         {tutorEvents.length === 0 ? (
           <p className="text-sm text-muted text-center py-3">
-            Пока нет наблюдений за сегодня
+            {t('tutor.home.recentEmpty')}
           </p>
         ) : (
           <div>
@@ -129,14 +130,14 @@ export const TutorHome: React.FC = () => {
           onClick={() => navigate('/tutor/child-profile')}
           className="h-12 rounded-2xl bg-white border border-line text-ink font-bold text-sm flex items-center justify-center gap-1.5 hover:bg-bg transition-colors"
         >
-          Профиль ребёнка
+          {t('tutor.home.childProfileBtn')}
         </button>
         <button
           onClick={() => navigate('/tutor/report')}
-          className="h-12 rounded-2xl bg-gradient-to-br from-purple to-[#5e3eb4] text-white font-bold text-sm flex items-center justify-center gap-1.5 shadow-card hover:shadow-card-hover transition-shadow"
+          className="h-12 rounded-2xl bg-gradient-to-br from-purple to-purple-dark text-white font-bold text-sm flex items-center justify-center gap-1.5 shadow-card hover:shadow-card-hover transition-shadow"
         >
           <FileText className="w-4 h-4" />
-          Отчёт родителю
+          {t('tutor.home.reportBtn')}
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Mic, MicOff } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { VoiceWave } from '@/components/ui/VoiceWave';
@@ -8,6 +9,7 @@ import { useElapsedTimer } from '@/hooks/useElapsedTimer';
 import { formatDuration } from '@/utils/formatDuration';
 
 export const TutorVoice: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { startRecording, stopRecording } = useVoiceObservationStore();
   const timer = useElapsedTimer();
@@ -25,27 +27,24 @@ export const TutorVoice: React.FC = () => {
 
   const handleRecord = () => (timer.isActive ? stopRec() : startRec());
 
-  const examples = [
-    'Использовал визуальное расписание, переходы прошли спокойнее',
-    'Закрывал уши при громкой музыке, наушники помогли',
-    'Попросил паузу — помогло',
-  ];
+  // Локализованные примеры наблюдений
+  const examples = t('tutor.voice.examples', { returnObjects: true }) as string[];
 
   return (
     <div className="flex flex-col gap-6 min-h-[70vh]">
       <PageHeader
-        title="Запись наблюдения"
-        subtitle="Говорите обычным языком"
+        title={t('tutor.voice.title')}
+        subtitle={t('tutor.voice.subtitle')}
         showBack
       />
 
       <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
         <button
           onClick={handleRecord}
-          aria-label={timer.isActive ? 'Остановить запись' : 'Начать запись'}
+          aria-label={timer.isActive ? t('tutor.voice.stopAria') : t('tutor.voice.startAria')}
           className={`w-48 h-48 rounded-full flex items-center justify-center transition-all active:scale-95 ${
             timer.isActive
-              ? 'bg-gradient-to-br from-coral to-[#cc251d]'
+              ? 'bg-gradient-to-br from-coral to-coral-dark'
               : 'bg-gradient-to-br from-teal to-teal-dark'
           }`}
           style={{
@@ -74,13 +73,15 @@ export const TutorVoice: React.FC = () => {
 
         {!timer.isActive && (
           <p className="text-sm text-muted text-center max-w-xs">
-            Опишите, что произошло на занятии. AI предложит структуру.
+            {t('tutor.voice.hint')}
           </p>
         )}
       </div>
 
       <div>
-        <p className="text-xs font-bold text-muted mb-2 px-1">Примеры наблюдений</p>
+        <p className="text-xs font-bold text-muted mb-2 px-1">
+          {t('tutor.voice.examplesTitle')}
+        </p>
         <div className="flex flex-col gap-2">
           {examples.map((ex, i) => (
             <div
@@ -98,7 +99,7 @@ export const TutorVoice: React.FC = () => {
           onClick={handleRecord}
           className="w-full h-13 rounded-2xl bg-coral text-white font-bold text-base shadow-card active:scale-[0.98] transition-all"
         >
-          Остановить запись
+          {t('tutor.voice.stopAria')}
         </button>
       )}
     </div>
