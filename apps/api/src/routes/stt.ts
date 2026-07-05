@@ -10,10 +10,12 @@
 import { Router } from 'express';
 import { sttService } from '../services/sttService.js';
 import { sttRateLimit } from '../middleware/rateLimit.js';
+import { validateBody } from '../middleware/validateBody.js';
+import { sttTranscribeBodySchema } from '../validation/requestSchemas.js';
 
 export const sttRouter = Router();
 
-sttRouter.post('/transcribe', sttRateLimit, async (req, res, next) => {
+sttRouter.post('/transcribe', sttRateLimit, validateBody(sttTranscribeBodySchema), async (req, res, next) => {
   try {
     const { audio = '', language } = req.body as { audio?: string; language?: string };
     // Минимальная задержка 400мс для UX-консистентности.

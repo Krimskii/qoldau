@@ -7,6 +7,7 @@
 import OpenAI from 'openai';
 import { randomUUID } from 'node:crypto';
 import { PARSE_RU_PROMPT_VERSION, PARSE_RU_SYSTEM_PROMPT } from './prompts/parseRuV2.js';
+import { DEFAULT_OPENAI_MAX_RETRIES, DEFAULT_OPENAI_TIMEOUT_MS, readNonNegativeIntEnv, readPositiveIntEnv } from '../config/env.js';
 
 export interface AIParserInput {
   transcript: string;
@@ -71,6 +72,8 @@ interface ServiceEnv {
   model: string;
   client: OpenAI | null;
   enabled: boolean;
+  timeoutMs: number;
+  maxRetries: number;
 }
 
 interface ParsedEvent {
@@ -123,8 +126,17 @@ const RED_FLAG_PATTERNS = [
 function loadEnv(): ServiceEnv {
   const apiKey = process.env.OPENAI_API_KEY?.trim() || null;
   const model = process.env.OPENAI_LLM_MODEL?.trim() || 'gpt-4o-mini';
-  if (!apiKey) return { apiKey: null, model, client: null, enabled: false };
-  return { apiKey: '[set]', model, client: new OpenAI({ apiKey }), enabled: true };
+  const timeoutMs = readPositiveIntEnv('OPENAI_TIMEOUT_MS', DEFAULT_OPENAI_TIMEOUT_MS);
+  const maxRetries = readNonNegativeIntEnv('OPENAI_MAX_RETRIES', DEFAULT_OPENAI_MAX_RETRIES);
+  if (!apiKey) return { apiKey: null, model, client: null, enabled: false, timeoutMs, maxRetries };
+  return {
+    apiKey: '[set]',
+    model,
+    client: new OpenAI({ apiKey, timeout: timeoutMs, maxRetries }),
+    enabled: true,
+    timeoutMs,
+    maxRetries,
+  };
 }
 
 const env = loadEnv();
@@ -420,7 +432,7 @@ function classifyOpenAIError(err: unknown): AIErrorCode {
   if (status === 429 && /quota|billing|insufficient_quota/u.test(message)) return 'quota';
   if (status === 429) return 'rate_limit';
   if (/quota|billing|insufficient_quota/u.test(message)) return 'quota';
-  if (/network|fetch|econn|timeout|socket/u.test(message)) return 'network';
+  if (/network|fetch|econn|timeout|socket|abort|timed out/u.test(message)) return 'network';
   return 'provider_error';
 }
 
@@ -494,6 +506,8 @@ export const llmService = {
       console.info('[llm] openai usage', {
         model: env.model,
         promptVersion: PARSE_RU_PROMPT_VERSION,
+        timeoutMs: env.timeoutMs,
+        maxRetries: env.maxRetries,
         promptTokens: usage?.prompt_tokens ?? 0,
         completionTokens: usage?.completion_tokens ?? 0,
         totalTokens: usage?.total_tokens ?? 0,
@@ -507,6 +521,8 @@ export const llmService = {
       console.warn('[llm] OpenAI parse failed, fallback to mock', {
         model: env.model,
         promptVersion: PARSE_RU_PROMPT_VERSION,
+        timeoutMs: env.timeoutMs,
+        maxRetries: env.maxRetries,
         aiError,
         status: typeof err === 'object' && err !== null && 'status' in err ? (err as { status?: unknown }).status : undefined,
       });
@@ -548,6 +564,8 @@ export const llmService = {
       console.warn('[llm] OpenAI digest failed, fallback to mock', {
         model: env.model,
         promptVersion: PARSE_RU_PROMPT_VERSION,
+        timeoutMs: env.timeoutMs,
+        maxRetries: env.maxRetries,
         aiError,
         status: typeof err === 'object' && err !== null && 'status' in err ? (err as { status?: unknown }).status : undefined,
       });

@@ -22,6 +22,16 @@ describe('POST /api/ai/parse', () => {
     expect(res.body.ok).toBe(false);
   });
 
+  it('rejects transcripts over the configured cap', async () => {
+    const res = await request(app)
+      .post('/api/ai/parse')
+      .send({ transcript: 'а'.repeat(4001) });
+
+    expect(res.status).toBe(400);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.error).toBe('transcript too long');
+  });
+
   it('parses Russian transcript and returns multiple typed events', async () => {
     const res = await request(app)
       .post('/api/ai/parse')
@@ -143,5 +153,39 @@ describe('POST /api/ai/digest', () => {
     expect(res.status).toBe(400);
     expect(res.body.ok).toBe(false);
     expect(res.body.error).toContain('aggregates only');
+  });
+
+  it('rejects oversized digest aggregate strings', async () => {
+    const res = await request(app)
+      .post('/api/ai/digest')
+      .send({
+        eventCounts: { behavior: 1 },
+        notes: ['x'.repeat(501)],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.issues[0].path).toBe('notes.0');
+  });
+});
+
+describe('AI route body limits', () => {
+  it('returns 413 before /api/ai/parse reaches the LLM for bodies over 256kb', async () => {
+    const app = express();
+    app.use(express.json({ limit: '256kb' }));
+    app.use('/api/ai', aiRouter);
+    app.use((err: Error & { status?: number; type?: string }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      if (err.status === 413 || err.type === 'entity.too.large') {
+        return res.status(413).json({ ok: false, error: 'Request body too large' });
+      }
+      return res.status(500).json({ ok: false, error: 'Internal server error' });
+    });
+
+    const res = await request(app)
+      .post('/api/ai/parse')
+      .send({ transcript: 'а'.repeat(260 * 1024) });
+
+    expect(res.status).toBe(413);
+    expect(res.body).toEqual({ ok: false, error: 'Request body too large' });
   });
 });

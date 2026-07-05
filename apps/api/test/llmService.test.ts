@@ -1,10 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-async function loadServiceWithOpenAIMock(createImpl: () => Promise<unknown>) {
+async function loadServiceWithOpenAIMock(
+  createImpl: () => Promise<unknown>,
+  env: Partial<Record<'OPENAI_TIMEOUT_MS' | 'OPENAI_MAX_RETRIES', string>> = {},
+) {
   vi.resetModules();
   const create = vi.fn(createImpl);
+  const constructorOptions = vi.fn();
   vi.doMock('openai', () => ({
     default: class MockOpenAI {
+      constructor(options: unknown) {
+        constructorOptions(options);
+      }
+
       chat = {
         completions: {
           create,
@@ -14,8 +22,10 @@ async function loadServiceWithOpenAIMock(createImpl: () => Promise<unknown>) {
   }));
   process.env.OPENAI_API_KEY = 'test-openai-key';
   process.env.OPENAI_LLM_MODEL = 'gpt-4o-mini';
+  process.env.OPENAI_TIMEOUT_MS = env.OPENAI_TIMEOUT_MS ?? '';
+  process.env.OPENAI_MAX_RETRIES = env.OPENAI_MAX_RETRIES ?? '';
   const mod = await import('../src/services/llmService');
-  return { llmService: mod.llmService, create };
+  return { llmService: mod.llmService, create, constructorOptions };
 }
 
 describe('llmService OpenAI fallback semantics', () => {
@@ -25,12 +35,14 @@ describe('llmService OpenAI fallback semantics', () => {
     vi.doUnmock('openai');
     process.env.OPENAI_API_KEY = '';
     process.env.OPENAI_LLM_MODEL = '';
+    process.env.OPENAI_TIMEOUT_MS = '';
+    process.env.OPENAI_MAX_RETRIES = '';
   });
 
   it('returns openai source and logs token usage with prompt version without transcript text', async () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => {});
     const transcript = 'Ребёнок поел кашу, попил воду, потом в магазине закрывал уши от шума и плакал.';
-    const { llmService, create } = await loadServiceWithOpenAIMock(async () => ({
+    const { llmService, create, constructorOptions } = await loadServiceWithOpenAIMock(async () => ({
       usage: {
         prompt_tokens: 620,
         completion_tokens: 180,
@@ -77,6 +89,11 @@ describe('llmService OpenAI fallback semantics', () => {
     }));
 
     const result = await llmService.parseTranscript({ transcript });
+    expect(constructorOptions).toHaveBeenCalledWith(expect.objectContaining({
+      apiKey: 'test-openai-key',
+      timeout: 30000,
+      maxRetries: 2,
+    }));
     expect(result.source).toBe('openai');
     expect(result.aiFallback).toBe(false);
     expect(result.events).toHaveLength(2);
@@ -112,6 +129,27 @@ describe('llmService OpenAI fallback semantics', () => {
     expect(result.aiFallback).toBe(true);
     expect(result.aiError).toBe('quota');
     expect(result.events.length).toBeGreaterThan(0);
+  });
+
+  it('sets aiFallback and network error when OpenAI times out', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const error = new Error('Request timed out after 25ms');
+    const { llmService, constructorOptions } = await loadServiceWithOpenAIMock(
+      async () => {
+        throw error;
+      },
+      { OPENAI_TIMEOUT_MS: '25', OPENAI_MAX_RETRIES: '0' },
+    );
+
+    const result = await llmService.parseTranscript({ transcript: 'Ребёнок попил воду.' });
+
+    expect(constructorOptions).toHaveBeenCalledWith(expect.objectContaining({
+      timeout: 25,
+      maxRetries: 0,
+    }));
+    expect(result.source).toBe('mock');
+    expect(result.aiFallback).toBe(true);
+    expect(result.aiError).toBe('network');
   });
 
   it('sets aiFallback and invalid_json when structured output cannot be parsed', async () => {

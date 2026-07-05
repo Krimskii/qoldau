@@ -10,43 +10,13 @@
 import { Router } from 'express';
 import { llmService } from '../services/llmService.js';
 import { aiRateLimit } from '../middleware/rateLimit.js';
+import { validateBody } from '../middleware/validateBody.js';
+import { aiDigestBodySchema, aiParseBodySchema } from '../validation/requestSchemas.js';
 
 export const aiRouter = Router();
 
-const FORBIDDEN_DIGEST_FIELDS = new Set([
-  'transcript',
-  'rawTranscript',
-  'audioTranscript',
-  'childName',
-  'name',
-  'fullName',
-]);
-
-function containsForbiddenDigestField(value: unknown): string | null {
-  if (!value || typeof value !== 'object') return null;
-  for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
-    if (FORBIDDEN_DIGEST_FIELDS.has(key)) return key;
-    if (Array.isArray(nested)) {
-      for (const item of nested) {
-        const found = containsForbiddenDigestField(item);
-        if (found) return found;
-      }
-    } else {
-      const found = containsForbiddenDigestField(nested);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-aiRouter.post('/parse', aiRateLimit, async (req, res) => {
-  const { transcript } = req.body as { transcript?: string };
-  if (!transcript || typeof transcript !== 'string') {
-    return res.status(400).json({
-      ok: false,
-      error: 'Missing required field: transcript',
-    });
-  }
+aiRouter.post('/parse', aiRateLimit, validateBody(aiParseBodySchema), async (req, res) => {
+  const { transcript } = req.body as { transcript: string };
 
   // Имитация AI-задержки для UX-консистентности.
   const t0 = Date.now();
@@ -69,15 +39,7 @@ aiRouter.post('/parse', aiRateLimit, async (req, res) => {
   });
 });
 
-aiRouter.post('/digest', aiRateLimit, async (req, res) => {
-  const forbiddenField = containsForbiddenDigestField(req.body);
-  if (forbiddenField) {
-    return res.status(400).json({
-      ok: false,
-      error: `Digest accepts aggregates only; field is not allowed: ${forbiddenField}`,
-    });
-  }
-
+aiRouter.post('/digest', aiRateLimit, validateBody(aiDigestBodySchema), async (req, res) => {
   const body = req.body as {
     windowLabel?: string;
     eventCounts?: Record<string, number>;

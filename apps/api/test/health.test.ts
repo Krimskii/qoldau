@@ -3,6 +3,7 @@ import request from 'supertest';
 import express from 'express';
 import cors from 'cors';
 import { healthRouter } from '../src/routes/health';
+import { requestId } from '../src/middleware/requestId';
 
 describe('GET /api/health', () => {
   const app = express();
@@ -31,5 +32,22 @@ describe('GET /api/health', () => {
     expect(res.body.ai.source).toBe('mock');
     expect(res.body.stt.enabled).toBe(false);
     expect(res.body.stt.source).toBe('mock');
+  });
+});
+
+describe('request id middleware', () => {
+  it('sets x-request-id and keeps incoming request ids', async () => {
+    const app = express();
+    app.use(requestId);
+    app.get('/ping', (req, res) => res.json({ ok: true, requestId: req.requestId }));
+
+    const generated = await request(app).get('/ping');
+    expect(generated.status).toBe(200);
+    expect(generated.headers['x-request-id']).toBeDefined();
+    expect(generated.body.requestId).toBe(generated.headers['x-request-id']);
+
+    const incoming = await request(app).get('/ping').set('x-request-id', 'test-request-id');
+    expect(incoming.headers['x-request-id']).toBe('test-request-id');
+    expect(incoming.body.requestId).toBe('test-request-id');
   });
 });
