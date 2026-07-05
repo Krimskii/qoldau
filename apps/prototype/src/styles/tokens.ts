@@ -271,6 +271,11 @@ export const components = {
   iconButtonSize: 44,
 } as const;
 
+// Re-export для удобства — `import { iconButtonSize } from '@/styles/tokens'`.
+export const iconButtonSize = components.iconButtonSize;
+export const adultTouchTarget = components.adultTouchTarget;
+export const childTouchTarget = components.childTouchTarget;
+
 // =============================================================================
 // Child family palette — для сетки 3×2 на ChildHome (v1.5+ polish)
 // =============================================================================

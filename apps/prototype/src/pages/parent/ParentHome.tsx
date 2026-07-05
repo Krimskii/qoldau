@@ -8,8 +8,8 @@ import {
   Droplet,
   Moon,
   MessageCircle,
+  Zap,
   Sparkles,
-  Smile,
   type LucideIcon,
 } from 'lucide-react';
 import { QoldauCard } from '@/components/ui/QoldauCard';
@@ -19,37 +19,87 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD, DEMO_PARENTS } from '@/data/demoDataset';
 import { formatTime } from '@/utils/dateFormat';
+import { iconButtonSize } from '@/styles/tokens';
+import { triggerHaptic } from '@/lib/feedback/haptics';
+import type { StatusKind } from '@/components/ui/StatusBadge';
+
+/**
+ * ParentHome — родительский дашборд (v1.5+ polish per design C).
+ *
+ * Структура (сверху вниз):
+ * 1. Hero — карточка ребёнка (QoldauCard tinted-teal + аватар + StatusBadge).
+ * 2. CTA «Сказать наблюдение» (teal gradient, min-h ~88px).
+ * 3. Сводка дня — 3 мини-метрики (НОВОЕ в spec C).
+ * 4. Быстрые действия — 3×2 (приведены к семантике eventTypeColors).
+ * 5. AI-наблюдение.
+ * 6. «Сегодня» — последние события (4).
+ * 7. Дисклеймер «профиль наблюдений, не диагноз».
+ *
+ * Тач-таргеты: adult ≥48px, icon-button ≥44px (в отличие от child ≥112px).
+ */
+
+type ActionTone = 'coral' | 'blue' | 'purple' | 'yellow';
 
 interface QuickAction {
   id: string;
   label: string;
   Icon: LucideIcon;
-  color: 'green' | 'blue' | 'purple' | 'yellow';
+  /** Tone из eventTypeColors (coral|blue|purple|yellow|teal|green). */
+  tone: ActionTone;
   path: string;
 }
 
+/**
+ * 6 quick-actions в фикс-порядке (motor memory):
+ * 1) Еда (coral) 2) Вода (blue) 3) Туалет (purple)
+ * 4) Сон (blue) 5) Поведение (yellow) 6) Коммуникация (purple)
+ *
+ * Источник иконок/тонов: eventTypeColors в tokens.ts.
+ */
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: 'food', label: 'Еда', Icon: Utensils, color: 'green', path: '/parent/care' },
-  { id: 'water', label: 'Вода', Icon: Droplet, color: 'blue', path: '/parent/care' },
-  { id: 'toilet', label: 'Туалет', Icon: Droplet, color: 'blue', path: '/parent/care' },
-  { id: 'sleep', label: 'Сон', Icon: Moon, color: 'purple', path: '/parent/care' },
-  { id: 'behavior', label: 'Поведение', Icon: Smile, color: 'yellow', path: '/parent/behavior' },
-  { id: 'comms', label: 'Коммуникация', Icon: MessageCircle, color: 'purple', path: '/parent/events' },
+  { id: 'food',   label: 'Еда',           Icon: Utensils,      tone: 'coral',   path: '/parent/care' },
+  { id: 'water',  label: 'Вода',          Icon: Droplet,       tone: 'blue',    path: '/parent/care' },
+  { id: 'toilet', label: 'Туалет',        Icon: Droplet,       tone: 'purple',  path: '/parent/care' },
+  { id: 'sleep',  label: 'Сон',           Icon: Moon,          tone: 'blue',    path: '/parent/care' },
+  { id: 'behav',  label: 'Поведение',     Icon: Zap,           tone: 'yellow',  path: '/parent/behavior' },
+  { id: 'comms',  label: 'Коммуникация',  Icon: MessageCircle, tone: 'purple',  path: '/parent/events' },
 ];
 
-const COLOR_BG: Record<QuickAction['color'], string> = {
-  green: 'bg-green-soft',
+const TONE_BG: Record<ActionTone, string> = {
+  coral: 'bg-coral-soft',
   blue: 'bg-blue-soft',
   purple: 'bg-purple-soft',
   yellow: 'bg-yellow-soft',
 };
 
-const COLOR_TEXT: Record<QuickAction['color'], string> = {
-  green: 'text-green',
+const TONE_TEXT: Record<ActionTone, string> = {
+  coral: 'text-coral',
   blue: 'text-blue',
   purple: 'text-purple',
   yellow: 'text-yellow',
 };
+
+/** Маппинг currentState ребёнка → StatusKind (без хардкода 'ok'). */
+function pickStatusKind(currentState: string): StatusKind {
+  const s = currentState.toLowerCase();
+  if (
+    s.includes('тревог') ||
+    s.includes('плох') ||
+    s.includes('неспок')
+  ) {
+    return 'help';
+  }
+  if (s.includes('устал') || s.includes('устал')) {
+    return 'tired';
+  }
+  if (s.includes('спокоен') || s.includes('спокойств')) {
+    return 'calm';
+  }
+  if (s.includes('сосредоточен') || s.includes('фокус')) {
+    return 'focus';
+  }
+  return 'ok';
+}
 
 export const ParentHome: React.FC = () => {
   const navigate = useNavigate();
@@ -59,29 +109,36 @@ export const ParentHome: React.FC = () => {
 
   const today = new Date().toISOString().slice(0, 10);
   const todayEvents = useMemo(
-    () => events.filter((e) => e.timestamp.startsWith(today)),
+    () => events.filter((e) => e.timestamp.startsWith(today) && !e.deleted),
     [events, today]
   );
+
+  // 3 метрики для сводки дня (см. спеку C §A3).
+  const todayTotal = todayEvents.length;
+  const todayComm = todayEvents.filter(
+    (e) => e.type === 'communication' || e.type === 'aac_card',
+  ).length;
+  const todaySensory = todayEvents.filter((e) => e.type === 'sensory').length;
 
   const lastEvents = todayEvents.slice(0, 4);
 
   const aiObservation = useMemo(() => {
-    const sensoryCount = todayEvents.filter((e) => e.type === 'sensory').length;
-    const communicationCount = todayEvents.filter(
-      (e) => e.type === 'communication' || e.type === 'aac_card'
-    ).length;
     if (todayEvents.length === 0) {
       return 'Сегодня пока нет наблюдений. Можно начать с голосовой записи — это самый быстрый способ зафиксировать, что произошло.';
     }
+    const sensoryCount = todaySensory;
+    const communicationCount = todayComm;
     if (sensoryCount >= 1 && communicationCount >= 2) {
       return 'Похоже, сегодня было несколько сенсорных событий и активная коммуникация. Это наблюдение, не диагноз. Можно обсудить со специалистом.';
     }
     return 'Сегодня уже есть наблюдения. Продолжайте фиксировать — это помогает видеть повторяющиеся ситуации и реакции.';
-  }, [todayEvents]);
+  }, [todayEvents, todaySensory, todayComm]);
+
+  const statusKind = pickStatusKind(child.currentState);
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Hero — карточка ребёнка */}
+      {/* A1. Hero — карточка ребёнка */}
       <QoldauCard variant="tinted-teal" padding="md">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-yellow-soft to-blue-soft border-2 border-white flex items-center justify-center flex-shrink-0 shadow-card-soft">
@@ -92,24 +149,34 @@ export const ParentHome: React.FC = () => {
               {child.name}, {child.age} лет
             </h2>
             <div className="mt-2 flex items-center gap-2 flex-wrap">
-              <StatusBadge kind="ok" label={child.currentState} />
+              <StatusBadge kind={statusKind} label={child.currentState} />
             </div>
           </div>
+          {/* Фикс: settings 36px → 44px (iconButtonSize). */}
           <button
-            onClick={() => navigate('/parent/profile')}
-            className="w-9 h-9 rounded-xl bg-white border border-line flex items-center justify-center hover:bg-bg transition-colors"
-            aria-label="Профиль"
+            onClick={() => {
+              triggerHaptic('tap');
+              navigate('/parent/profile');
+            }}
+            className="rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-bg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+            style={{ width: iconButtonSize, height: iconButtonSize }}
+            aria-label="Профиль и настройки"
+            data-testid="parent-settings"
           >
-            <Settings className="w-4 h-4 text-ink-2" />
+            <Settings className="w-5 h-5 text-ink-2" />
           </button>
         </div>
       </QoldauCard>
 
-      {/* Большая CTA — голос */}
+      {/* A2. CTA «Сказать наблюдение» */}
       <button
-        onClick={() => navigate('/parent/voice')}
-        className="w-full rounded-3xl p-5 bg-gradient-to-br from-teal to-teal-dark text-white shadow-card hover:shadow-card-hover transition-all active:scale-[0.98] flex items-center gap-4"
+        onClick={() => {
+          triggerHaptic('tap');
+          navigate('/parent/voice');
+        }}
+        className="w-full rounded-3xl p-5 bg-gradient-to-br from-teal to-teal-dark text-white shadow-card hover:shadow-card-hover transition-all active:scale-[0.98] flex items-center gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         aria-label="Сказать наблюдение"
+        data-testid="parent-cta-voice"
       >
         <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0">
           <Mic className="w-7 h-7" />
@@ -123,27 +190,53 @@ export const ParentHome: React.FC = () => {
         <ChevronRight className="w-5 h-5 opacity-90" />
       </button>
 
-      {/* Быстрые действия */}
+      {/* A3. Сводка дня — 3 мини-метрики (НОВОЕ) */}
+      <div className="grid grid-cols-3 gap-2.5" data-testid="parent-today-summary">
+        <QoldauCard variant="default" padding="sm">
+          <div className="text-center">
+            <div className="text-2xl font-black leading-none text-teal">{todayTotal}</div>
+            <div className="text-[11px] text-muted mt-1.5 leading-tight">Событий сегодня</div>
+          </div>
+        </QoldauCard>
+        <QoldauCard variant="default" padding="sm">
+          <div className="text-center">
+            <div className="text-2xl font-black leading-none text-purple">{todayComm}</div>
+            <div className="text-[11px] text-muted mt-1.5 leading-tight">Коммуникация</div>
+          </div>
+        </QoldauCard>
+        <QoldauCard variant="default" padding="sm">
+          <div className="text-center">
+            <div className="text-2xl font-black leading-none text-yellow">{todaySensory}</div>
+            <div className="text-[11px] text-muted mt-1.5 leading-tight">Сенсорика</div>
+          </div>
+        </QoldauCard>
+      </div>
+
+      {/* A4. Быстрые действия 3×2 */}
       <SectionCard title="Быстрые действия" accent="teal">
         <div className="grid grid-cols-3 gap-2.5">
-          {QUICK_ACTIONS.map(({ id, label, Icon, color, path }) => (
+          {QUICK_ACTIONS.map(({ id, label, Icon, tone, path }) => (
             <button
               key={id}
-              onClick={() => navigate(path)}
-              className={`min-h-[88px] rounded-2xl ${COLOR_BG[color]} border border-line flex flex-col items-center justify-center gap-1.5 p-2 hover:scale-[0.97] active:scale-[0.94] transition-transform`}
+              onClick={() => {
+                triggerHaptic('tap');
+                navigate(path);
+              }}
+              className={`min-h-[88px] rounded-2xl ${TONE_BG[tone]} border border-line flex flex-col items-center justify-center gap-1.5 p-2 hover:scale-[0.97] active:scale-[0.94] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40`}
               aria-label={label}
+              data-quick-action={id}
             >
-              <Icon className={`w-7 h-7 ${COLOR_TEXT[color]}`} aria-hidden="true" />
+              <Icon className={`w-7 h-7 ${TONE_TEXT[tone]}`} aria-hidden="true" />
               <span className="text-xs font-bold text-ink-2">{label}</span>
             </button>
           ))}
         </div>
       </SectionCard>
 
-      {/* AI observation */}
+      {/* A5. AI observation */}
       <AIInsightCard text={aiObservation} />
 
-      {/* Последние события */}
+      {/* A6. «Сегодня» — последние события */}
       <SectionCard
         title="Сегодня"
         accent="teal"
@@ -186,7 +279,7 @@ export const ParentHome: React.FC = () => {
         )}
       </SectionCard>
 
-      {/* Disclaimer */}
+      {/* A7. Disclaimer */}
       <p className="text-[11px] text-muted text-center italic px-4">
         Это профиль наблюдений {mother.name}. Не медицинский диагноз.
       </p>

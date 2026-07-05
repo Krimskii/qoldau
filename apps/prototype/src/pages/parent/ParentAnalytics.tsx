@@ -11,35 +11,51 @@ import {
 } from '@/lib/insights/weeklyPatterns';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { TrendingUp, BarChart3, Sparkles } from 'lucide-react';
+import { toneToColor, type EventTone } from '@/styles/tokens';
+
+/**
+ * ParentAnalytics — родительская аналитика (v1.5+ polish per design C).
+ *
+ * Контракт (spec C):
+ * - B1 ФИКС: donut использует toneToColor() → hex-значения, а НЕ Tailwind-классы
+ *   ('bg-green' внутри conic-gradient был невалиден — давал серый круг).
+ * - B2/B3: heatmap/сенсорика оставлены без изменений (логика корректна).
+ * - B4: «Триггеры» / «Динамика» — добавлен демо-маркер.
+ * - B5: PageHeader оставлен.
+ */
+
+interface SummaryItem {
+  type: string;
+  count: number;
+  label: string;
+  /** Tailwind-класс для маленькой точки-легенды (для UI). */
+  dotClass: string;
+  /** Тон (coral|blue|purple|yellow|teal|green). */
+  tone: EventTone;
+}
+
+const SUMMARY_TYPES: Array<{ type: string; label: string; tone: EventTone; dotClass: string }> = [
+  { type: 'food',          label: 'Еда',           tone: 'coral',  dotClass: 'bg-coral' },
+  { type: 'water',         label: 'Вода',          tone: 'blue',   dotClass: 'bg-blue' },
+  { type: 'toilet',        label: 'Туалет',        tone: 'purple', dotClass: 'bg-purple' },
+  { type: 'communication', label: 'Коммуникация',  tone: 'purple', dotClass: 'bg-purple' },
+  { type: 'aac_card',      label: 'AAC',           tone: 'teal',   dotClass: 'bg-teal' },
+  { type: 'sensory',       label: 'Сенсорика',     tone: 'yellow', dotClass: 'bg-yellow' },
+  { type: 'behavior',      label: 'Поведение',     tone: 'yellow', dotClass: 'bg-yellow' },
+  { type: 'phrase',        label: 'Фразы',         tone: 'teal',   dotClass: 'bg-teal' },
+];
 
 export const ParentAnalytics: React.FC = () => {
-  // v1.5+ — читаем через EventStorage.query (soft-delete + сортировка).
   const events = useEventQuery({ childId: DEMO_PRIMARY_CHILD.id });
 
-  const summary = useMemo(() => {
+  const summary: SummaryItem[] = useMemo(() => {
     const childEvents = events.filter((e) => e.childId === DEMO_PRIMARY_CHILD.id);
-    const types = ['food', 'water', 'toilet', 'communication', 'aac_card', 'sensory', 'behavior', 'phrase'] as const;
-    return types.map((type) => ({
-      type,
-      count: childEvents.filter((e) => e.type === type).length,
-      label:
-        type === 'food' ? 'Еда' :
-        type === 'water' ? 'Вода' :
-        type === 'toilet' ? 'Туалет' :
-        type === 'communication' ? 'Коммуникация' :
-        type === 'aac_card' ? 'AAC' :
-        type === 'sensory' ? 'Сенсорика' :
-        type === 'behavior' ? 'Поведение' :
-        'Фразы',
-      color:
-        type === 'food' ? 'bg-green' :
-        type === 'water' ? 'bg-blue' :
-        type === 'toilet' ? 'bg-blue' :
-        type === 'communication' ? 'bg-purple' :
-        type === 'aac_card' ? 'bg-teal' :
-        type === 'sensory' ? 'bg-yellow' :
-        type === 'behavior' ? 'bg-yellow' :
-        'bg-teal',
+    return SUMMARY_TYPES.map((cfg) => ({
+      type: cfg.type,
+      count: childEvents.filter((e) => e.type === cfg.type).length,
+      label: cfg.label,
+      tone: cfg.tone,
+      dotClass: cfg.dotClass,
     }));
   }, [events]);
 
@@ -64,30 +80,32 @@ export const ParentAnalytics: React.FC = () => {
     { label: 'Подтверждения', value: '+5%', bg: 'bg-blue-soft', text: 'text-blue' },
   ];
 
+  /**
+   * B1 ФИКС: gradientStops использует hex-значения через toneToColor(),
+   * а НЕ Tailwind-классы. Раньше в conic-gradient попадал `'bg-green'`,
+   * что CSS считал невалидным цветом → серый круг.
+   */
   const gradientStops = (() => {
     let acc = 0;
     const stops = top3.map((item) => {
       const start = acc;
       acc += (item.count / total) * 360;
-      return `${item.color} ${start}deg ${acc}deg`;
+      const hex = toneToColor(item.tone);
+      return `${hex} ${start}deg ${acc}deg`;
     });
     return `conic-gradient(${stops.join(', ')})`;
   })();
 
-  // v1.5+ — Weekly heatmap: 7×24 матрица интенсивности событий за неделю.
-  // Без AI, без диагнозов. Это наблюдательная визуализация плотности
-  // событий по дню недели и часу. Пустые недели показывают empty-state.
+  // Weekly heatmap (B2).
   const heatmap = useMemo(
-    () =>
-      dayHourHeatmap(events, DEMO_PRIMARY_CHILD.id, new Date()),
+    () => dayHourHeatmap(events, DEMO_PRIMARY_CHILD.id, new Date()),
     [events],
   );
   const heatMax = heatmapMax(heatmap);
   const heatTotal = heatmapTotal(heatmap);
   const heatmapDayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-  // v1.5+ (wave 2): sensoryCounts — сколько событий помечено каждым
-  // сенсорным тегом. Используется в sensory-секции ниже.
+  // Sensory (B3).
   const sensoryCounts = useMemo(() => {
     const tags = ['sound', 'light', 'touch', 'smell', 'temperature'] as const;
     const out: Record<string, number> = {};
@@ -111,17 +129,22 @@ export const ParentAnalytics: React.FC = () => {
     temperature: 'Температура',
   };
 
+  // Хелпер: top3 должны иметь хотя бы один с count>0, иначе donut пуст.
+  const top3WithCount = top3.filter((x) => x.count > 0);
+  const displayTop3 = top3WithCount.length > 0 ? top3WithCount : top3;
+
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title="Аналитика" subtitle="Демо-данные за 7 дней" />
 
-      {/* Donut + Top signals */}
+      {/* B1. Donut + Top signals (ФИКС: tone→hex) */}
       <SectionCard title="Распределение событий" accent="teal" action={<BarChart3 className="w-5 h-5 text-teal" />}>
         <div className="flex items-center gap-4">
           <div
             className="w-24 h-24 rounded-full relative flex-shrink-0"
             style={{ background: gradientStops }}
             aria-hidden="true"
+            data-testid="donut"
           >
             <div className="absolute inset-2 bg-white rounded-full flex flex-col items-center justify-center">
               <span className="text-xl font-black text-ink">{total}</span>
@@ -129,9 +152,12 @@ export const ParentAnalytics: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 flex flex-col gap-1.5">
-            {top3.map((item) => (
+            {displayTop3.map((item) => (
               <div key={item.type} className="flex items-center gap-2 text-xs">
-                <span className={`w-3 h-3 rounded-sm ${item.color}`} />
+                <span
+                  className={`w-3 h-3 rounded-sm ${item.dotClass}`}
+                  aria-hidden="true"
+                />
                 <span className="flex-1">{item.label}</span>
                 <span className="font-bold tabular-nums">{item.count}</span>
               </div>
@@ -140,7 +166,7 @@ export const ParentAnalytics: React.FC = () => {
         </div>
       </SectionCard>
 
-      {/* v1.5+ — Weekly heatmap */}
+      {/* B2. Weekly heatmap */}
       <SectionCard
         title="Тепловая карта недели"
         accent="blue"
@@ -178,7 +204,6 @@ export const ParentAnalytics: React.FC = () => {
                       </th>
                       {row.map((v: number, colIdx: number) => {
                         const intensity = heatMax > 0 ? v / heatMax : 0;
-                        // 4 уровня интенсивности: пусто/слабо/средне/сильно.
                         const cls =
                           v === 0
                             ? 'bg-bg'
@@ -218,7 +243,7 @@ export const ParentAnalytics: React.FC = () => {
         )}
       </SectionCard>
 
-      {/* v1.5+ (wave 2): Sensory — сколько событий с сенсорными тегами. */}
+      {/* B3. Сенсорный контекст */}
       <SectionCard title="Сенсорный контекст" accent="yellow">
         {sensoryTotal === 0 ? (
           <p className="text-sm text-muted italic py-2">
@@ -248,7 +273,7 @@ export const ParentAnalytics: React.FC = () => {
         </p>
       </SectionCard>
 
-      {/* Triggers */}
+      {/* B4. Triggers — добавлен демо-маркер */}
       <SectionCard title="Ситуации, которые могли повлиять" accent="yellow">
         {triggers.map((t) => (
           <div
@@ -261,18 +286,21 @@ export const ParentAnalytics: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-20 h-1.5 bg-bg rounded-full overflow-hidden">
-                <div className="h-full bg-yellow rounded-full" style={{ width: `${t.percent}%` }} />
+                <div
+                  className="h-full bg-yellow rounded-full"
+                  style={{ width: `${t.percent}%` }}
+                />
               </div>
               <span className="text-xs text-muted w-10 text-right">{t.percent}%</span>
             </div>
           </div>
         ))}
         <p className="text-[11px] text-muted mt-3 italic">
-          Это гипотезы на основе наблюдений. Не являются медицинским диагнозом.
+          Демо-пример. В след. версии — реальные подсчёты. Не является медицинским диагнозом.
         </p>
       </SectionCard>
 
-      {/* What helped */}
+      {/* What helped — уже имеет демо-маркер */}
       <SectionCard
         title="Что помогало"
         accent="green"
@@ -292,7 +320,7 @@ export const ParentAnalytics: React.FC = () => {
         </p>
       </SectionCard>
 
-      {/* Dynamics */}
+      {/* B4. Dynamics — добавлен демо-маркер */}
       <SectionCard
         title="Динамика"
         accent="purple"
@@ -308,6 +336,9 @@ export const ParentAnalytics: React.FC = () => {
             </QoldauCard>
           ))}
         </div>
+        <p className="text-[11px] text-muted mt-3 italic">
+          Демо-пример. В след. версии — реальные подсчёты.
+        </p>
       </SectionCard>
 
       <AIInsightCard
