@@ -20,7 +20,7 @@ If Railway provides PgBouncer, use the pooled URL for `DATABASE_URL` and the dir
 
 ### Deploy Command
 
-Use Prisma migrations, never `db push`, for production:
+Use Prisma migrations, never `db push`, for production. The Docker image runs the same migrate-on-start path by default:
 
 ```bash
 cd apps/api
@@ -37,6 +37,15 @@ npm run start:prod
 ```
 
 `start:prod` runs `prisma migrate deploy` and then starts `dist/index.js`.
+The production Dockerfile uses `CMD ["npm", "run", "start:prod"]`, copies the
+`prisma/` directory into the runner image, and keeps the `prisma` CLI as a
+production dependency so migrations are available after `npm prune --omit=dev`.
+If Postgres is unreachable or a migration fails, `prisma migrate deploy` exits
+non-zero and the container does not start.
+
+`schema.prisma` uses `url = env("DATABASE_URL")` for the runtime Prisma client
+and `directUrl = env("DIRECT_DATABASE_URL")` for migrations. Keep
+`DIRECT_DATABASE_URL` pointed at the direct Postgres connection, not PgBouncer.
 
 ### Health Checks
 
