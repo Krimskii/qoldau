@@ -9,9 +9,9 @@
  * В dev-mode токен возвращается в ответе, чтобы можно было пройти flow без почтового сервера.
  */
 import { Router } from 'express';
-import { authService } from '../services/authService';
-import { authRateLimit } from '../middleware/rateLimit';
-import { childrenRepo } from '../repositories/children';
+import { authService } from '../services/authService.js';
+import { authRateLimit } from '../middleware/rateLimit.js';
+import { childrenRepo } from '../repositories/children.js';
 
 export const authRouter = Router();
 

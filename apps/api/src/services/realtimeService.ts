@@ -9,7 +9,7 @@
  */
 import type { Server as HttpServer } from 'node:http';
 import { Server as IOServer, type Socket } from 'socket.io';
-import { authService } from './authService';
+import { authService } from './authService.js';
 
 let io: IOServer | null = null;
 

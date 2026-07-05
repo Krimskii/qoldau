@@ -10,7 +10,7 @@
  * В production ОБЯЗАТЕЛЬНО задать JWT_SECRET.
  */
 import { randomBytes, createHash } from 'node:crypto';
-import { prisma } from '../db/prisma';
+import { prisma } from '../db/prisma.js';
 
 const TOKEN_TTL_MS = 1000 * 60 * 15; // 15 минут
 const DEFAULT_JWT_SECRET = 'qoldau-dev-secret-do-not-use-in-prod';
