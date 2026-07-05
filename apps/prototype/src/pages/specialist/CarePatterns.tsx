@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, Clock, Brain, Sparkles, Calendar, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -19,6 +20,7 @@ interface Pattern {
 }
 
 export const CarePatterns: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { events } = useEventStore();
   const { selectedChildId } = useDemoControlsStore();
@@ -46,19 +48,19 @@ export const CarePatterns: React.FC = () => {
   // Time-of-day clustering: when do sensory events happen?
   const timeClustering = useMemo(() => {
     const buckets: Record<string, number> = {
-      'Утро (6-12)': 0,
-      'День (12-17)': 0,
-      'Вечер (17-21)': 0,
-      'Ночь (21-6)': 0,
+      morning: 0,
+      day: 0,
+      evening: 0,
+      night: 0,
     };
     childEvents
       .filter((e) => e.type === 'sensory' || e.type === 'behavior')
       .forEach((e) => {
         const hour = new Date(e.timestamp).getHours();
-        if (hour >= 6 && hour < 12) buckets['Утро (6-12)']++;
-        else if (hour >= 12 && hour < 17) buckets['День (12-17)']++;
-        else if (hour >= 17 && hour < 21) buckets['Вечер (17-21)']++;
-        else buckets['Ночь (21-6)']++;
+        if (hour >= 6 && hour < 12) buckets.morning++;
+        else if (hour >= 12 && hour < 17) buckets.day++;
+        else if (hour >= 17 && hour < 21) buckets.evening++;
+        else buckets.night++;
       });
     return buckets;
   }, [childEvents]);
@@ -80,15 +82,15 @@ export const CarePatterns: React.FC = () => {
 
     return matches.slice(0, 3).map((m) => ({
       type: 'cause-effect' as const,
-      title: `Еда → сенсорная реакция через ${Math.round(m.gap)} мин`,
-      description: 'Похоже, после приёма пищи иногда появляется сенсорная реакция. Можно обсудить со специалистом.',
+      title: t('specialist.carePatterns.foodToSensoryTitle', { min: Math.round(m.gap) }),
+      description: t('specialist.carePatterns.foodToSensoryDesc'),
       confidence: matches.length >= 3 ? 'high' : 'medium',
       events: [
         { title: m.food.title, timestamp: m.food.timestamp },
         { title: m.reaction.title, timestamp: m.reaction.timestamp },
       ],
     }));
-  }, [childEvents]);
+  }, [childEvents, t]);
 
   // Recurring calm pattern
   const calmPatterns = useMemo<Pattern[]>(() => {
@@ -96,12 +98,12 @@ export const CarePatterns: React.FC = () => {
     if (calms.length === 0) return [];
     return [{
       type: 'recurring' as const,
-      title: 'Спокойный режим помогает',
-      description: `Спокойный режим использовался ${calms.length} раз. Похоже, после паузы ребёнок возвращается к активности спокойнее.`,
+      title: t('specialist.carePatterns.calmHelpsTitle'),
+      description: t('specialist.carePatterns.calmHelpsDesc', { count: calms.length }),
       confidence: 'high',
       events: calms.slice(-3).map((c) => ({ title: c.title, timestamp: c.timestamp })),
     }];
-  }, [childEvents]);
+  }, [childEvents, t]);
 
   const allPatterns = [...foodToSensoryPatterns, ...calmPatterns];
 
@@ -110,8 +112,8 @@ export const CarePatterns: React.FC = () => {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
-        title="Паттерны ухода"
-        subtitle={`${currentChild.name} · связь событий`}
+        title={t('specialist.carePatterns.title')}
+        subtitle={t('specialist.carePatterns.subtitle', { name: currentChild.name })}
         showBack
       />
 
@@ -119,25 +121,25 @@ export const CarePatterns: React.FC = () => {
 
       {/* Summary stats */}
       <div className="grid grid-cols-4 gap-2.5">
-        <SummaryCard label="Еда" value={summary.food} color="green" />
-        <SummaryCard label="Вода" value={summary.water} color="blue" />
-        <SummaryCard label="Туалет" value={summary.toilet} color="purple" />
-        <SummaryCard label="Сенсорика" value={summary.sensory} color="yellow" />
+        <SummaryCard label={t('specialist.carePatterns.summaryFood')} value={summary.food} color="green" />
+        <SummaryCard label={t('specialist.carePatterns.summaryWater')} value={summary.water} color="blue" />
+        <SummaryCard label={t('specialist.carePatterns.summaryToilet')} value={summary.toilet} color="purple" />
+        <SummaryCard label={t('specialist.carePatterns.summarySensory')} value={summary.sensory} color="yellow" />
       </div>
 
       {/* Time-of-day clustering — bar chart */}
       <QoldauCard variant="default" padding="md">
         <h3 className="text-sm font-black mb-3 flex items-center gap-2">
           <Clock className="w-4 h-4 text-blue" />
-          В какое время суток сложнее всего
+          {t('specialist.carePatterns.timeOfDay')}
         </h3>
-        <p className="text-xs text-muted mb-3">
-          Сенсорные реакции и нервозность — по времени дня.
-        </p>
+        <p className="text-xs text-muted mb-3">{t('specialist.carePatterns.timeOfDayHint')}</p>
         <div className="space-y-2.5">
           {Object.entries(timeClustering).map(([period, count]) => (
             <div key={period} className="flex items-center gap-2.5">
-              <span className="w-24 text-xs text-ink-2 font-bold">{period}</span>
+              <span className="w-24 text-xs text-ink-2 font-bold">
+                {t(`specialist.carePatterns.${period}`)}
+              </span>
               <div className="flex-1 h-6 bg-bg rounded-full overflow-hidden relative">
                 <div
                   className="h-full bg-gradient-to-r from-blue-soft to-blue rounded-full transition-all duration-500"
@@ -158,9 +160,12 @@ export const CarePatterns: React.FC = () => {
         </div>
         <div className="mt-3 flex items-center gap-1.5 text-xs text-muted">
           <span className="text-yellow">⚠</span>
-          Самое сложное время:{' '}
+          {t('specialist.carePatterns.hardestTime')}{' '}
           <strong className="text-ink">
-            {Object.entries(timeClustering).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'}
+            {(() => {
+              const top = Object.entries(timeClustering).sort((a, b) => b[1] - a[1])[0]?.[0];
+              return top ? t(`specialist.carePatterns.${top}`) : t('specialist.carePatterns.noData');
+            })()}
           </strong>
         </div>
       </QoldauCard>
@@ -170,7 +175,7 @@ export const CarePatterns: React.FC = () => {
         <QoldauCard variant="default" padding="md">
           <h3 className="text-sm font-black mb-3 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-purple" />
-            Связи событий (гипотезы)
+            {t('specialist.carePatterns.patterns')}
           </h3>
           <div className="space-y-3">
             {allPatterns.map((p, i) => (
@@ -184,21 +189,15 @@ export const CarePatterns: React.FC = () => {
       <QoldauCard variant="default" padding="md">
         <h3 className="text-sm font-black mb-3 flex items-center gap-2">
           <Brain className="w-4 h-4 text-teal" />
-          Общая картина
+          {t('specialist.carePatterns.bigPicture')}
         </h3>
         <p className="text-sm text-ink-2 leading-relaxed">
-          Похоже, нервозность чаще появляется через 20–30 минут после еды или при шуме.
-          Возможна связь с пищеварением или сенсорной перегрузкой. Спокойный режим и
-          короткие паузы помогают. Это наблюдение, не диагноз.
+          {t('specialist.carePatterns.bigPictureText')}
         </p>
       </QoldauCard>
 
-      <AIInsightCard
-        text="Похоже, можно отслеживать потребление воды и связь с событиями поведения. Это наблюдение, не диагноз. Можно обсудить со специалистом."
-        variant="warning"
-      />
+      <AIInsightCard text={t('specialist.carePatterns.aiInsight')} variant="warning" />
 
-      {/* Связь: паттерны выявлены из Event Timeline. */}
       <button
         onClick={() => navigate('/specialist/events')}
         className="w-full bg-white border-2 border-teal/30 rounded-2xl p-4 flex items-center gap-3 hover:bg-teal-soft transition-all active:scale-[0.98] text-left"
@@ -207,8 +206,8 @@ export const CarePatterns: React.FC = () => {
           <Calendar className="w-5 h-5 text-teal-dark" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-ink">Открыть Event Timeline</p>
-          <p className="text-xs text-muted">Эти паттерны построены по наблюдениям в Timeline</p>
+          <p className="text-sm font-black text-ink">{t('specialist.carePatterns.openTimeline')}</p>
+          <p className="text-xs text-muted">{t('specialist.carePatterns.openTimelineHint')}</p>
         </div>
         <ChevronRight className="w-4 h-4 text-teal-dark shrink-0" />
       </button>
@@ -238,10 +237,11 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ label, value, color }) => {
 };
 
 const PatternCard: React.FC<{ pattern: Pattern }> = ({ pattern }) => {
+  const { t } = useTranslation();
   const confBadge = {
-    high: { label: 'Высокая', className: 'bg-green text-white' },
-    medium: { label: 'Средняя', className: 'bg-yellow text-ink' },
-    low: { label: 'Низкая', className: 'bg-bg text-muted' },
+    high: { label: t('specialist.carePatterns.highConfidence'), className: 'bg-green text-white' },
+    medium: { label: t('specialist.carePatterns.mediumConfidence'), className: 'bg-yellow text-ink' },
+    low: { label: t('specialist.carePatterns.lowConfidence'), className: 'bg-bg text-muted' },
   }[pattern.confidence];
 
   return (
@@ -254,16 +254,19 @@ const PatternCard: React.FC<{ pattern: Pattern }> = ({ pattern }) => {
       </div>
       <p className="text-xs text-ink-2 leading-relaxed mb-2.5">{pattern.description}</p>
 
-      {/* Cause-effect chain */}
       {pattern.events.length >= 2 && (
         <div className="flex items-center gap-2">
           <div className="flex-1 bg-white rounded-xl p-2 border border-line-soft">
-            <p className="text-[10px] text-muted uppercase tracking-wide mb-0.5">Событие 1</p>
+            <p className="text-[10px] text-muted uppercase tracking-wide mb-0.5">
+              {t('specialist.carePatterns.eventN', { n: 1 })}
+            </p>
             <p className="text-xs font-black text-ink leading-tight">{pattern.events[0].title}</p>
           </div>
           <ArrowRight className="w-4 h-4 text-muted flex-shrink-0" />
           <div className="flex-1 bg-white rounded-xl p-2 border border-line-soft">
-            <p className="text-[10px] text-muted uppercase tracking-wide mb-0.5">Событие 2</p>
+            <p className="text-[10px] text-muted uppercase tracking-wide mb-0.5">
+              {t('specialist.carePatterns.eventN', { n: 2 })}
+            </p>
             <p className="text-xs font-black text-ink leading-tight">{pattern.events[1].title}</p>
           </div>
         </div>

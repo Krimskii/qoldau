@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CheckCircle,
   MessageCircle,
@@ -38,6 +39,7 @@ const SIGNAL_CATEGORIES: Record<Signal['category'], { label: string; bg: string;
 };
 
 export const CommunicationProfile: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { events } = useEventStore();
   const { selectedChildId } = useDemoControlsStore();
@@ -99,34 +101,30 @@ export const CommunicationProfile: React.FC = () => {
     if (signals.length === 0) return null;
     const avgConfirmed = signals.reduce((acc, s) => acc + s.confirmed, 0) / signals.length;
     const hasChildSource = signals.some((s) => s.sources.includes('child'));
-    if (avgConfirmed >= 5) {
-      return 'Похоже, собирается достаточно подтверждённых сигналов. Это поможет специалисту лучше понять коммуникацию ребёнка.';
-    }
-    if (hasChildSource) {
-      return 'Ребёнок начинает использовать AAC карточки — это хороший прогресс в коммуникации!';
-    }
-    return 'Чем больше наблюдений — тем точнее профиль. Продолжайте фиксировать сигналы.';
-  }, [signals]);
+    if (avgConfirmed >= 5) return t('specialist.communication.aiObservations.enoughSignals');
+    if (hasChildSource) return t('specialist.communication.aiObservations.childAac');
+    return t('specialist.communication.aiObservations.moreData');
+  }, [signals, t]);
 
   const getConfidenceBadge = (confidence: Signal['confidence']) => {
     switch (confidence) {
       case 'high':
-        return { label: 'Высокая', className: 'bg-green text-white' };
+        return { label: t('specialist.communication.high'), className: 'bg-green text-white' };
       case 'medium':
-        return { label: 'Средняя', className: 'bg-yellow text-ink' };
+        return { label: t('specialist.communication.medium'), className: 'bg-yellow text-ink' };
       case 'low':
-        return { label: 'Низкая', className: 'bg-bg text-muted border border-line' };
+        return { label: t('specialist.communication.low'), className: 'bg-bg text-muted border border-line' };
     }
   };
 
   const getSourceLabel = (source: string) => {
     switch (source) {
       case 'parent':
-        return '👩 Родитель';
+        return t('specialist.communication.sourceParent');
       case 'child':
-        return '👦 Ребёнок';
+        return t('specialist.communication.sourceChild');
       case 'tutor':
-        return '👨‍🏫 Тьютор';
+        return t('specialist.communication.sourceTutor');
       default:
         return source;
     }
@@ -135,8 +133,8 @@ export const CommunicationProfile: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 pb-8">
       <PageHeader
-        title="Коммуникационный профиль"
-        subtitle={`${currentChild.name} · ${signals.length} сигналов`}
+        title={t('specialist.communication.title')}
+        subtitle={t('specialist.communication.subtitle', { name: currentChild.name, count: signals.length })}
       />
 
       <ChildSelector />
@@ -150,10 +148,10 @@ export const CommunicationProfile: React.FC = () => {
             </div>
             <div>
               <p className="text-xs font-black text-blue-dark uppercase tracking-wide mb-1">
-                AI наблюдение
+                {t('specialist.communication.aiObservation')}
               </p>
               <p className="text-sm text-ink leading-relaxed">{aiObservation}</p>
-              <p className="text-xs text-muted mt-2 italic">Это наблюдение, не диагноз. Нужно подтвердить.</p>
+              <p className="text-xs text-muted mt-2 italic">{t('specialist.communication.aiNeutral')}</p>
             </div>
           </div>
         </div>
@@ -163,15 +161,15 @@ export const CommunicationProfile: React.FC = () => {
       <div className="grid grid-cols-3 gap-2.5">
         <QoldauCard variant="default" padding="sm" className="text-center">
           <p className="text-2xl font-black text-teal">{signals.length}</p>
-          <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wide">Сигналов</p>
+          <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wide">{t('specialist.communication.signalsCount')}</p>
         </QoldauCard>
         <QoldauCard variant="default" padding="sm" className="text-center">
           <p className="text-2xl font-black text-green">{highConfidence.length}</p>
-          <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wide">Подтверждённых</p>
+          <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wide">{t('specialist.communication.confirmedCount')}</p>
         </QoldauCard>
         <QoldauCard variant="default" padding="sm" className="text-center">
           <p className="text-2xl font-black text-yellow">{mediumConfidence.length}</p>
-          <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wide">Проверить</p>
+          <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wide">{t('specialist.communication.toCheck')}</p>
         </QoldauCard>
       </div>
 
@@ -180,19 +178,15 @@ export const CommunicationProfile: React.FC = () => {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-black flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-teal" />
-            Сигналы ребёнка
+            {t('specialist.communication.signalsTitle')}
           </h3>
           <Badge className="bg-teal-soft text-teal">{signals.length}</Badge>
         </div>
-        <p className="text-xs text-muted mb-4">
-          Чем чаще сигнал — тем надёжнее интерпретация. Источники показывают, кто подтвердил.
-        </p>
 
-        {/* Frequency distribution chart */}
         {signals.length > 0 && (
           <div className="bg-bg rounded-2xl p-3 mb-4">
             <p className="text-[10px] text-muted font-black uppercase tracking-wide mb-2">
-              Частота
+              {t('specialist.communication.frequency')}
             </p>
             <div className="space-y-1.5">
               {signals.slice(0, 5).map((s) => (
@@ -215,7 +209,6 @@ export const CommunicationProfile: React.FC = () => {
           </div>
         )}
 
-        {/* Signals list — cards с полной мета-информацией */}
         <div className="space-y-2.5">
           {signals.map((s) => {
             const cat = SIGNAL_CATEGORIES[s.category];
@@ -226,9 +219,7 @@ export const CommunicationProfile: React.FC = () => {
                 className="bg-white border border-line-soft rounded-2xl p-3 hover:border-teal/40 transition-colors"
               >
                 <div className="flex items-start gap-2.5 mb-2">
-                  <div
-                    className={`w-10 h-10 rounded-xl ${cat.bg} flex items-center justify-center flex-shrink-0`}
-                  >
+                  <div className={`w-10 h-10 rounded-xl ${cat.bg} flex items-center justify-center flex-shrink-0`}>
                     <span className="text-xl" aria-hidden="true">{cat.emoji}</span>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -243,21 +234,9 @@ export const CommunicationProfile: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 mt-2.5 pt-2.5 border-t border-line-soft">
-                  <Stat
-                    icon={<CheckCircle className="w-3 h-3" />}
-                    label="Подтв."
-                    value={`${s.confirmed}×`}
-                  />
-                  <Stat
-                    icon={<Calendar className="w-3 h-3" />}
-                    label="Когда"
-                    value={s.lastSeen}
-                  />
-                  <Stat
-                    icon={<Users className="w-3 h-3" />}
-                    label="Кто"
-                    value={s.sources.length > 1 ? `${s.sources.length} ист.'а` : getSourceLabel(s.sources[0])}
-                  />
+                  <Stat icon={<CheckCircle className="w-3 h-3" />} label={t('specialist.communication.confirmed')} value={`${s.confirmed}×`} />
+                  <Stat icon={<Calendar className="w-3 h-3" />} label={t('specialist.communication.when')} value={s.lastSeen} />
+                  <Stat icon={<Users className="w-3 h-3" />} label={t('specialist.communication.who')} value={s.sources.length > 1 ? `${s.sources.length}` : getSourceLabel(s.sources[0])} />
                 </div>
               </div>
             );
@@ -265,12 +244,11 @@ export const CommunicationProfile: React.FC = () => {
         </div>
       </QoldauCard>
 
-      {/* Communication methods — примеры (демо), будут из реальных данных */}
       <QoldauCard variant="default" padding="md">
         <h3 className="text-sm font-black mb-3 flex items-center gap-2">
           <MessageCircle className="w-4 h-4 text-teal" />
-          Методы коммуникации
-          <span className="text-[10px] text-muted italic ml-auto">примеры (демо)</span>
+          {t('specialist.communication.methodsTitle')}
+          <span className="text-[10px] text-muted italic ml-auto">{t('specialist.communication.demoBadge')}</span>
         </h3>
         <div className="flex flex-wrap gap-2">
           {[
@@ -280,52 +258,34 @@ export const CommunicationProfile: React.FC = () => {
             { name: 'Взгляд', count: 2 },
             { name: 'Мимика', count: 1 },
           ].map((m) => (
-            <span
-              key={m.name}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-soft text-teal-dark text-xs font-bold"
-            >
+            <span key={m.name} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-soft text-teal-dark text-xs font-bold">
               {m.name}
-              <span className="px-1.5 rounded-full bg-white text-[10px] font-black text-teal">
-                {m.count}
-              </span>
+              <span className="px-1.5 rounded-full bg-white text-[10px] font-black text-teal">{m.count}</span>
             </span>
           ))}
         </div>
       </QoldauCard>
 
-      {/* Progress за месяц — реальные сигналы из store, +15% AAC убран как hardcoded */}
       <QoldauCard variant="default" padding="md">
         <h3 className="text-sm font-black mb-3 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-teal" />
-          Прогресс за месяц
+          {t('specialist.communication.progressTitle')}
         </h3>
         <div className="space-y-2.5">
-          <ProgressRow label="Новых сигналов" value={`+${Math.max(0, signals.length - 3)}`} trend="up" color="teal" />
-          <ProgressRow label="Подтверждённых" value={`+${highConfidence.length}`} trend="up" color="green" />
-          <ProgressRow
-            label="Использование AAC"
-            value={signals.length > 0 ? `${signals.filter((s) => s.sources.includes('child')).length}×` : '—'}
-            trend="up"
-            color="teal"
-          />
+          <ProgressRow label={t('specialist.communication.progressNewSignals')} value={`+${Math.max(0, signals.length - 3)}`} trend="up" color="teal" />
+          <ProgressRow label={t('specialist.communication.progressConfirmed')} value={`+${highConfidence.length}`} trend="up" color="green" />
+          <ProgressRow label={t('specialist.communication.progressAacUse')} value={signals.length > 0 ? `${signals.filter((s) => s.sources.includes('child')).length}×` : '—'} trend="up" color="teal" />
         </div>
-        <p className="text-[11px] text-muted mt-3 italic">
-          Это наблюдения на основе данных. Не является медицинской оценкой. Реальные
-          подсчёты появятся, когда накопится достаточно наблюдений.
-        </p>
+        <p className="text-[11px] text-muted mt-3 italic">{t('specialist.communication.progressHint')}</p>
       </QoldauCard>
 
-      {/* Связь: профиль построен из Event Timeline. */}
-      <button
-        onClick={() => navigate('/specialist/events')}
-        className="w-full bg-white border-2 border-teal/30 rounded-2xl p-4 flex items-center gap-3 hover:bg-teal-soft transition-all active:scale-[0.98] text-left"
-      >
+      <button onClick={() => navigate('/specialist/events')} className="w-full bg-white border-2 border-teal/30 rounded-2xl p-4 flex items-center gap-3 hover:bg-teal-soft transition-all active:scale-[0.98] text-left">
         <div className="w-10 h-10 rounded-2xl bg-teal-soft flex items-center justify-center shrink-0">
           <Calendar className="w-5 h-5 text-teal-dark" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-ink">Открыть Event Timeline</p>
-          <p className="text-xs text-muted">Эти сигналы собраны из наблюдений в Timeline</p>
+          <p className="text-sm font-black text-ink">{t('specialist.communication.openTimeline')}</p>
+          <p className="text-xs text-muted">{t('specialist.communication.openTimelineHint')}</p>
         </div>
         <ChevronRight className="w-4 h-4 text-teal-dark shrink-0" />
       </button>

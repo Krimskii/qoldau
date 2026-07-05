@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Copy, Send, Calendar, CheckCircle, Lightbulb, Clock } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
@@ -9,6 +10,7 @@ import { QoldauEvent } from '@/types/qoldau';
 import { formatDate, formatTime } from '@/utils/dateFormat';
 
 export const TutorReport: React.FC = () => {
+  const { t } = useTranslation();
   const { events } = useEventStore();
   const { showToast } = useToastStore();
 
@@ -53,7 +55,8 @@ export const TutorReport: React.FC = () => {
   };
 
   const handleSend = () => {
-    showToast('Отчёт отправлен родителю', 'success');
+    // v1.5+ E2 honest state: реальная отправка появится в следующей версии.
+    showToast(t('tutor.report.sendInDevelopment'), 'info');
   };
 
   const generateReportText = () => {
