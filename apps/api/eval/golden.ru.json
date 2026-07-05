@@ -26,5 +26,8 @@
   { "transcript": "После очереди в поликлинике ребёнок устал, лёг на диван и не хотел разговаривать.", "expect": { "minEvents": 2, "types": ["sensory", "state"], "hasAbc": true, "sensory": ["толпа"], "safetyFlag": false } },
   { "transcript": "Ребёнок сказал больно, показал на ухо и заплакал.", "expect": { "minEvents": 2, "types": ["communication", "behavior"], "hasAbc": false, "sensory": [], "safetyFlag": false } },
   { "transcript": "Запись пустая, слышно только шум микрофона.", "expect": { "minEvents": 0, "types": [], "hasAbc": false, "sensory": [], "safetyFlag": false } },
-  { "transcript": "Перед обедом ребёнок попросил горшок, потом пописал и был спокойный.", "expect": { "minEvents": 3, "types": ["communication", "toilet", "state"], "hasAbc": true, "sensory": [], "safetyFlag": false } }
+  { "transcript": "Перед обедом ребёнок попросил горшок, потом пописал и был спокойный.", "expect": { "minEvents": 3, "types": ["communication", "toilet", "state"], "hasAbc": true, "sensory": [], "safetyFlag": false } },
+  { "transcript": "Алихан попил воды и был спокоен.", "expect": { "minEvents": 2, "types": ["water", "state"], "hasAbc": false, "sensory": [], "safetyFlag": false } },
+  { "transcript": "Ребёнок выпил чай и спокойно играл рядом.", "expect": { "minEvents": 2, "types": ["water", "state"], "hasAbc": false, "sensory": [], "safetyFlag": false } },
+  { "transcript": "Ребёнок был спокойный, потом попросил сок словом дай и выпил.", "expect": { "minEvents": 3, "types": ["state", "communication", "water"], "hasAbc": true, "sensory": [], "safetyFlag": false } }
 ]

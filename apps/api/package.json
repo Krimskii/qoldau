@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "eval": "tsx eval/runEval.ts",
+    "eval:live": "tsx eval/runEval.ts --live",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset --force",
