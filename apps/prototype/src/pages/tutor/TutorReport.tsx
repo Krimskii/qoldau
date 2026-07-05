@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Copy, Send, Calendar, CheckCircle, Lightbulb, Clock } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
+import { DataState } from '@/components/ui/DataState';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
@@ -107,34 +108,43 @@ export const TutorReport: React.FC = () => {
           <Calendar className="w-4 h-4 text-teal" />
           <h4 className="text-sm font-black text-ink">{t('tutor.report.eventsTitle')}</h4>
         </div>
-        {Object.keys(grouped).length === 0 ? (
-          <p className="text-sm text-muted text-center py-3">{t('tutor.report.empty')}</p>
-        ) : (
-          Object.entries(grouped).map(([day, items]) => (
-            <div key={day}>
-              <p className="text-xs font-black text-muted uppercase tracking-wide mb-2 px-1 mt-2">
-                {day}
-              </p>
-              <div className="space-y-2">
-                {items.map((e) => (
-                  <div
-                    key={e.id}
-                    className="flex items-center gap-3 p-3 bg-bg rounded-2xl"
-                  >
-                    <Clock className="w-4 h-4 text-muted" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-ink truncate">{e.title}</p>
-                      <p className="text-xs text-muted truncate">{e.description}</p>
+        <DataState
+          isLoading={false}
+          error={null}
+          isEmpty={Object.keys(grouped).length === 0}
+          loadingVariant="inline"
+          emptyState={{
+            title: t('tutor.report.empty'),
+            variant: 'plain',
+          }}
+        >
+          <div className="space-y-2">
+            {Object.entries(grouped).map(([day, items]) => (
+              <div key={day}>
+                <p className="text-xs font-black text-muted uppercase tracking-wide mb-2 px-1 mt-2">
+                  {day}
+                </p>
+                <div className="space-y-2">
+                  {items.map((e) => (
+                    <div
+                      key={e.id}
+                      className="flex items-center gap-3 p-3 bg-bg rounded-2xl"
+                    >
+                      <Clock className="w-4 h-4 text-muted" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-ink truncate">{e.title}</p>
+                        <p className="text-xs text-muted truncate">{e.description}</p>
+                      </div>
+                      <span className="text-xs text-muted tabular-nums">
+                        {formatTime(e.timestamp)}
+                      </span>
                     </div>
-                    <span className="text-xs text-muted tabular-nums">
-                      {formatTime(e.timestamp)}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
-        )}
+            ))}
+          </div>
+        </DataState>
       </QoldauCard>
 
       {/* What helped — hardcoded demo (помечено явно) */}

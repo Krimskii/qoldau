@@ -33,6 +33,7 @@ export { EmptyState, type IconInput } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { Skeleton, EventCardSkeleton, EventListSkeleton, CardSkeleton } from './Skeleton';
 export { ErrorBoundary } from './ErrorBoundary';
+export { DataState, type DataStateProps, type LoadingVariant } from './DataState';
 export { MetricCard } from './MetricCard';
 export { AIInsightCard } from './AIInsightCard';
 export { TimelineItem } from './TimelineItem';

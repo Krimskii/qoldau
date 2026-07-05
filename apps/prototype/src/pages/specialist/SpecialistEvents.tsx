@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TimelineItem } from '@/components/ui/TimelineItem';
+import { DataState } from '@/components/ui/DataState';
 import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
@@ -59,13 +60,16 @@ export const SpecialistEvents: React.FC = () => {
         ))}
       </div>
 
-      {/* Timeline */}
-      {filtered.length === 0 ? (
-        <div className="bg-white border border-line rounded-2xl p-6 text-center">
-          <p className="text-sm font-bold mb-1">{t('specialist.events.empty')}</p>
-          <p className="text-xs text-muted">{t('specialist.events.emptyHint')}</p>
-        </div>
-      ) : (
+      {/* Timeline — через DataState: loading/empty/error/data */}
+      <DataState
+        isLoading={false}
+        error={null}
+        isEmpty={filtered.length === 0}
+        emptyState={{
+          title: t('specialist.events.empty'),
+          description: t('specialist.events.emptyHint'),
+        }}
+      >
         <div className="relative">
           <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-line" />
           {filtered.slice(0, 30).map((event) => (
@@ -86,7 +90,7 @@ export const SpecialistEvents: React.FC = () => {
             </div>
           ))}
         </div>
-      )}
+      </DataState>
     </div>
   );
 };
