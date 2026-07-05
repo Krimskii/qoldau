@@ -44,6 +44,9 @@ export function assertEnv(): void {
     if (!/^postgres(ql)?:\/\//u.test(process.env.DATABASE_URL)) {
       throw new Error('[env] DATABASE_URL must be a PostgreSQL connection string in production');
     }
+    if (process.env.REQUIRE_AUTH?.trim().toLowerCase() === 'false') {
+      throw new Error('[env] REQUIRE_AUTH=false is not allowed in production');
+    }
     if (!process.env.OPENAI_API_KEY?.trim()) {
       console.warn('[env] NODE_ENV=production but OPENAI_API_KEY is empty; AI will run in mock mode');
     }

@@ -13,10 +13,14 @@ NODE_ENV=production
 DATABASE_URL=postgresql://USER:PASS@HOST:PORT/DB?schema=public
 DIRECT_DATABASE_URL=postgresql://USER:PASS@HOST:PORT/DB?schema=public
 JWT_SECRET=<rotated-production-secret>
+REQUIRE_AUTH=true
 OPENAI_API_KEY=<server-side-key>
 ```
 
 If Railway provides PgBouncer, use the pooled URL for `DATABASE_URL` and the direct URL for `DIRECT_DATABASE_URL`. If there is no pooler, set both to the same Postgres URL.
+
+`REQUIRE_AUTH=false` is rejected at startup in production. Keep AI/audio/health routes public
+as before, but `/api/children`, `/api/events`, and `/api/recordings` require Bearer JWTs.
 
 ### Deploy Command
 

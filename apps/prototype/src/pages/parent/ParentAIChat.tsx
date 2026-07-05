@@ -3,6 +3,7 @@ import { Send } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DemoBadge } from '@/components/ui/DemoBadge';
 import { DEMO_PRIMARY_CHILD, getFamilyChildName, getDemoTimelineSummary } from '@/data/demoDataset';
+import { useCurrentChild } from '@/store/useCurrentChild';
 
 interface Message {
   role: 'user' | 'ai';
@@ -53,10 +54,13 @@ export const ParentAIChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const summary = getDemoTimelineSummary(DEMO_PRIMARY_CHILD.id);
+  // E7.3: используем выбранного ребёнка из ChildSelector (консистентно с
+  // другими parent-страницами). Если выбран тот же primary — fallback ОК.
+  const { child: currentChild } = useCurrentChild();
+  const summary = getDemoTimelineSummary(currentChild.id);
   const hasData = summary.total > 0;
   // Реальное имя ребёнка (если семья настроила через FamilySetupCard).
-  const childName = getFamilyChildName() ?? DEMO_PRIMARY_CHILD.name;
+  const childName = getFamilyChildName() ?? currentChild.name ?? DEMO_PRIMARY_CHILD.name;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });

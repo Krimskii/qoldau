@@ -3,13 +3,15 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
+import { DataState } from '@/components/ui/DataState';
 import { useEventQuery } from '@/lib/storage/eventStorage';
 import {
   dayHourHeatmap,
   heatmapMax,
   heatmapTotal,
 } from '@/lib/insights/weeklyPatterns';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { useCurrentChild } from '@/store/useCurrentChild';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import { TrendingUp, BarChart3, Sparkles } from 'lucide-react';
 import { toneToColor, type EventTone } from '@/styles/tokens';
 
@@ -46,10 +48,11 @@ const SUMMARY_TYPES: Array<{ type: string; label: string; tone: EventTone; dotCl
 ];
 
 export const ParentAnalytics: React.FC = () => {
-  const events = useEventQuery({ childId: DEMO_PRIMARY_CHILD.id });
+  const { id: childId } = useCurrentChild();
+  const events = useEventQuery({ childId });
 
   const summary: SummaryItem[] = useMemo(() => {
-    const childEvents = events.filter((e) => e.childId === DEMO_PRIMARY_CHILD.id);
+    const childEvents = events.filter((e) => e.childId === childId);
     return SUMMARY_TYPES.map((cfg) => ({
       type: cfg.type,
       count: childEvents.filter((e) => e.type === cfg.type).length,
@@ -98,8 +101,8 @@ export const ParentAnalytics: React.FC = () => {
 
   // Weekly heatmap (B2).
   const heatmap = useMemo(
-    () => dayHourHeatmap(events, DEMO_PRIMARY_CHILD.id, new Date()),
-    [events],
+    () => dayHourHeatmap(events, childId, new Date()),
+    [events, childId],
   );
   const heatMax = heatmapMax(heatmap);
   const heatTotal = heatmapTotal(heatmap);
@@ -132,13 +135,28 @@ export const ParentAnalytics: React.FC = () => {
   // Хелпер: top3 должны иметь хотя бы один с count>0, иначе donut пуст.
   const top3WithCount = top3.filter((x) => x.count > 0);
   const displayTop3 = top3WithCount.length > 0 ? top3WithCount : top3;
+  const hasData = events.length > 0;
 
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title="Аналитика" subtitle="Демо-данные за 7 дней" />
+      <ChildSelector />
 
-      {/* B1. Donut + Top signals (ФИКС: tone→hex) */}
-      <SectionCard title="Распределение событий" accent="teal" action={<BarChart3 className="w-5 h-5 text-teal" />}>
+      {/* E7.1: DataState wrapper для всего контента — loading/empty/error/data */}
+      <DataState
+        isLoading={false}
+        error={null}
+        isEmpty={!hasData}
+        emptyState={{
+          icon: BarChart3,
+          title: 'Пока недостаточно данных',
+          description: 'Добавьте наблюдения — голосом, AAC-карточкой или через сенсоры. Здесь появятся тепловая карта, динамика и топ-сигналы.',
+        }}
+      >
+        <div className="flex flex-col gap-5">
+
+          {/* B1. Donut + Top signals (ФИКС: tone→hex) */}
+          <SectionCard title="Распределение событий" accent="teal" action={<BarChart3 className="w-5 h-5 text-teal" />}>
         <div className="flex items-center gap-4">
           <div
             className="w-24 h-24 rounded-full relative flex-shrink-0"
@@ -341,9 +359,11 @@ export const ParentAnalytics: React.FC = () => {
         </p>
       </SectionCard>
 
-      <AIInsightCard
-        text="Похоже, за неделю больше всего событий связано с коммуникацией и AAC. Это хороший знак! Можно продолжать поддерживать."
+<AIInsightCard
+        text="Похоже, ребёнок стал использовать больше AAC-карточек и жестов, чем раньше. Это хороший прогресс! Можно обсудить со специалистом."
       />
+        </div>
+      </DataState>
     </div>
   );
 };

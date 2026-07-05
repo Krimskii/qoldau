@@ -18,6 +18,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { DemoBadge } from '@/components/ui/DemoBadge';
 import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
@@ -103,7 +104,7 @@ export const SpecialistDashboard: React.FC = () => {
       return t('specialist.dashboard.sensoryHint');
     }
     if (kpis.communications >= 5) {
-      return t('specialist.dashboard.sensoryHint').replace('сенсорн', 'коммуникац'); // упрощение — fallback на sensory
+      return t('specialist.dashboard.commHint');
     }
     return t('specialist.dashboard.sensoryHint');
   }, [kpis, t]);
@@ -126,27 +127,37 @@ export const SpecialistDashboard: React.FC = () => {
         date: formatDate(s.lastSeenAt, { day: '2-digit', month: '2-digit' }),
       }));
     }
+    // Демо-фолбэк: только если у ребёнка нет сигналов. Помечаем DemoBadge.
     return [
       { signal: '"ва"', meaning: 'возможно вода', date: '01.07' },
       { signal: 'тянет за руку', meaning: 'хочет показать', date: '30.06' },
     ];
   }, [currentChild]);
 
+  const isRecentSignalsDemo = currentChild.mainSignals.length === 0;
+
   const repeatingSituations = useMemo(() => {
     const childEvents = events.filter((e) => e.childId === selectedChildId);
-    const situations: Record<string, number> = {};
+    const situations: Record<string, number> = {
+      [t('specialist.dashboard.situationSensory')]: 0,
+      [t('specialist.dashboard.situationComm')]: 0,
+      [t('specialist.dashboard.situationCalm')]: 0,
+    };
     childEvents.forEach((e) => {
-      if (e.type === 'sensory') situations['Сенсорные реакции'] = (situations['Сенсорные реакции'] || 0) + 1;
-      if (e.type === 'communication' || e.type === 'aac_card') situations['Коммуникация'] = (situations['Коммуникация'] || 0) + 1;
-      if (e.type === 'calm_mode') situations['Спокойный режим использовался'] = (situations['Спокойный режим использовался'] || 0) + 1;
+      if (e.type === 'sensory') situations[t('specialist.dashboard.situationSensory')]++;
+      if (e.type === 'communication' || e.type === 'aac_card') situations[t('specialist.dashboard.situationComm')]++;
+      if (e.type === 'calm_mode') situations[t('specialist.dashboard.situationCalm')]++;
     });
-    return Object.entries(situations).sort((a, b) => b[1] - a[1]).slice(0, 3);
-  }, [events, selectedChildId]);
+    return Object.entries(situations)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3);
+  }, [events, selectedChildId, t]);
 
   const whatHelped = [
-    'Пауза / отдых',
-    'Тихое место',
-    'Визуальное расписание',
+    t('specialist.dashboard.whatHelpedItem1'),
+    t('specialist.dashboard.whatHelpedItem2'),
+    t('specialist.dashboard.whatHelpedItem3'),
   ];
 
   return (
@@ -205,32 +216,32 @@ export const SpecialistDashboard: React.FC = () => {
           className="bg-white border border-line rounded-2xl p-4 text-left hover:border-teal hover:shadow-card-soft transition-all active:scale-[0.98] min-w-0"
         >
           <Brain className="w-5 h-5 text-teal mb-2" />
-          <p className="text-sm font-black text-ink truncate">ABC-анализ</p>
-          <p className="text-xs text-muted truncate">Сигналы · что · после</p>
+          <p className="text-sm font-black text-ink truncate">{t('specialist.dashboard.quickActions.abcTitle')}</p>
+          <p className="text-xs text-muted truncate">{t('specialist.dashboard.quickActions.abcDesc')}</p>
         </button>
         <button
           onClick={() => navigate('/specialist/communication-profile')}
           className="bg-white border border-line rounded-2xl p-4 text-left hover:border-purple hover:shadow-card-soft transition-all active:scale-[0.98] min-w-0"
         >
           <MessageCircle className="w-5 h-5 text-purple mb-2" />
-          <p className="text-sm font-black text-ink truncate">Коммуникации</p>
-          <p className="text-xs text-muted truncate">Сигналы ребёнка</p>
+          <p className="text-sm font-black text-ink truncate">{t('specialist.dashboard.quickActions.commTitle')}</p>
+          <p className="text-xs text-muted truncate">{t('specialist.dashboard.quickActions.commDesc')}</p>
         </button>
         <button
           onClick={() => navigate('/specialist/care-patterns')}
           className="bg-white border border-line rounded-2xl p-4 text-left hover:border-blue hover:shadow-card-soft transition-all active:scale-[0.98] min-w-0"
         >
           <Activity className="w-5 h-5 text-blue mb-2" />
-          <p className="text-sm font-black text-ink truncate">Паттерны</p>
-          <p className="text-xs text-muted truncate">Связи в данных</p>
+          <p className="text-sm font-black text-ink truncate">{t('specialist.dashboard.quickActions.patternsTitle')}</p>
+          <p className="text-xs text-muted truncate">{t('specialist.dashboard.quickActions.patternsDesc')}</p>
         </button>
         <button
           onClick={() => navigate('/specialist/reports')}
           className="bg-gradient-to-br from-teal to-teal-dark text-white rounded-2xl p-4 text-left hover:shadow-card-hover transition-shadow active:scale-[0.98] min-w-0"
         >
           <FileText className="w-5 h-5 mb-2" />
-          <p className="text-sm font-black truncate">Отчёт</p>
-          <p className="text-xs opacity-80 truncate">Сформировать</p>
+          <p className="text-sm font-black truncate">{t('specialist.dashboard.quickActions.reportTitle')}</p>
+          <p className="text-xs opacity-80 truncate">{t('specialist.dashboard.quickActions.reportDesc')}</p>
         </button>
       </div>
 
@@ -243,15 +254,18 @@ export const SpecialistDashboard: React.FC = () => {
           <Calendar className="w-5 h-5 text-teal-dark" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-ink">Открыть Event Timeline</p>
-          <p className="text-xs text-muted">Все наблюдения родителя, тьютора и ребёнка — единый поток</p>
+          <p className="text-sm font-black text-ink">{t('specialist.dashboard.openTimelineTitle')}</p>
+          <p className="text-xs text-muted">{t('specialist.dashboard.openTimelineDesc')}</p>
         </div>
         <ChevronRight className="w-4 h-4 text-teal-dark shrink-0" />
       </button>
 
       {/* Repeating situations */}
       {repeatingSituations.length > 0 && (
-        <SectionCard title="Повторяющиеся ситуации" accent="teal">
+        <SectionCard title={t('specialist.dashboard.repeatingTitle')} accent="teal">
+          <p className="text-[11px] text-muted italic mb-2">
+            {t('specialist.dashboard.repeatingDisclaimer')}
+          </p>
           {repeatingSituations.map(([name, count]) => (
             <div
               key={name}
@@ -269,12 +283,12 @@ export const SpecialistDashboard: React.FC = () => {
 
       {/* What helped — примеры (демо) */}
       <SectionCard
-        title="Что помогало"
+        title={t('specialist.dashboard.whatHelpedTitle')}
         accent="green"
         action={<CheckCircle className="w-5 h-5 text-green" />}
       >
         <p className="text-[11px] text-muted italic mb-2">
-          Примеры для иллюстрации формата. Реальные данные — после накопления наблюдений.
+          {t('specialist.dashboard.whatHelpedDisclaimer')}
         </p>
         <div className="space-y-2">
           {whatHelped.map((h) => (
@@ -289,9 +303,14 @@ export const SpecialistDashboard: React.FC = () => {
       {/* New signals */}
       {recentSignals.length > 0 && (
         <SectionCard
-          title="Новые сигналы"
+          title={t('specialist.dashboard.recentSignalsTitle')}
           accent="purple"
-          action={<Sparkles className="w-5 h-5 text-purple" />}
+          action={
+            <span className="inline-flex items-center gap-2">
+              {isRecentSignalsDemo && <DemoBadge label={t('specialist.dashboard.recentSignalsDemo')} />}
+              <Sparkles className="w-5 h-5 text-purple" />
+            </span>
+          }
         >
           {recentSignals.map((s, i) => (
             <div

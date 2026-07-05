@@ -66,3 +66,11 @@ afterEach(() => {
   cleanup();
   localStorage.clear();
 });
+
+// jsdom не имеет HTMLElement.prototype.scrollTo — мокаем.
+// Используется в ParentAIChat и других страницах с auto-scroll на новые сообщения.
+if (typeof Element !== 'undefined' && !Element.prototype.scrollTo) {
+  Element.prototype.scrollTo = function () {
+    /* noop в jsdom */
+  };
+}

@@ -21,10 +21,27 @@ export async function seed(): Promise<void> {
 
   console.log('[seed] Starting...');
 
+  const demoParent = await prisma.user.upsert({
+    where: { email: 'demo-parent@qoldau.local' },
+    create: { id: 'user-demo-parent', email: 'demo-parent@qoldau.local', role: 'parent' },
+    update: {},
+  });
+  const demoTutor = await prisma.user.upsert({
+    where: { email: 'demo-tutor@qoldau.local' },
+    create: { id: 'user-demo-tutor', email: 'demo-tutor@qoldau.local', role: 'tutor' },
+    update: {},
+  });
+  const demoSpecialist = await prisma.user.upsert({
+    where: { email: 'demo-specialist@qoldau.local' },
+    create: { id: 'user-demo-specialist', email: 'demo-specialist@qoldau.local', role: 'specialist' },
+    update: {},
+  });
+
   // === Children ===
   console.log('[seed] Inserting children...');
   await childrenRepo.upsert({
     id: 'child-alikhan',
+    ownerUserId: demoParent.id,
     name: 'Демо-профиль 1',
     age: 7,
     diagnosisLabel: 'РАС',
@@ -33,6 +50,7 @@ export async function seed(): Promise<void> {
   });
   await childrenRepo.upsert({
     id: 'child-mira',
+    ownerUserId: demoParent.id,
     name: 'Демо-профиль 2',
     age: 5,
     diagnosisLabel: 'РАС',
@@ -41,12 +59,18 @@ export async function seed(): Promise<void> {
   });
   await childrenRepo.upsert({
     id: 'child-timur',
+    ownerUserId: demoParent.id,
     name: 'Демо-профиль 3',
     age: 9,
     diagnosisLabel: 'РАС',
     currentState: 'сфокусирован',
     avatar: 'Т',
   });
+
+  for (const childId of ['child-alikhan', 'child-mira', 'child-timur']) {
+    await childrenRepo.grantAccess({ childId, userId: demoTutor.id, role: 'tutor', grantedBy: demoParent.id });
+    await childrenRepo.grantAccess({ childId, userId: demoSpecialist.id, role: 'specialist', grantedBy: demoParent.id });
+  }
 
   // === Privacy migration (v0.7.4) — synthetic имена в существующих данных ===
   // Если БД содержит старые имена (Алихан/Мира/Тимур, или "Ребёнок 1/2/3" из v0.7.3-v0.7.4 dev),

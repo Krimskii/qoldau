@@ -11,6 +11,7 @@ datasource db {
 
 model Child {
   id              String   @id
+  ownerUserId     String
   name            String
   age             Int
   diagnosisLabel  String?
@@ -18,9 +19,12 @@ model Child {
   avatar          String?
   createdAt       DateTime @default(now())
 
+  owner      User          @relation("OwnedChildren", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  accessList ChildAccess[]
   events     Event[]
   recordings Recording[]
 
+  @@index([ownerUserId])
   @@map("children")
 }
 
@@ -67,9 +71,29 @@ model User {
   createdAt DateTime @default(now())
 
   magicTokens MagicToken[]
+  ownedChildren Child[]       @relation("OwnedChildren")
+  childAccess   ChildAccess[]
 
   @@index([email])
   @@map("users")
+}
+
+model ChildAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  childId   String
+  role      String
+  grantedBy String
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, childId])
+  @@index([userId])
+  @@index([childId])
+  @@map("child_access")
 }
 
 model MagicToken {

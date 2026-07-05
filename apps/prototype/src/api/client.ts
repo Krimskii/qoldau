@@ -1,14 +1,23 @@
 /**
- * API client для frontend (v0.4.0).
+ * API client для frontend (v0.4.0 → v1.5+ E7.5).
  *
  * Использует fetch + baseURL из env (VITE_API_BASE_URL).
  * Если API недоступен (network/CORS/4xx/5xx) — fallback на in-memory mock.
  *
- * Stores вызывают api.events.list() / api.recordings.list() и т.д.
- * Если запрос упал — store использует локальный кеш (localStorage или в памяти).
+ * v1.5+ E7.5 auth-ready:
+ * - Authorization: Bearer <jwt> подмешивается автоматически из auth-стора
+ *   (если есть jwt).
+ * - На 401 (протух/нет токена) → мягкий редирект на /auth/login (НЕ белый
+ *   экран). Только если VITE_REQUIRE_AUTH=true.
+ * - На 403 → ApiError со статусом (caller сам решает показать ErrorState).
+ * - В demo-режиме (VITE_REQUIRE_AUTH=false) — старое поведение, без
+ *   принудительного логина.
  */
 
 export const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '';
+
+/** Если true — на 401 редиректим на /auth/login. По умолчанию false (demo). */
+export const REQUIRE_AUTH = (import.meta.env.VITE_REQUIRE_AUTH as string | undefined) === 'true';
 
 export interface ApiOk<T> { ok: true; data?: T; [k: string]: unknown }
 export interface ApiErr { ok: false; error: string; status?: number }
@@ -22,19 +31,46 @@ class ApiError extends Error {
   }
 }
 
+/** Колбэк для получения текущего JWT из auth-стора. Lazy — чтобы не было цикла. */
+let getJwtFn: (() => string | null) | null = null;
+/** Колбэк для редиректа на /auth/login при 401 (вызывается из caller-роутера). */
+let on401Fn: ((path: string) => void) | null = null;
+
+/** Регистрирует getter текущего JWT. Вызывается один раз при инициализации auth-стора. */
+export function registerAuthGetter(getter: () => string | null): void {
+  getJwtFn = getter;
+}
+
+/** Регистрирует обработчик 401 (например, для мягкого редиректа на /auth/login). */
+export function register401Handler(handler: (path: string) => void): void {
+  on401Fn = handler;
+}
+
 export async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
   const url = `${BASE_URL}${path}`;
+  const jwt = getJwtFn?.() ?? null;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> | undefined),
+  };
+  if (jwt && !headers.Authorization) {
+    headers.Authorization = `Bearer ${jwt}`;
+  }
   const res = await fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
-    },
+    headers,
   });
   if (!res.ok) {
+    // v1.5+ E7.5: 401 → мягкий редирект на /auth/login (если REQUIRE_AUTH).
+    if (res.status === 401) {
+      if (REQUIRE_AUTH && on401Fn) {
+        try { on401Fn(path); } catch { /* ignore */ }
+      }
+      throw new ApiError('Unauthorized', 401);
+    }
     const text = await res.text().catch(() => '');
     throw new ApiError(text || res.statusText, res.status);
   }

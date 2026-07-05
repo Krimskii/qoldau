@@ -6,7 +6,8 @@ import { QoldauCard } from '@/components/ui/QoldauCard';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useEventStore } from '@/store/useEventStore';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { useCurrentChild } from '@/store/useCurrentChild';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import type { LucideIcon } from 'lucide-react';
 import { formatDate } from '@/utils/dateFormat';
 
@@ -34,13 +35,14 @@ const SOURCE_STYLES: Record<
 
 export const ParentNotifications: React.FC = () => {
   const { events } = useEventStore();
+  const child = useCurrentChild();
   const navigate = useNavigate();
 
   const notifications = useMemo<Notification[]>(() => {
     const childEvents = events
       .filter(
         (e) =>
-          e.childId === DEMO_PRIMARY_CHILD.id &&
+          e.childId === child.id &&
           (e.sourceRole === 'child' || e.sourceRole === 'tutor' || e.sourceRole === 'specialist')
       )
       .slice(-6)
@@ -52,7 +54,7 @@ export const ParentNotifications: React.FC = () => {
           id: `notif-${e.id}`,
           title:
             e.sourceRole === 'child'
-              ? `${DEMO_PRIMARY_CHILD.name}: ${e.title}`
+              ? `${child.name}: ${e.title}`
               : e.sourceRole === 'tutor'
                 ? `Тьютор: ${e.title}`
                 : `Специалист: ${e.title}`,
@@ -93,6 +95,7 @@ export const ParentNotifications: React.FC = () => {
         showBack
         rightAction={<Bell className="w-5 h-5 text-muted" />}
       />
+      <ChildSelector />
 
       {notifications.length === 0 ? (
         <EmptyState

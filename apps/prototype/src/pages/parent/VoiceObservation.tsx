@@ -25,7 +25,7 @@ import { PrimaryAction } from '@/components/ui/Primitives';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { DataState } from '@/components/ui/DataState';
 import { ConsentGate } from '@/components/privacy/ConsentGate';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { useCurrentChild } from '@/store/useCurrentChild';
 import { useSpeechRecognition } from '@/lib/stt/useSpeechRecognition';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { uploadAudioObservation, type AudioPipelineResponse } from '@/api/audio';
@@ -75,6 +75,7 @@ function detectMediaRecorderSupport(): boolean {
 export const VoiceObservation: React.FC = () => {
   const navigate = useNavigate();
   const timer = useElapsedTimer();
+  const { id: childId } = useCurrentChild();
 
   // Capability detection (один раз при mount).
   const mediaRecorderSupported = useRef(detectMediaRecorderSupport()).current;
@@ -185,7 +186,7 @@ export const VoiceObservation: React.FC = () => {
               sensoryContext?: string[];
             };
             return {
-              childId: DEMO_PRIMARY_CHILD.id,
+              childId: childId,
               type: (raw.type ?? 'voice_observation') as QoldauEvent['type'],
               title: raw.title ?? 'Голосовое наблюдение',
               description: raw.description ?? result.insight ?? '',
@@ -260,7 +261,7 @@ export const VoiceObservation: React.FC = () => {
       try {
         const result = await uploadAudioObservation({
           blob,
-          childId: DEMO_PRIMARY_CHILD.id,
+          childId: childId,
           sourceRole: (userRole ?? 'parent') as 'parent' | 'tutor' | 'specialist',
           durationSec,
           language: 'ru',
@@ -316,7 +317,7 @@ export const VoiceObservation: React.FC = () => {
     setPipelineResult(null);
     setPhase('recording');
     timer.start();
-    startStoreRecording({ speakerRole: 'parent', childId: DEMO_PRIMARY_CHILD.id });
+    startStoreRecording({ speakerRole: 'parent', childId: childId });
     await recorder.startRecording();
   }, [recorder, startStoreRecording, timer]);
 
@@ -344,7 +345,7 @@ export const VoiceObservation: React.FC = () => {
   // ===== Fallback path: Web Speech / Manual / Demo =====
 
   const handleFallbackStart = useCallback(() => {
-    startStoreRecording({ speakerRole: 'parent', childId: DEMO_PRIMARY_CHILD.id });
+    startStoreRecording({ speakerRole: 'parent', childId: childId });
     timer.start();
     speech.start();
   }, [speech, startStoreRecording, timer]);

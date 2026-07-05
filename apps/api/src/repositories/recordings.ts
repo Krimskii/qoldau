@@ -17,8 +17,8 @@ export interface RecordingRecord extends RecordingInput {
 
 const CACHE_TTL_SEC = 30;
 
-function cacheKey(childId?: string): string {
-  return `recordings:list:${childId ?? 'all'}`;
+function cacheKey(childId?: string, childIds?: string[]): string {
+  return `recordings:list:${childId ?? childIds?.sort().join(',') ?? 'all'}`;
 }
 
 async function invalidateCache(): Promise<void> {
@@ -27,19 +27,27 @@ async function invalidateCache(): Promise<void> {
 }
 
 export const recordingsRepo = {
-  async list(filter?: { childId?: string }): Promise<RecordingRecord[]> {
+  async list(filter?: { childId?: string; childIds?: string[] }): Promise<RecordingRecord[]> {
     const cache = getCache();
-    const key = cacheKey(filter?.childId);
+    const key = cacheKey(filter?.childId, filter?.childIds);
     const cached = await cache.get<RecordingRecord[]>(key);
     if (cached) return cached;
 
     const recordings = await prisma.recording.findMany({
-      where: filter?.childId ? { childId: filter.childId } : undefined,
+      where: filter?.childId
+        ? { childId: filter.childId }
+        : filter?.childIds
+          ? { childId: { in: filter.childIds } }
+          : undefined,
       orderBy: { timestamp: 'desc' },
     });
 
     await cache.set(key, recordings, CACHE_TTL_SEC);
     return recordings;
+  },
+
+  async get(id: string): Promise<RecordingRecord | null> {
+    return prisma.recording.findUnique({ where: { id } });
   },
 
   async create(input: RecordingInput): Promise<RecordingRecord> {
