@@ -4,6 +4,9 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
+# Prisma engines on Alpine need openssl/libssl (else schema-engine fails to load).
+RUN apk add --no-cache openssl libc6-compat
+
 COPY package*.json ./
 RUN npm ci
 
@@ -19,6 +22,9 @@ RUN npm prune --omit=dev
 
 FROM node:22-alpine AS runner
 WORKDIR /app
+
+# Prisma engines on Alpine need openssl/libssl at runtime (migrate deploy + client).
+RUN apk add --no-cache openssl libc6-compat
 
 ENV NODE_ENV=production
 ENV PORT=4000
