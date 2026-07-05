@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { audioPipelineService } from './audioPipeline.service.js';
 import { AudioPipelineError, type AudioIngestRequest } from './audioPipeline.types.js';
 import { audioIngestRateLimit } from '../../middleware/rateLimit.js';
+import { validateBody } from '../../middleware/validateBody.js';
+import { audioIngestBodySchema } from '../../validation/requestSchemas.js';
 
 export const audioRouter = Router();
 
@@ -11,7 +13,7 @@ export const audioRouter = Router();
  * Stateless AI proxy:
  * audioBase64 -> STT -> LLM parser -> parsed payload for local frontend storage.
  */
-audioRouter.post('/ingest', audioIngestRateLimit, async (req, res) => {
+audioRouter.post('/ingest', audioIngestRateLimit, validateBody(audioIngestBodySchema), async (req, res) => {
   try {
     const result = await audioPipelineService.process(req.body as AudioIngestRequest);
     res.status(201).json(result);
@@ -23,7 +25,10 @@ audioRouter.post('/ingest', audioIngestRateLimit, async (req, res) => {
         error: err.message,
       });
     }
-    console.error('[audio] ingest failed:', err instanceof Error ? err.message : err);
+    console.error('[audio] ingest failed:', {
+      requestId: req.requestId ?? '-',
+      error: err instanceof Error ? err.message : String(err),
+    });
     res.status(502).json({
       ok: false,
       code: 'AUDIO_PIPELINE_FAILED',
@@ -38,7 +43,7 @@ audioRouter.get('/health', (_req, res) => {
     service: 'audio-pipeline',
     mode: 'sync',
     maxAudioMb: Number(process.env.AUDIO_MAX_MB ?? 25),
-    jsonBodyLimit: process.env.JSON_BODY_LIMIT ?? '35mb',
+    jsonBodyLimit: process.env.JSON_BODY_LIMIT_AUDIO ?? '35mb',
     rateLimitPerMin: Number(process.env.AUDIO_INGEST_RATE_LIMIT_PER_MIN ?? 10),
   });
 });

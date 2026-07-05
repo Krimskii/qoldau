@@ -9,6 +9,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { logger } from './middleware/logger.js';
+import { requestId } from './middleware/requestId.js';
 import { healthRouter } from './routes/health.js';
 import { sttRouter } from './routes/stt.js';
 import { aiRouter } from './routes/ai.js';
@@ -16,9 +17,19 @@ import { audioRouter } from './modules/audio-pipeline/audio.routes.js';
 import { llmService } from './services/llmService.js';
 import { sttService } from './services/sttService.js';
 import { sentry } from './services/sentry.js';
+import {
+  DEFAULT_AUDIO_JSON_BODY_LIMIT,
+  DEFAULT_JSON_BODY_LIMIT,
+  DEFAULT_SHUTDOWN_TIMEOUT_MS,
+  assertEnv,
+  readPositiveIntEnv,
+} from './config/env.js';
 
+assertEnv();
 const app = express();
-const PORT = Number(process.env.PORT ?? 4000);
+const PORT = readPositiveIntEnv('PORT', 4000);
+const JSON_BODY_LIMIT_DEFAULT = DEFAULT_JSON_BODY_LIMIT;
+const JSON_BODY_LIMIT_AUDIO = DEFAULT_AUDIO_JSON_BODY_LIMIT;
 
 // За обратным прокси (Railway/Render) клиентский IP приходит в X-Forwarded-For.
 // Без trust proxy express-rate-limit бросает ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
@@ -58,7 +69,7 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
 }));
-app.use(express.json({ limit: process.env.JSON_BODY_LIMIT ?? '35mb' }));
+app.use(requestId);
 app.use(logger);
 
 app.get('/', (_req, res) => {
@@ -72,18 +83,24 @@ app.get('/', (_req, res) => {
   });
 });
 
+app.use('/api/audio', express.json({ limit: JSON_BODY_LIMIT_AUDIO }), audioRouter);
+app.use(express.json({ limit: JSON_BODY_LIMIT_DEFAULT }));
 app.use('/api/health', healthRouter);
 app.use('/api/stt', sttRouter);
 app.use('/api/ai', aiRouter);
-app.use('/api/audio', audioRouter);
 
 app.use((req, res) => {
   res.status(404).json({ ok: false, error: 'Not found', path: req.path });
 });
 
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('[error]', err);
-  res.status(500).json({ ok: false, error: 'Internal server error' });
+app.use((err: Error & { status?: number; type?: string }, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const requestIdValue = req.requestId ?? '-';
+  if (err.status === 413 || err.type === 'entity.too.large') {
+    console.warn('[http] request body too large', { requestId: requestIdValue, path: req.path });
+    return res.status(413).json({ ok: false, error: 'Request body too large' });
+  }
+  console.error('[error]', { requestId: requestIdValue, error: err.message });
+  res.status(500).json({ ok: false, error: 'Internal server error', requestId: requestIdValue });
 });
 
 const httpServer = app.listen(PORT, () => {
@@ -96,9 +113,21 @@ const httpServer = app.listen(PORT, () => {
   console.log(`STT:    ${stt.source}${stt.enabled ? ` (${stt.model})` : ' (mock fallback)'}\n`);
 });
 
+let shuttingDown = false;
+
 function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
   console.log('\n[shutdown] Closing HTTP server...');
-  httpServer.close(() => process.exit(0));
+  const forceTimer = setTimeout(() => {
+    console.error('[shutdown] Force exit after timeout');
+    process.exit(1);
+  }, readPositiveIntEnv('SHUTDOWN_TIMEOUT_MS', DEFAULT_SHUTDOWN_TIMEOUT_MS));
+  forceTimer.unref();
+  httpServer.close(() => {
+    clearTimeout(forceTimer);
+    process.exit(0);
+  });
 }
 
 process.on('SIGINT', shutdown);
