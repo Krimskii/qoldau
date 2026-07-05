@@ -1,10 +1,12 @@
-import React, { lazy, Suspense } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { lazy, Suspense, useEffect } from 'react';
+import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { DemoIndicator } from '@/components/layout/DemoIndicator';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { PageLoader } from '@/components/ui/PageLoader';
+import { useAuthStore } from '@/store/useAuthStore';
+import { registerAuthGetter, register401Handler } from '@/api/client';
 
 // Parent Pages (eager — small, frequently visited)
 import { ParentHome } from '@/pages/parent/ParentHome';
@@ -63,10 +65,49 @@ import { VerifyPage } from '@/pages/auth/VerifyPage';
 import { Overview } from '@/pages/overview/Overview';
 import { NotFoundPage } from '@/pages/errors/NotFoundPage';
 
+/**
+ * v1.5+ E7.5 auth-ready: маленький компонент, который регистрирует JWT getter
+ * и 401-handler в api/client.ts, а также подтягивает сохранённую auth-сессию
+ * из localStorage при старте приложения. Живёт ВНУТРИ HashRouter (нужен
+ * useNavigate для редиректа на /auth/login при 401).
+ *
+ * В demo-режиме (VITE_REQUIRE_AUTH=false) — просто инициализирует state,
+ * но НЕ редиректит на 401 (handlers.noop).
+ */
+const AppInit: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const initAuth = useAuthStore((s) => s.init);
+  const logout = useAuthStore((s) => s.logout);
+
+  useEffect(() => {
+    // Регистрируем getter JWT — теперь каждый fetch в api/client.ts будет
+    // автоматически подмешивать Authorization: Bearer <jwt>.
+    registerAuthGetter(() => useAuthStore.getState().jwt);
+    // Регистрируем 401-handler — мягкий редирект на /auth/login с returnTo.
+    register401Handler((_path) => {
+      if (!location.pathname.startsWith('/auth/')) {
+        const returnTo = location.pathname + location.search;
+        navigate(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
+      }
+    });
+    // Подтягиваем сохранённую сессию (best-effort, не блокирует UI).
+    void initAuth();
+  }, [initAuth, navigate, location.pathname, location.search]);
+
+  // Подписываемся на logout — очищаем store, не делаем редирект.
+  useEffect(() => {
+    void logout;
+  }, [logout]);
+
+  return null;
+};
+
 export const AppRoutes: React.FC = () => {
   return (
     <HashRouter>
       <ErrorBoundary>
+        <AppInit />
         <DemoIndicator />
         <ToastContainer />
         <Routes>
