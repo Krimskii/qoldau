@@ -11,8 +11,9 @@ COPY tsconfig.json ./
 COPY src ./src
 COPY prisma ./prisma
 
-# Prisma generate is build-only for legacy compiled modules.
-# Runtime startup does not run Prisma migrate, seed, or socket.io.
+# Build the compiled API and generated Prisma client, then keep only production
+# dependencies. The prisma CLI stays available because migrate-on-deploy runs in
+# the production container.
 RUN npm run build
 RUN npm prune --omit=dev
 
@@ -27,6 +28,7 @@ ENV JSON_BODY_LIMIT=35mb
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
@@ -34,4 +36,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 EXPOSE 4000
 
-CMD ["node", "dist/index.js"]
+CMD ["npm", "run", "start:prod"]
