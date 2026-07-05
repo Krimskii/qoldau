@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { DemoIndicator } from '@/components/layout/DemoIndicator';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { PageLoader } from '@/components/ui/PageLoader';
 
@@ -65,9 +66,10 @@ import { NotFoundPage } from '@/pages/errors/NotFoundPage';
 export const AppRoutes: React.FC = () => {
   return (
     <HashRouter>
-      <DemoIndicator />
-      <ToastContainer />
-      <Routes>
+      <ErrorBoundary>
+        <DemoIndicator />
+        <ToastContainer />
+        <Routes>
         {/* Landing (v0.6.2): выбор роли + запуск демо */}
         <Route path="/overview" element={<Overview />} />
 
@@ -261,7 +263,8 @@ export const AppRoutes: React.FC = () => {
         {/* Default redirect (v0.6.3: '/' → landing, '*' → 404 page) */}
         <Route path="/" element={<Navigate to="/overview" replace />} />
         <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+        </Routes>
+      </ErrorBoundary>
     </HashRouter>
   );
 };
