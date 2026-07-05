@@ -564,7 +564,20 @@
     "close": "Close",
     "confirm": "Confirm",
     "loading": "Loading…",
-    "backToHome": "Home"
+    "backToHome": "Home",
+    "error": {
+      "title": "Could not load",
+      "description": "Please try again.",
+      "retry": "Retry"
+    },
+    "errorBoundary": {
+      "title": "Something broke",
+      "description": "An error occurred in the app. Try refreshing the page or returning home.",
+      "details": "Technical details",
+      "reload": "Refresh page",
+      "reset": "Reset",
+      "home": "Home"
+    }
   },
   "errors": {
     "notFoundTitle": "404",
