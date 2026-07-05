@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { DataState } from '@/components/ui/DataState';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { formatDate } from '@/utils/dateFormat';
@@ -83,16 +84,23 @@ export const BehaviorSensory: React.FC = () => {
 
       {activeTab === 'triggers' && (
         <>
+        <DataState
+          isLoading={false}
+          error={null}
+          isEmpty={sensoryEvents.length === 0}
+          loadingVariant="inline"
+          emptyState={{
+            title: 'Пока нет сенсорных событий',
+            description: 'Зафиксируйте сенсорные реакции через голосовое наблюдение или AAC-карточку.',
+            variant: 'plain',
+          }}
+        >
           <QoldauCard variant="default">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-black text-ink">Сенсорные события</h4>
               <span className="text-xs text-muted">{sensoryEvents.length} за неделю</span>
             </div>
-            {sensoryEvents.length === 0 ? (
-              <p className="text-xs text-muted text-center py-4">
-                Пока нет сенсорных событий
-              </p>
-            ) : (
+            {sensoryEvents.length === 0 ? null : (
               sensoryEvents.map((event, i) => (
                 <div
                   key={event.id}
@@ -112,6 +120,7 @@ export const BehaviorSensory: React.FC = () => {
               ))
             )}
           </QoldauCard>
+        </DataState>
 
           <QoldauCard variant="default">
             <h4 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
