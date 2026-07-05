@@ -503,7 +503,7 @@ export const llmService = {
     try {
       const response = await env.client.chat.completions.create({
         model: env.model,
-        temperature: 0.1,
+        temperature: 0,
         response_format: { type: 'json_schema', json_schema: JSON_SCHEMA },
         messages: [
           { role: 'system', content: PARSE_RU_SYSTEM_PROMPT },
