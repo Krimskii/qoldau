@@ -14,6 +14,7 @@ import {
   CHILD_FAMILY_STYLES,
   type ChildCardFamily,
 } from '@/components/icons/child2d';
+import { triggerHaptic } from '@/lib/feedback/haptics';
 
 interface ChildHomeCard {
   id: string;
@@ -54,10 +55,14 @@ const HOME_ROW_2: ChildHomeCard[] = [
 const HomeCard: React.FC<{ c: ChildHomeCard }> = ({ c }) => {
   const navigate = useNavigate();
   const family = CHILD_FAMILY_STYLES[c.family];
+  const handleClick = () => {
+    triggerHaptic('tap');
+    navigate(c.go);
+  };
   return (
     <button
-      onClick={() => navigate(c.go)}
-      className="flex items-center justify-center bg-white rounded-[28px] shadow-card cursor-pointer aspect-square w-full min-h-[120px] transition-transform duration-200 active:scale-[0.94] hover:-translate-y-1 hover:shadow-card-lg"
+      onClick={handleClick}
+      className="flex items-center justify-center bg-white rounded-[28px] shadow-card cursor-pointer aspect-square w-full min-h-[120px] transition-transform duration-200 active:scale-[0.96] hover:-translate-y-1 hover:shadow-card-lg qoldau-tap-ring"
       aria-label={c.label}
     >
       <div className={`w-[88px] h-[88px] rounded-[22px] ${family.icoBg} flex items-center justify-center`}>
@@ -88,10 +93,15 @@ export const ChildHome: React.FC = () => {
         ))}
       </div>
 
-      {/* «Позвать маму» — крупная coral кнопка с иконкой */}
+      {/* «Позвать маму» — крупная coral кнопка с soft-pulse (v1.5+ D1).
+         Дышащее состояние привлекает внимание без фейерверка.
+         Гасится prefers-reduced-motion и html.qoldau-paused (см. animations.css). */}
       <button
-        onClick={() => navigate('/child/call')}
-        className="mx-5 mt-4 mb-3 border-0 rounded-[24px] p-4 cursor-pointer flex items-center justify-center gap-3 active:scale-[0.97] transition-transform shadow-card min-h-[72px]"
+        onClick={() => {
+          triggerHaptic('cue');
+          navigate('/child/call');
+        }}
+        className="mx-5 mt-4 mb-3 border-0 rounded-[24px] p-4 cursor-pointer flex items-center justify-center gap-3 active:scale-[0.97] transition-transform shadow-card min-h-[72px] qoldau-soft-pulse qoldau-tap-ring"
         style={{
           background: 'linear-gradient(135deg, #fdecec 0%, #fbe0e0 100%)',
           color: '#c95f5f',
@@ -103,8 +113,11 @@ export const ChildHome: React.FC = () => {
 
       {/* «Собрать фразу» — отдельная большая карточка с иконкой Puzzle2DIcon */}
       <button
-        onClick={() => navigate('/child/phrase-builder')}
-        className="mx-5 mt-1 mb-3 rounded-[24px] p-5 cursor-pointer flex items-center justify-center gap-3 shadow-card active:scale-[0.98] transition-transform min-h-[88px]"
+        onClick={() => {
+          triggerHaptic('tap');
+          navigate('/child/phrase-builder');
+        }}
+        className="mx-5 mt-1 mb-3 rounded-[24px] p-5 cursor-pointer flex items-center justify-center gap-3 shadow-card active:scale-[0.98] transition-transform min-h-[88px] qoldau-tap-ring"
         style={{ background: 'linear-gradient(135deg, #eef4fb 0%, #f3eefb 100%)' }}
         aria-label="Собрать фразу"
       >

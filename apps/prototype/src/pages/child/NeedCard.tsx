@@ -8,6 +8,7 @@ import { layout } from '@/styles/tokens';
 import { useElapsedTimer } from '@/hooks/useElapsedTimer';
 import { formatDuration } from '@/utils/formatDuration';
 import { speak } from '@/lib/tts/speak';
+import { triggerHaptic } from '@/lib/feedback/haptics';
 
 /** Грамматическая функция слова (определяет цвет плитки-иконки). */
 export type WordFunc = 'pron' | 'verb' | 'noun' | 'soc';
@@ -84,8 +85,8 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
   // Mic state (no auto-stop — пользователь сам решает, когда сказать)
   const mic = useElapsedTimer();
 
-  // Success overlay
-  const [showSuccess, setShowSuccess] = useState(false);
+  // Success overlay (v1.5+ D1: убран — теперь короткая qoldau-success-pop на кнопке).
+  const [, setYesPopped] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -103,6 +104,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
 
     if (phrase.includes(text)) {
       setRemoving(text);
+      triggerHaptic('tap');
       removeTimerRef.current = setTimeout(() => {
         setPhrase((prev) => prev.filter((w) => w !== text));
         setRemoving(null);
@@ -112,6 +114,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
       setPhrase((prev) => [...prev, text]);
       setSpeaking(text);
       speak(text);
+      triggerHaptic('tap');
       setTimeout(() => setSpeaking((cur) => (cur === text ? null : cur)), 320);
     }
   };
@@ -143,15 +146,19 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
       },
     });
     speak(phraseText || config.eventTitle);
-    setShowSuccess(true);
+    triggerHaptic('success');
+    // v1.5+ D1: короткая галочка/spark (≤360мс) + переход без overlay.
+    // Галочка отображается через CSS qoldau-success-pop (280ms) на самой
+    // кнопке «Да», overlay-фейерверк убран.
+    setYesPopped(true);
     setTimeout(() => {
-      setShowSuccess(false);
       navigate('/child/home');
-    }, 1500);
+    }, 320);
   };
 
   const handleNo = () => {
     mic.reset();
+    triggerHaptic('tap');
     navigate(-1);
   };
 
@@ -349,7 +356,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
           <div className="flex gap-3">
             <button
               onClick={handleYes}
-              className="flex-1 h-[88px] border-0 rounded-[22px] flex flex-col items-center justify-center gap-1 active:scale-[0.96] transition-transform"
+              className="flex-1 h-[88px] border-0 rounded-[22px] flex flex-col items-center justify-center gap-1 active:scale-[0.96] transition-transform qoldau-tap-ring"
               style={{
                 background: '#e9f4ee',
                 color: '#3f9a6a',
@@ -362,7 +369,7 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
             </button>
             <button
               onClick={handleNo}
-              className="flex-1 h-[88px] border-0 rounded-[22px] flex flex-col items-center justify-center gap-1 active:scale-[0.96] transition-transform"
+              className="flex-1 h-[88px] border-0 rounded-[22px] flex flex-col items-center justify-center gap-1 active:scale-[0.96] transition-transform qoldau-tap-ring"
               style={{
                 background: '#f7ecec',
                 color: '#c56a6a',
@@ -377,21 +384,8 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
         </div>
       </div>
 
-      {/* Success overlay */}
-      {showSuccess && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: 'rgba(234,245,255,0.85)', backdropFilter: 'blur(4px)' }}
-        >
-          <div className="bg-white rounded-3xl px-8 py-6 shadow-card-hover text-center max-w-xs">
-            <div className="text-5xl mb-2">✓</div>
-            <p className="text-lg font-black text-ink">Мама увидит</p>
-            <p className="text-sm text-muted mt-1">Спасибо!</p>
-          </div>
-        </div>
-      )}
+      {/* Success overlay — убран в v1.5+ D1. Галочка/spark на кнопке «Да»
+          через qoldau-success-pop (≤320мс). */}
 
       <style>{`
         @keyframes need-pop {
