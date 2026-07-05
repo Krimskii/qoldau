@@ -7,6 +7,7 @@
  */
 
 export { QoldauCard, type QoldauCardProps } from './QoldauCard';
+export { ConfirmSheet, type ConfirmSheetProps } from './ConfirmSheet';
 export {
   QoldauIconCard,
   COLOR_MAP,
