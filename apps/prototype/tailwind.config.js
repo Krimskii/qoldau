@@ -37,6 +37,7 @@ export default {
         },
         purple: {
           DEFAULT: '#7C5CCB',
+          dark: '#5e3eb4',
           soft: '#F1EDFF',
         },
         yellow: {
@@ -45,6 +46,7 @@ export default {
         },
         coral: {
           DEFAULT: '#E56F5D',
+          dark: '#cc251d',
           soft: '#FFEAEA',
         },
         green: {
