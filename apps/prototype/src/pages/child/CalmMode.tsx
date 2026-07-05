@@ -13,6 +13,7 @@ import {
   type ChildCardFamily,
 } from '@/components/icons/child2d';
 import { formatDuration } from '@/utils/formatDuration';
+import { triggerHaptic } from '@/lib/feedback/haptics';
 
 const TIMER_SECONDS = 60;
 // Mock-длительность «аудио от мамы» — имитирует воспроизведение без реального файла.
@@ -30,10 +31,14 @@ const CalmTile: React.FC<{ c: CalmCard; onClick: () => void }> = ({
   onClick,
 }) => {
   const family = CHILD_FAMILY_STYLES[c.family];
+  const handle = () => {
+    triggerHaptic('tap');
+    onClick();
+  };
   return (
     <button
-      onClick={onClick}
-      className="flex items-center justify-center bg-white rounded-[24px] shadow-card cursor-pointer aspect-square w-full min-h-[110px] transition-transform active:scale-[0.94]"
+      onClick={handle}
+      className="flex items-center justify-center bg-white rounded-[24px] shadow-card cursor-pointer aspect-square w-full min-h-[110px] transition-transform active:scale-[0.96] qoldau-tap-ring"
       aria-label={c.id}
     >
       <div className={`w-[80px] h-[80px] rounded-[20px] ${family.icoBg} flex items-center justify-center`}>
@@ -185,8 +190,11 @@ export const CalmMode: React.FC = () => {
       {/* Header — только кнопка назад. */}
       <div className="flex items-center pt-1.5 pb-1">
         <button
-          onClick={() => navigate('/child/home')}
-          className="w-9 h-9 rounded-[12px] bg-white border-0 shadow-card flex items-center justify-center hover:bg-bg transition-colors"
+          onClick={() => {
+            triggerHaptic('tap');
+            navigate('/child/home');
+          }}
+          className="w-9 h-9 rounded-[12px] bg-white border-0 shadow-card flex items-center justify-center hover:bg-bg transition-colors active:scale-[0.94] qoldau-tap-ring"
           aria-label="Назад"
         >
           <BackArrowIcon size={18} />
@@ -200,8 +208,11 @@ export const CalmMode: React.FC = () => {
         </div>
         {startedAt === null ? (
           <button
-            onClick={handleStart}
-            className="mt-4 w-full min-h-[56px] border-0 rounded-[18px] text-white text-[18px] font-black cursor-pointer active:scale-[0.98] transition-transform"
+            onClick={() => {
+              triggerHaptic('tap');
+              handleStart();
+            }}
+            className="mt-4 w-full min-h-[56px] border-0 rounded-[18px] text-white text-[18px] font-black cursor-pointer active:scale-[0.96] transition-transform qoldau-tap-ring"
             style={{
               background: '#1ba39a',
               boxShadow: '0 8px 20px rgba(27,163,154,0.28)',
@@ -213,15 +224,21 @@ export const CalmMode: React.FC = () => {
         ) : (
           <div className="mt-4 flex justify-center gap-3">
             <button
-              onClick={() => handleFinish(true)}
-              className="w-12 h-12 rounded-full bg-green-soft text-green flex items-center justify-center hover:bg-[#d6f1e0] transition-colors"
+              onClick={() => {
+                triggerHaptic('success');
+                handleFinish(true);
+              }}
+              className="w-12 h-12 rounded-full bg-green-soft text-green flex items-center justify-center hover:bg-[#d6f1e0] transition-colors active:scale-[0.92] qoldau-tap-ring"
               aria-label="Спокойно"
             >
               ✓
             </button>
             <button
-              onClick={() => handleFinish(false)}
-              className="w-12 h-12 rounded-full bg-white border-2 border-line text-muted flex items-center justify-center hover:bg-bg transition-colors"
+              onClick={() => {
+                triggerHaptic('tap');
+                handleFinish(false);
+              }}
+              className="w-12 h-12 rounded-full bg-white border-2 border-line text-muted flex items-center justify-center hover:bg-bg transition-colors active:scale-[0.92] qoldau-tap-ring"
               aria-label="Выйти"
             >
               ✕

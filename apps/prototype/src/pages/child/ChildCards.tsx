@@ -5,6 +5,7 @@ import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { BackArrowIcon } from '@/components/icons/child2d';
 import { QUICK_NEEDS, CATEGORIES } from '@/data/categories';
 import { speak } from '@/lib/tts/speak';
+import { triggerHaptic } from '@/lib/feedback/haptics';
 
 /**
  * ChildCards (v1.5+ minimal) — «Быстрые карточки».
@@ -43,6 +44,7 @@ export const ChildCards: React.FC = () => {
       {/* Featured — большая верхняя карточка с иконкой (без надписей). */}
       <button
         onClick={() => {
+          triggerHaptic('tap');
           speak(featured.title);
           addEvent({
             childId: DEMO_PRIMARY_CHILD.id,
@@ -73,10 +75,11 @@ export const ChildCards: React.FC = () => {
           <button
             key={need.id}
             onClick={() => {
+              triggerHaptic('tap');
               speak(need.title);
               navigate(need.go);
             }}
-            className="flex items-center justify-center bg-white rounded-[22px] shadow-card-soft aspect-square w-full min-h-[88px] transition-transform active:scale-[0.94]"
+            className="flex items-center justify-center bg-white rounded-[22px] shadow-card-soft aspect-square w-full min-h-[88px] transition-transform active:scale-[0.96] qoldau-tap-ring"
             aria-label={need.title}
           >
             <div
@@ -94,6 +97,7 @@ export const ChildCards: React.FC = () => {
           <button
             key={cat.id}
             onClick={() => {
+              triggerHaptic('tap');
               speak(cat.title);
               addEvent({
                 childId: DEMO_PRIMARY_CHILD.id,
@@ -107,7 +111,7 @@ export const ChildCards: React.FC = () => {
               });
               navigate(`/child/category/${cat.id}`);
             }}
-            className="flex items-center justify-center bg-white rounded-[22px] shadow-card-soft aspect-square w-full min-h-[88px] transition-transform active:scale-[0.94]"
+            className="flex items-center justify-center bg-white rounded-[22px] shadow-card-soft aspect-square w-full min-h-[88px] transition-transform active:scale-[0.96] qoldau-tap-ring"
             aria-label={cat.title}
           >
             <div

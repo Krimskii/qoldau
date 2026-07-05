@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 /**
- * useChildSettingsStore — настройки ребёнка (v0.3.16).
+ * useChildSettingsStore — настройки ребёнка (v0.3.16 + v1.5+ D2).
  *
  * Обязательные настройки по DESIGN_RULES для child UI:
  * - calmVisual: убирает градиенты и анимации (полностью статичный визуал).
@@ -10,9 +10,14 @@ import { persist } from 'zustand/middleware';
  * - highContrast: bolder text/colors, без muted текста.
  * - paused: глобальная "Тишина" — отключает анимации и звук во всём приложении.
  * - fontScale: 1 / 1.1 / 1.2 — размер шрифта.
+ * - sensoryMode (v1.5+ D2): 'calm' | 'standard' | 'playful' — общий сенсорный
+ *   регулятор. Заменяет «один toggle» на сегментированный переключатель.
  *
- * Persist в localStorage (`qoldau-child-settings-v1`).
+ * Persist в localStorage (`qoldau-child-settings-v1`, version 2 — добавили
+ * sensoryMode со значением по умолчанию 'standard').
  */
+
+export type SensoryMode = 'calm' | 'standard' | 'playful';
 
 export interface ChildSettings {
   calmVisual: boolean;
@@ -20,6 +25,8 @@ export interface ChildSettings {
   highContrast: boolean;
   paused: boolean;
   fontScale: 1 | 1.1 | 1.2;
+  /** v1.5+ D2 — сенсорный режим (CSS-vars + haptics + personalization). */
+  sensoryMode: SensoryMode;
 }
 
 interface ChildSettingsState extends ChildSettings {
@@ -33,6 +40,7 @@ const DEFAULTS: ChildSettings = {
   highContrast: false,
   paused: false,
   fontScale: 1,
+  sensoryMode: 'standard',
 };
 
 export const useChildSettingsStore = create<ChildSettingsState>()(
@@ -44,7 +52,18 @@ export const useChildSettingsStore = create<ChildSettingsState>()(
     }),
     {
       name: 'qoldau-child-settings-v1',
-      version: 1,
+      version: 2,
+      // v1 → v2: добавлено поле sensoryMode (default 'standard'). Старые
+      // записи без sensoryMode получат значение по умолчанию при migrate.
+      migrate: (persistedState, fromVersion) => {
+        const state = (persistedState ?? {}) as Partial<ChildSettings> & {
+          events?: unknown;
+        };
+        if (fromVersion < 2 && !state.sensoryMode) {
+          return { ...DEFAULTS, ...state, sensoryMode: 'standard' };
+        }
+        return state as ChildSettings;
+      },
     },
   ),
 );
@@ -55,6 +74,8 @@ export const useChildSettingsStore = create<ChildSettingsState>()(
  * - fontScale: добавить data-font-scale для CSS.
  * - calmVisual: добавить класс .qoldau-calm-visual (без градиентов/теней).
  * - highContrast: добавить класс .qoldau-high-contrast.
+ * - sensoryMode (v1.5+ D2): добавить data-sensory="calm|standard|playful".
+ *   CSS-vars --child-saturation / --child-motion определены в sensory.css.
  */
 export function applyChildSettings(settings: ChildSettings) {
   if (typeof document === 'undefined') return;
@@ -75,4 +96,5 @@ export function applyChildSettings(settings: ChildSettings) {
     html.classList.remove('qoldau-high-contrast');
   }
   html.dataset.fontScale = String(settings.fontScale);
+  html.dataset.sensory = settings.sensoryMode ?? 'standard';
 }

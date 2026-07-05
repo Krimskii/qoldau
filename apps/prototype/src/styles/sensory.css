@@ -1,0 +1,85 @@
+/* ============================================================
+   Qoldau AI — Sensory dial (v1.5+ D2)
+   ------------------------------------------------------------
+   Общий сенсорный режим для child UI: calm | standard | playful.
+
+   Применяется к корню детского UI через атрибут
+   `data-sensory="calm|standard|playful"` на <html> (см.
+   applyChildSettings в useChildSettingsStore.ts).
+
+   Режимы:
+   - calm:     saturation 0.72 (мягче цвета), motion 0 (без анимации).
+               TTS тише/без гаптика. Аватар и имя скрыты в ChildTopBar.
+   - standard: saturation 1.00 (без изменений), motion 1 (вся анимация).
+               TTS + лёгкий гаптик-tap (10ms).
+   - playful:  saturation 1.12 (сочнее цвета), motion 1 (вся анимация).
+               TTS + cue-pattern гаптика + искры/spark в feedback.
+
+   `--child-motion` используется в Q&A утилитных классах и проверяется
+   через `prefers-reduced-motion: reduce` (глобальный override остаётся).
+   ============================================================ */
+
+:root,
+[data-sensory='standard'] {
+  --child-saturation: 1;
+  --child-motion: 1;
+  --child-tts-rate: 1;
+  --child-tts-volume: 1;
+  --child-haptic-default: 'tap';
+  --child-haptic-success: 'success';
+}
+
+[data-sensory='calm'] {
+  /* Мягче цвета, анимация выключена, TTS тише, гаптик off. */
+  --child-saturation: 0.72;
+  --child-motion: 0;
+  --child-tts-rate: 0.92;
+  --child-tts-volume: 0.6;
+  --child-haptic-default: 'off';
+  --child-haptic-success: 'off';
+}
+
+[data-sensory='playful'] {
+  /* Сочнее цвета, всё включено, cue-pattern гаптика. */
+  --child-saturation: 1.12;
+  --child-motion: 1;
+  --child-tts-rate: 1.05;
+  --child-tts-volume: 1;
+  --child-haptic-default: 'cue';
+  --child-haptic-success: 'success';
+}
+
+/* Применяем saturate только в зоне child-root, чтобы не задеть parent UI.
+   Если child-root не задан (например, на parent-экране) — saturate не
+   активируется через этот CSS, поэтому безопасно. */
+.child-root {
+  filter: saturate(var(--child-saturation));
+}
+
+/* Глобальный гейт анимации по motion=0 (calm). Применяется ко всем
+   элементам внутри child-root. prefers-reduced-motion остаётся глобальным. */
+[data-sensory='calm'] .child-root *,
+[data-sensory='calm'] .child-root *::before,
+[data-sensory='calm'] .child-root *::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0s !important;
+}
+
+/* Calm также отключает soft-pulse (только CTA «Позвать маму» / SOS)
+   и любые loop-анимации. */
+[data-sensory='calm'] .qoldau-soft-pulse {
+  animation: none !important;
+}
+
+/* Применяем motion=0 как data-атрибут (для JS-проверок в haptics.ts). */
+[data-sensory='standard'] {
+  --child-motion-label: 'standard';
+}
+[data-sensory='calm'] {
+  --child-motion-label: 'calm';
+}
+[data-sensory='playful'] {
+  --child-motion-label: 'playful';
+}

@@ -42,6 +42,37 @@
   animation: qoldau-speak-pulse 280ms ease-out both;
 }
 
+/* Tap-ring — короткая подсветка-«волна» при нажатии (v1.5+ D1).
+   Применяется к любой интерактивной карточке через class `qoldau-tap-ring`
+   (или active: pseudo-class). Чисто сенсорный feedback — никакого
+   scaling здесь (он в active:scale-[0.96]). */
+@keyframes qoldau-tap-ring {
+  0%   { box-shadow: 0 0 0 0   rgba(7,149,139,0); }
+  35%  { box-shadow: 0 0 0 8px rgba(7,149,139,0.22); }
+  100% { box-shadow: 0 0 0 0   rgba(7,149,139,0); }
+}
+.qoldau-tap-ring:active {
+  animation: qoldau-tap-ring 200ms ease-out both;
+}
+
+/* Soft-pulse для важных CTA «Позвать маму» / SOS.
+   Только на пользовательском слое (не ambient) — длится 1.6s
+   с pause между циклами через animation-delay, чтобы не мигало. */
+@keyframes qoldau-soft-pulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.04); opacity: 0.92; }
+}
+.qoldau-soft-pulse {
+  animation: qoldau-soft-pulse 1.8s ease-in-out infinite;
+  animation-delay: 0.6s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .qoldau-soft-pulse { animation: none !important; }
+}
+html.qoldau-paused .qoldau-soft-pulse { animation: none !important; }
+/* v1.5+ D2: sensoryMode calm отключает soft-pulse через CSS-var.
+   В sensory.css это сделано через [data-sensory='calm']. */
+
 /* Recording pulse — только когда .rec class на элементе (user-action, не ambient) */
 @keyframes qoldau-rec-pulse {
   0%   { box-shadow: 0 0 0 0   rgba(229,111,93,0.32); }

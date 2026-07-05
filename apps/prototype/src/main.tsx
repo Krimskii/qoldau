@@ -8,6 +8,7 @@ import { sentry } from './utils/sentry';
 import './i18n/config';
 import './styles/globals.css';
 import './styles/animations.css';
+import './styles/sensory.css';
 
 // v0.7.3: Sentry init (opt-in через VITE_SENTRY_DSN, должен быть ПЕРВЫМ).
 sentry.init();

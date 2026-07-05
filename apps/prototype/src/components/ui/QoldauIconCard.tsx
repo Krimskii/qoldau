@@ -1,6 +1,7 @@
 import React from 'react';
 import clsx from 'clsx';
 import type { IconProps } from '@/components/icons';
+import { triggerHaptic } from '@/lib/feedback/haptics';
 
 /**
  * QoldauIconCard — универсальная плоская карточка с иконкой.
@@ -70,9 +71,15 @@ export const QoldauIconCard: React.FC<QoldauIconCardProps> = ({
   const palette = COLOR_MAP[color];
   const dims = SIZE_MAP[size];
 
+  const handleClick = () => {
+    // v1.5+ D1: единый паттерн — гаптик-tap (10ms) по умолчанию.
+    triggerHaptic('tap');
+    onClick?.();
+  };
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       disabled={disabled}
       aria-label={ariaLabel ?? label}
       className={clsx(
@@ -82,12 +89,14 @@ export const QoldauIconCard: React.FC<QoldauIconCardProps> = ({
         palette.bg,
         palette.border,
         'shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_4px_10px_rgba(42,73,108,0.04)]',
+        // v1.5+ D1: ring-подсветка при active (200ms).
+        !disabled && 'qoldau-tap-ring',
         // pressed/selected/success states
         state === 'pressed' && 'scale-[0.96] opacity-90',
         state === 'selected' && 'ring-2 ring-offset-2 ring-teal/40 scale-[0.97]',
         state === 'success' && 'ring-2 ring-offset-2 ring-[#4EC28A]/50',
         // interactive
-        !disabled && 'active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40',
+        !disabled && 'active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40',
         disabled && 'opacity-40 cursor-not-allowed',
         className,
       )}
