@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, MicOff, Play, Pause, Trash2, Clock, Volume2 } from 'lucide-react';
-import { BackArrowIcon, Music2DIcon } from '@/components/icons/child2d';
+import { BackArrowIcon, Music2DIcon, Water2DIcon, Mom2DIcon, Toilet2DIcon, Home2DIcon, CHILD_FAMILY_STYLES, type ChildCardFamily } from '@/components/icons/child2d';
 import { useRecordingsStore, type Recording } from '@/store/useRecordingsStore';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
@@ -37,6 +37,24 @@ const SCHEDULE_PRESETS = [
   { label: '30 мин',  minutes: 30 },
   { label: '1 час',   minutes: 60 },
 ] as const;
+
+/**
+ * Fallback-карточки для невокализующих детей (v1.5+ D §2).
+ * Частотные FCT-потребности — ребёнок может выразить их без голоса.
+ * Тап карточки = speak(label) + aac_card event, без навигации.
+ * Скрыто при активной записи (isRecording), чтобы не отвлекать.
+ */
+interface SpeakFallbackCard {
+  label: string;
+  family: ChildCardFamily;
+  Icon: React.FC<{ size?: number; animated?: boolean }>;
+}
+const SPEAK_FALLBACK_CARDS: SpeakFallbackCard[] = [
+  { label: 'Вода',   family: 'need', Icon: Water2DIcon },
+  { label: 'Мама',   family: 'help', Icon: Mom2DIcon },
+  { label: 'Туалет', family: 'feel', Icon: Toilet2DIcon },
+  { label: 'Домой',  family: 'fav',  Icon: Home2DIcon },
+];
 
 const formatTime = (s: number) => {
   const m = Math.floor(s / 60);
@@ -275,6 +293,43 @@ export const ChildSpeak: React.FC = () => {
     });
   };
 
+  /**
+   * Тап fallback-карточки — выражение потребности без голоса (v1.5+ D §2).
+   * Без навигации — ребёнок остаётся на Speak, короткий ✓-feedback.
+   */
+  const handleFallbackCard = (card: SpeakFallbackCard) => {
+    speak(card.label);
+    addEvent({
+      childId: DEMO_PRIMARY_CHILD.id,
+      type: 'aac_card',
+      title: card.label,
+      description: `Ребёнок выбрал карточку «${card.label}» без голоса (fallback).`,
+      timestamp: new Date().toISOString(),
+      sourceRole: 'child',
+      status: 'confirmed',
+      payload: {
+        source: 'speak_fallback',
+        label: card.label,
+      },
+    });
+    // Короткий ✓-feedback — переиспользуем SuccessSparkle через mini-toast.
+    showFallbackFeedback(card.label);
+  };
+
+  // === Mini ✓-feedback для fallback-карточки (не блокирует запись/UI) ===
+  const [fallbackFeedback, setFallbackFeedback] = useState<string | null>(null);
+  const fallbackFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showFallbackFeedback = (label: string) => {
+    setFallbackFeedback(label);
+    if (fallbackFeedbackTimer.current) clearTimeout(fallbackFeedbackTimer.current);
+    fallbackFeedbackTimer.current = setTimeout(() => setFallbackFeedback(null), 1200);
+  };
+  useEffect(() => {
+    return () => {
+      if (fallbackFeedbackTimer.current) clearTimeout(fallbackFeedbackTimer.current);
+    };
+  }, []);
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)]">
       {/* Header */}
@@ -338,6 +393,36 @@ export const ChildSpeak: React.FC = () => {
           </p>
         )}
       </div>
+
+      {/* Fallback-карточки «или выбери карточку» (v1.5+ D §2) — скрыты во время записи */}
+      {!isRecording && (
+        <div className="mx-5 mt-6">
+          <p className="text-sm text-muted text-center mb-3">
+            или выбери карточку
+          </p>
+          <div className="grid grid-cols-4 gap-3">
+            {SPEAK_FALLBACK_CARDS.map((card) => {
+              const familyStyle = CHILD_FAMILY_STYLES[card.family];
+              const Icon = card.Icon;
+              return (
+                <button
+                  key={card.label}
+                  onClick={() => handleFallbackCard(card)}
+                  aria-label={card.label}
+                  className={`bg-white rounded-[22px] shadow-card-soft aspect-square min-h-[88px] flex flex-col items-center justify-center gap-1.5 px-1 py-2 transition-transform duration-200 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 qoldau-tap-ring`}
+                >
+                  <div className={`w-[56px] h-[56px] rounded-[16px] ${familyStyle.icoBg} flex items-center justify-center`}>
+                    <Icon size={40} animated={false} />
+                  </div>
+                  <span className={`text-[12px] font-black ${familyStyle.lbl} leading-tight text-center`}>
+                    {card.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Recent recordings */}
       <div className="mx-5 mt-6 mb-2">
@@ -442,6 +527,19 @@ export const ChildSpeak: React.FC = () => {
       </div>
 
       <div style={{ height: 12 }} />
+
+      {/* Mini ✓-feedback для fallback-карточки */}
+      {fallbackFeedback && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-sm qoldau-success-pop pointer-events-none"
+        >
+          <div className="bg-teal-soft border-2 border-teal/30 rounded-3xl px-6 py-3 shadow-card text-center">
+            <p className="text-base font-black text-teal-dark">✓ {fallbackFeedback}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

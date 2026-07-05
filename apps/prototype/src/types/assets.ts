@@ -68,6 +68,15 @@ export interface AACCardConfig {
   category: AssetCategory;
   order: number;
   isFavorite?: boolean;
+  /**
+   * Тип медиа для карточки-фаворита (v1.5+ D):
+   * - 'video' → play-оверлей на плитке (▶)
+   * - 'audio' → play-оверлей на плитке (▶)
+   * - 'photo' → без бейджа
+   * - 'app'   → без бейджа
+   * Опц. — старые записи мигрируют (см. useAssetStore migrate v1→v2).
+   */
+  mediaKind?: 'video' | 'audio' | 'photo' | 'app';
 }
 
 /**
