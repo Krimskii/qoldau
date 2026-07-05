@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Sparkles, ArrowRight, Check } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
@@ -20,6 +21,7 @@ import { eventTypeColors, toneToColor, type EventTone } from '@/styles/tokens';
  * 4. Primary action: "Продолжить" / "Не сохранять"
  */
 export const AIReview: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     parsedObservation,
@@ -55,17 +57,23 @@ export const AIReview: React.FC = () => {
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal to-teal-dark flex items-center justify-center qoldau-soft-pulse">
           <Sparkles className="w-8 h-8 text-white" />
         </div>
-        <p className="text-sm font-bold text-ink">AI обрабатывает…</p>
-        <p className="text-xs text-muted">Структурируем наблюдение.</p>
+        <p className="text-sm font-bold text-ink">{t('parent.aiReview.processing')}</p>
+        <p className="text-xs text-muted">{t('parent.aiReview.processingHint')}</p>
       </div>
     );
   }
 
+  const eventCountWord = events.length === 1
+    ? t('parent.aiReview.eventWordSingular')
+    : events.length < 5
+    ? t('parent.aiReview.eventWordFew')
+    : t('parent.aiReview.eventWordMany');
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="AI-разбор"
-        subtitle="Проверьте, всё ли правильно"
+        title={t('parent.aiReview.title')}
+        subtitle={t('parent.aiReview.subtitle')}
         showBack
         fallbackPath="/parent/voice"
       />
@@ -76,13 +84,13 @@ export const AIReview: React.FC = () => {
           <div className="flex items-center gap-2 mb-2">
             <AppIcon component={VoiceWaveIcon} size={16} colorClass="text-blue" />
             <p className="text-xs font-black text-blue uppercase tracking-wide">
-              Исходная фраза
+              {t('parent.aiReview.transcriptLabel')}
             </p>
             <button
               onClick={handleEditTranscript}
               className="ml-auto text-xs text-blue underline hover:text-blue-dark"
             >
-              Изменить
+              {t('parent.aiReview.editBtn')}
             </button>
           </div>
           <p className="text-sm text-ink italic leading-relaxed">
@@ -96,17 +104,17 @@ export const AIReview: React.FC = () => {
         <header className="flex items-center gap-2 mb-2 px-1">
           <Sparkles size={14} className="text-teal" />
           <h3 className="text-sm font-black text-ink">
-            AI предложил {events.length} {events.length === 1 ? 'событие' : events.length < 5 ? 'события' : 'событий'}
+            {t('parent.aiReview.eventCount', { count: events.length, word: eventCountWord })}
           </h3>
           <span className="text-[10px] text-muted italic ml-auto">
-            нужно подтвердить
+            {t('parent.aiReview.needClarification')}
           </span>
         </header>
 
         {events.length === 0 ? (
           <QoldauCard variant="default" padding="md">
             <p className="text-sm text-muted text-center py-2">
-              AI не смог выделить событий. Возможно, описание слишком короткое.
+              {t('parent.aiReview.noEvents')}
             </p>
           </QoldauCard>
         ) : (
@@ -124,7 +132,7 @@ export const AIReview: React.FC = () => {
                   variant="default"
                   padding="md"
                   hoverable
-                  ariaLabel={`Событие: ${event.title}`}
+                  ariaLabel={t('parent.aiReview.ariaLabelEvent', { title: event.title })}
                 >
                   <div className="flex items-start gap-3">
                     <div
@@ -143,7 +151,7 @@ export const AIReview: React.FC = () => {
                         <EventTypeBadge eventType={event.type} size="sm" />
                         {event.confidence && (
                           <span className="text-[11px] font-bold text-muted">
-                            уверенность {Math.round(event.confidence * 100)}%
+                            {t('parent.aiReview.confidence', { percent: Math.round(event.confidence * 100) })}
                           </span>
                         )}
                       </div>
@@ -176,7 +184,7 @@ export const AIReview: React.FC = () => {
           <div className="flex items-center gap-2 mb-2">
             <Sparkles size={16} className="text-yellow" />
             <p className="text-xs font-black text-yellow uppercase tracking-wide">
-              AI-наблюдение
+              {t('parent.aiReview.aiObservation')}
             </p>
             <span className="text-[10px] text-muted italic ml-auto">
               не диагноз
@@ -190,14 +198,13 @@ export const AIReview: React.FC = () => {
 
       {/* 4. Disclaimer */}
       <p className="text-xs text-muted text-center italic px-4 leading-relaxed">
-        События сохранятся в Event Timeline после вашего подтверждения на следующем шаге.
-        Это наблюдение, не диагноз. Можно отредактировать или отклонить.
+        {t('parent.aiReview.hintFooter')}
       </p>
 
       {/* 5. Actions */}
       <div className="flex flex-col gap-2 mt-2">
         <PrimaryAction
-          label="Подтвердить и продолжить"
+          label={t('parent.aiReview.saveBtn')}
           onClick={handleContinue}
           variant="primary"
           size="lg"
