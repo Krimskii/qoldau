@@ -5,6 +5,10 @@ Backend API для Qoldau AI frontend. Prisma + SQLite/Postgres, Anthropic Claud
 **Base URL (dev):** `http://localhost:4000`
 **Base URL (prod):** `https://api.your-domain.com`
 
+v1.6 P1 authz: in production, `/api/children`, `/api/events`, and
+`/api/recordings` require `Authorization: Bearer <jwt>`. The `REQUIRE_AUTH`
+env flag defaults to production-on and local-demo-off.
+
 Все ответы имеют формат `{ ok: true, ... }` или `{ ok: false, error: string }`.
 
 ---
@@ -60,10 +64,15 @@ curl -X POST http://localhost:4000/api/reset
 
 ## Children
 
+v1.6 P1: data routes require `Authorization: Bearer <jwt>` when `REQUIRE_AUTH=true`
+(always true in production). In local demo with `REQUIRE_AUTH=false`, requests without
+Bearer auth run as the deterministic demo parent.
+
 ### `GET /api/children`
 
 ```bash
-curl http://localhost:4000/api/children
+curl http://localhost:4000/api/children \
+  -H "Authorization: Bearer <jwt>"
 ```
 
 ```json
@@ -79,7 +88,37 @@ curl http://localhost:4000/api/children
 ### `GET /api/children/:id`
 
 ```bash
-curl http://localhost:4000/api/children/child-alikhan
+curl http://localhost:4000/api/children/child-alikhan \
+  -H "Authorization: Bearer <jwt>"
+```
+
+### `GET /api/children/:id/access`
+
+Owner-only. Lists active access grants for the child.
+
+```bash
+curl http://localhost:4000/api/children/child-alikhan/access \
+  -H "Authorization: Bearer <jwt>"
+```
+
+### `POST /api/children/:id/access`
+
+Owner-only. Grants access by existing `userId` or by `email` (email creates a user if needed).
+
+```bash
+curl -X POST http://localhost:4000/api/children/child-alikhan/access \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "tutor@example.com", "role": "tutor" }'
+```
+
+### `DELETE /api/children/:id/access/:userId`
+
+Owner-only. Revokes an active access grant.
+
+```bash
+curl -X DELETE http://localhost:4000/api/children/child-alikhan/access/user-id \
+  -H "Authorization: Bearer <jwt>"
 ```
 
 ---
@@ -89,7 +128,8 @@ curl http://localhost:4000/api/children/child-alikhan
 ### `GET /api/events?childId=xxx`
 
 ```bash
-curl 'http://localhost:4000/api/events?childId=child-alikhan'
+curl 'http://localhost:4000/api/events?childId=child-alikhan' \
+  -H "Authorization: Bearer <jwt>"
 ```
 
 Response:
@@ -116,13 +156,15 @@ Response:
 ### `GET /api/events/:id`
 
 ```bash
-curl http://localhost:4000/api/events/evt-abc123
+curl http://localhost:4000/api/events/evt-abc123 \
+  -H "Authorization: Bearer <jwt>"
 ```
 
 ### `POST /api/events`
 
 ```bash
 curl -X POST http://localhost:4000/api/events \
+  -H "Authorization: Bearer <jwt>" \
   -H "Content-Type: application/json" \
   -d '{
     "childId": "child-alikhan",
@@ -142,6 +184,7 @@ Optional: `timestamp`, `status`, `confidence`, `rawText`, `linkedEventIds`, `pay
 
 ```bash
 curl -X PATCH http://localhost:4000/api/events/evt-abc123 \
+  -H "Authorization: Bearer <jwt>" \
   -H "Content-Type: application/json" \
   -d '{ "status": "confirmed", "description": "Подтверждено мамой" }'
 ```
@@ -149,7 +192,8 @@ curl -X PATCH http://localhost:4000/api/events/evt-abc123 \
 ### `DELETE /api/events/:id`
 
 ```bash
-curl -X DELETE http://localhost:4000/api/events/evt-abc123
+curl -X DELETE http://localhost:4000/api/events/evt-abc123 \
+  -H "Authorization: Bearer <jwt>"
 ```
 
 ---
@@ -159,13 +203,15 @@ curl -X DELETE http://localhost:4000/api/events/evt-abc123
 ### `GET /api/recordings?childId=xxx`
 
 ```bash
-curl 'http://localhost:4000/api/recordings?childId=child-alikhan'
+curl 'http://localhost:4000/api/recordings?childId=child-alikhan' \
+  -H "Authorization: Bearer <jwt>"
 ```
 
 ### `POST /api/recordings`
 
 ```bash
 curl -X POST http://localhost:4000/api/recordings \
+  -H "Authorization: Bearer <jwt>" \
   -H "Content-Type: application/json" \
   -d '{
     "childId": "child-alikhan",
@@ -177,7 +223,8 @@ curl -X POST http://localhost:4000/api/recordings \
 ### `DELETE /api/recordings/:id`
 
 ```bash
-curl -X DELETE http://localhost:4000/api/recordings/rec-abc
+curl -X DELETE http://localhost:4000/api/recordings/rec-abc \
+  -H "Authorization: Bearer <jwt>"
 ```
 
 ---
@@ -314,7 +361,11 @@ curl http://localhost:4000/api/auth/me \
 ```
 
 ```json
-{ "ok": true, "user": { "id": "...", "email": "parent@example.com", "role": "parent" } }
+{
+  "ok": true,
+  "user": { "id": "...", "email": "parent@example.com", "role": "parent" },
+  "childIds": ["child-alikhan"]
+}
 ```
 
 ### `GET /api/ai/health`

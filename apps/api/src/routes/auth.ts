@@ -11,6 +11,7 @@
 import { Router } from 'express';
 import { authService } from '../services/authService';
 import { authRateLimit } from '../middleware/rateLimit';
+import { childrenRepo } from '../repositories/children';
 
 export const authRouter = Router();
 
@@ -46,10 +47,15 @@ authRouter.post('/verify', authRateLimit, async (req, res) => {
   }
 });
 
-authRouter.get('/me', (req, res) => {
+authRouter.get('/me', async (req, res, next) => {
   const result = authService.verifyJwtHeader(req.headers.authorization);
   if (!result.ok) {
     return res.status(401).json({ ok: false, error: result.error });
   }
-  res.json({ ok: true, user: result.user });
+  try {
+    const childIds = await childrenRepo.accessibleIds(result.user.id);
+    res.json({ ok: true, user: result.user, childIds });
+  } catch (err) {
+    next(err);
+  }
 });

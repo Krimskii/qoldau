@@ -49,8 +49,8 @@ export interface EventRecord extends EventInput {
 
 const CACHE_TTL_SEC = 30;
 
-function cacheKey(childId?: string): string {
-  return `events:list:${childId ?? 'all'}`;
+function cacheKey(childId?: string, childIds?: string[]): string {
+  return `events:list:${childId ?? childIds?.sort().join(',') ?? 'all'}`;
 }
 
 async function invalidateCache(childId?: string): Promise<void> {
@@ -60,16 +60,20 @@ async function invalidateCache(childId?: string): Promise<void> {
 }
 
 export const eventsRepo = {
-  async list(filter?: { childId?: string }): Promise<EventRecord[]> {
+  async list(filter?: { childId?: string; childIds?: string[] }): Promise<EventRecord[]> {
     const cache = getCache();
-    const key = cacheKey(filter?.childId);
+    const key = cacheKey(filter?.childId, filter?.childIds);
     const cached = await cache.get<EventRecord[]>(key);
     if (cached) {
       return cached;
     }
 
     const events = await prisma.event.findMany({
-      where: filter?.childId ? { childId: filter.childId } : undefined,
+      where: filter?.childId
+        ? { childId: filter.childId }
+        : filter?.childIds
+          ? { childId: { in: filter.childIds } }
+          : undefined,
       orderBy: { timestamp: 'desc' },
     });
 

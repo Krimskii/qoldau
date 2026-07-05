@@ -38,6 +38,7 @@ type EventStatus = 'draft' | 'ai_parsed' | 'confirmed' | 'corrected' | 'rejected
 ```typescript
 interface ChildProfile {
   id: string;
+  ownerUserId: string;            // owning parent User.id
   name: string;
   age: number;
   diagnosisLabel: string;        // "РАС", etc.
@@ -54,6 +55,25 @@ interface Signal {
   confidence: number;            // 0.0 - 1.0
   confirmedCount: number;         // сколько раз подтверждено
   lastSeenAt: string;            // ISO timestamp
+}
+```
+
+### Multi-Tenant Access (v1.6 P1)
+
+Children are isolated by owner plus explicit access grants. A user can read a child when
+they are the owner or have an active `ChildAccess` row. Only the owner can manage access.
+Owners and `parent` grants can mutate events/recordings; `tutor` and `specialist` grants
+are read-only.
+
+```typescript
+interface ChildAccess {
+  id: string;
+  userId: string;
+  childId: string;
+  role: 'parent' | 'tutor' | 'specialist';
+  grantedBy: string;
+  createdAt: string;
+  revokedAt?: string;
 }
 ```
 
