@@ -8,7 +8,7 @@ import { AppIcon } from '@/components/ui/AppIcon';
 import { useEventStore } from '@/store/useEventStore';
 import { useToastStore } from '@/store/useToastStore';
 import { useVoiceObservationStore } from '@/store/useVoiceObservationStore';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { useCurrentChild } from '@/store/useCurrentChild';
 import { createEventsFromAIReview } from '@/lib/events/eventFactory';
 import { EventType } from '@/types/qoldau';
 import { QoldauEvent } from '@/types/qoldau';
@@ -82,6 +82,7 @@ export const ClarifyingQuestions: React.FC = () => {
     childId,
     reset: resetVoiceObservation,
   } = useVoiceObservationStore();
+  const { id: currentChildId } = useCurrentChild();
   const [answers, setAnswers] = useState<AnswerState>({ ...defaultAnswers });
 
   // Динамические вопросы из AI результата, fallback на defaults.
@@ -109,7 +110,7 @@ export const ClarifyingQuestions: React.FC = () => {
         originalTranscript,
         sttSource: sttSource ?? 'mock',
         sourceRole: 'parent',
-        childId: childId || DEMO_PRIMARY_CHILD.id,
+        childId: childId || currentChildId,
         clarificationAnswers: { ...answers },
         status: 'confirmed',
       });
@@ -118,7 +119,7 @@ export const ClarifyingQuestions: React.FC = () => {
     } else {
       // Fallback — сохраняем как одно observation-событие.
       const event = {
-        childId: childId || DEMO_PRIMARY_CHILD.id,
+        childId: childId || currentChildId,
         type: 'voice_observation' as EventType,
         title: 'Голосовое наблюдение',
         description: effectiveTranscript || 'Наблюдение без расшифровки',

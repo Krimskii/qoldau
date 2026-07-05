@@ -14,12 +14,13 @@ import {
 } from 'lucide-react';
 import { AppIcon } from '@/components/ui/AppIcon';
 import {
-  DEMO_PRIMARY_CHILD,
   DEMO_PARENTS,
   DEMO_TUTORS,
   DEMO_SPECIALISTS,
   setFamilyChildName,
 } from '@/data/demoDataset';
+import { useCurrentChild } from '@/store/useCurrentChild';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useConsentStore } from '@/store/useConsentStore';
 import { useToastStore } from '@/store/useToastStore';
 import { clearAllChildData, hasChildData } from '@/lib/privacy/dataControl';
@@ -27,7 +28,7 @@ import { MiniPolicy } from '@/components/privacy/MiniPolicy';
 
 export const ParentProfile: React.FC = () => {
   const navigate = useNavigate();
-  const child = DEMO_PRIMARY_CHILD;
+  const { child } = useCurrentChild();
   const mother = DEMO_PARENTS[0];
   const tutor = DEMO_TUTORS[0];
   const specialist = DEMO_SPECIALISTS[0];
@@ -62,6 +63,7 @@ export const ParentProfile: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title={`Профиль ${child.name}`} subtitle="Семья и сопровождение" />
+      <ChildSelector />
 
       {/* Child summary */}
       <QoldauCard variant="tinted-teal">

@@ -16,8 +16,10 @@ import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
-import { DEMO_PRIMARY_CHILD, DEMO_PARENTS } from '@/data/demoDataset';
+import { DEMO_PARENTS } from '@/data/demoDataset';
+import { useCurrentChild } from '@/store/useCurrentChild';
 import { formatTime } from '@/utils/dateFormat';
 import { iconButtonSize } from '@/styles/tokens';
 import { triggerHaptic } from '@/lib/feedback/haptics';
@@ -104,13 +106,16 @@ function pickStatusKind(currentState: string): StatusKind {
 export const ParentHome: React.FC = () => {
   const navigate = useNavigate();
   const { events } = useEventStore();
-  const child = DEMO_PRIMARY_CHILD;
+  const { child } = useCurrentChild();
   const mother = DEMO_PARENTS[0];
 
   const today = new Date().toISOString().slice(0, 10);
   const todayEvents = useMemo(
-    () => events.filter((e) => e.timestamp.startsWith(today) && !e.deleted),
-    [events, today]
+    () =>
+      events.filter(
+        (e) => e.childId === child.id && e.timestamp.startsWith(today) && !e.deleted
+      ),
+    [events, today, child.id]
   );
 
   // 3 метрики для сводки дня (см. спеку C §A3).
@@ -138,6 +143,9 @@ export const ParentHome: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-5">
+      {/* E7.3: единый выбор ребёнка — консистентен с другими ролями. */}
+      <ChildSelector />
+
       {/* A1. Hero — карточка ребёнка */}
       <QoldauCard variant="tinted-teal" padding="md">
         <div className="flex items-center gap-4">

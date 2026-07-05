@@ -7,7 +7,8 @@ import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DataState } from '@/components/ui/DataState';
 import { useEventStore } from '@/store/useEventStore';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { useCurrentChild } from '@/store/useCurrentChild';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import { formatDate } from '@/utils/dateFormat';
 
 const TABS = [
@@ -20,10 +21,11 @@ export const BehaviorSensory: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<typeof TABS[number]['key']>('triggers');
   const { events } = useEventStore();
+  const { id: childId } = useCurrentChild();
 
   const childEvents = useMemo(
-    () => events.filter((e) => e.childId === DEMO_PRIMARY_CHILD.id),
-    [events]
+    () => events.filter((e) => e.childId === childId),
+    [events, childId]
   );
 
   const sensoryEvents = useMemo(
@@ -64,6 +66,7 @@ export const BehaviorSensory: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="Сенсорика и поведение" subtitle="Что повторяется и что помогает" />
+      <ChildSelector />
 
       {/* Tabs */}
       <div className="bg-bg border border-line-soft rounded-2xl p-1 flex gap-1">

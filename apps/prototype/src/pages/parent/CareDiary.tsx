@@ -6,8 +6,9 @@ import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useEventStore } from '@/store/useEventStore';
+import { useCurrentChild } from '@/store/useCurrentChild';
 import { EventType } from '@/types/qoldau';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
+import { ChildSelector } from '@/components/layout/ChildSelector';
 import { formatDate, formatTime } from '@/utils/dateFormat';
 
 interface TabConfig {
@@ -35,11 +36,12 @@ export const CareDiary: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const { events } = useEventStore();
+  const { id: childId } = useCurrentChild();
 
   const types = TABS.find((t) => t.key === activeTab)?.types ?? [];
   const childEvents = events
     .filter(
-      (e) => e.childId === DEMO_PRIMARY_CHILD.id && types.includes(e.type)
+      (e) => e.childId === childId && types.includes(e.type)
     )
     .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
     .slice(0, 14);
@@ -55,6 +57,7 @@ export const CareDiary: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="Питание и уход" subtitle="Из Event Timeline" />
+      <ChildSelector />
 
       {/* Tabs */}
       <div className="overflow-x-auto -mx-5 px-5">
