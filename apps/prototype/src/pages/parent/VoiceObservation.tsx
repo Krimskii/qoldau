@@ -22,6 +22,8 @@ import { useConsentStore } from '@/store/useConsentStore';
 import { VoiceWaveIcon } from '@/components/icons';
 import { VoiceWave } from '@/components/ui/VoiceWave';
 import { PrimaryAction } from '@/components/ui/Primitives';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { DataState } from '@/components/ui/DataState';
 import { ConsentGate } from '@/components/privacy/ConsentGate';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { useSpeechRecognition } from '@/lib/stt/useSpeechRecognition';
@@ -684,14 +686,20 @@ export const VoiceObservation: React.FC = () => {
           </QoldauCard>
         )}
 
-        {/* Error card — реальная ошибка (без fallback) */}
+        {/* Error card — реальная ошибка (без fallback) v1.5+ E6.4: ErrorState + retry */}
         {phase === 'error' && pipelineError && (
-          <QoldauCard variant="tinted-warm" padding="md" className="w-full">
-            <div className="flex items-center gap-2">
-              <AppIcon component={AlertCircle} size={18} colorClass="text-coral shrink-0" />
-              <p className="text-xs text-ink-2">{pipelineError}</p>
-            </div>
-          </QoldauCard>
+          <ErrorState
+            message={pipelineError}
+            variant="plain"
+            onRetry={() => {
+              // Повтор: перезапуск pipeline для текущей записи (если есть)
+              if (currentTranscript) {
+                void transcribeMock();
+              } else {
+                navigate('/parent/voice');
+              }
+            }}
+          />
         )}
 
         {/* Волна + таймер (recording) */}
@@ -767,23 +775,15 @@ export const VoiceObservation: React.FC = () => {
           </QoldauCard>
         )}
 
-        {/* Processing AI (старый flow) */}
-        {isProcessing && (
-          <QoldauCard variant="tinted-teal" padding="md" className="w-full">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-teal flex items-center justify-center text-white">
-                <Sparkles size={20} />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-black text-ink">AI обрабатывает…</p>
-                <p className="text-xs text-ink-2 mt-0.5">
-                  Структурируем наблюдение. Это может занять секунду.
-                </p>
-              </div>
-              <div className="w-5 h-5 rounded-full border-2 border-teal border-t-transparent animate-spin" />
-            </div>
-          </QoldauCard>
-        )}
+        {/* Processing AI v1.5+ E6.4: через DataState skeleton */}
+        <DataState
+          isLoading={isProcessing}
+          error={null}
+          isEmpty={false}
+          loadingVariant="card"
+        >
+          <div />
+        </DataState>
       </div>
 
       {/* Idle actions — выбор режима */}

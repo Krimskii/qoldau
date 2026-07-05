@@ -1,20 +1,22 @@
 /**
- * EmptyState (v0.6.3) — empty list / no data placeholder.
+ * EmptyState (v0.6.3 → v1.5+ E6) — empty list / no data placeholder.
  *
  * Поддерживает два варианта icon: Lucide-иконка (component) или emoji-строка.
+ * v1.5+ E6: variant 'card' (default, оборачивает в QoldauCard) | 'plain' (без карточки).
  */
 import React from 'react';
 import { Inbox } from 'lucide-react';
 import { QoldauCard } from './QoldauCard';
 import { AppIcon } from './AppIcon';
 
-type IconInput = typeof Inbox | string;
+export type IconInput = typeof Inbox | string;
 
 interface EmptyStateProps {
   icon?: IconInput;
   title: string;
   description?: string;
   action?: React.ReactNode;
+  variant?: 'card' | 'plain';
 }
 
 function isEmoji(input: IconInput): input is string {
@@ -26,8 +28,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
   action,
-}) => (
-  <QoldauCard variant="tinted-warm" padding="lg">
+  variant = 'card',
+}) => {
+  const Inner = (
     <div className="flex flex-col items-center text-center gap-3 py-4">
       {icon ? (
         isEmoji(icon) ? (
@@ -48,5 +51,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       )}
       {action}
     </div>
-  </QoldauCard>
-);
+  );
+
+  if (variant === 'plain') return Inner;
+
+  return (
+    <QoldauCard variant="tinted-warm" padding="lg">
+      {Inner}
+    </QoldauCard>
+  );
+};
