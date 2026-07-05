@@ -2,8 +2,22 @@
  * Vitest setup для frontend.
  */
 import '@testing-library/jest-dom/vitest';
-import { afterEach } from 'vitest';
+import { afterEach, beforeAll } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import i18n from '@/i18n/config';
+
+// i18n — async init. Дожидаемся готовности до запуска тестов,
+// чтобы `t('auth.loginEmailPlaceholder')` сразу возвращал текст, не ключ.
+beforeAll(async () => {
+  if (!i18n.isInitialized) {
+    await new Promise<void>((resolve) => {
+      i18n.on('initialized', () => resolve());
+      // Safety timeout — fallback к работе с ключами.
+      setTimeout(resolve, 200);
+    });
+  }
+  await i18n.changeLanguage('ru');
+});
 
 // jsdom не имеет matchMedia (prefers-color-scheme)
 Object.defineProperty(window, 'matchMedia', {
