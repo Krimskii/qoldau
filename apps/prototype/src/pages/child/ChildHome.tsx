@@ -1,7 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { ChildOnboarding } from '@/components/child/ChildOnboarding';
 import {
   Water2DIcon,
   Food2DIcon,
@@ -11,29 +9,43 @@ import {
   Mic2DIcon,
   Heart2DIcon,
   Puzzle2DIcon,
-  CHILD_FAMILY_STYLES,
   type ChildCardFamily,
 } from '@/components/icons/child2d';
+import { childFamily, ctaChildHome, childHomeSizes } from '@/styles/tokens';
+import { useChildSettingsStore } from '@/store/useChildSettingsStore';
 import { triggerHaptic } from '@/lib/feedback/haptics';
+import { speak } from '@/lib/tts/speak';
 
 interface ChildHomeCard {
+  /** Фикс-порядок для моторной памяти. */
   id: string;
+  label: string;
   Icon: React.FC<{ size?: number; animated?: boolean }>;
   family: ChildCardFamily;
   go: string;
-  label: string;
 }
 
 /**
- * ChildHome — главный экран ребёнка (v1.5+ minimal).
+ * ChildHome — главный экран ребёнка (v1.5+ polish).
  *
- * Чистый минимализм для child role:
- * - НЕТ «Привет, имя» / статуса / аватара / CloudMascot — это отвлекает.
- * - Большие квадратные карточки 2×3 (без надписей, иконка центрирована).
- * - Кнопка «Позвать маму» — заметная, coral, с иконкой.
- * - Кнопка «Собрать фразу» — отдельная большая карточка под сеткой.
+ * Структура:
+ * - TopBar ~48 (mute + выйти в calm/standard; +аватар26+имя в playful).
+ * - Сетка 3×2 карточки: aspect-square min-h-[112px] rounded-[28px] белая
+ *   shadow-card, плитка 84×84 rounded-[22px] с иконкой 64, лейбл 12px
+ *   font-black (цвет семьи). В calm лейблы скрыты.
+ * - CTA «Позвать маму» mx-5 mt-4 min-h-[76px], coral, soft-pulse.
+ * - CTA «Собрать фразу» mx-5 mt-2 min-h-[88px], blue/purple, статичный.
  *
- * Все размеры — touch-friendly: action-карточки ≥110×110px.
+ * Состояния карточек:
+ * - default: белая, плитка цветная.
+ * - pressed: active:scale-[0.94] + opacity-90 + TTS + haptic.
+ * - selected: ring-2 ring-teal/40.
+ * - disabled: opacity-40.
+ *
+ * Регулятор (sensoryMode):
+ * - calm:     лейблы скрыты, soft-pulse выкл, гаптик off.
+ * - standard: лейблы видны, обычный ритм.
+ * - playful:  лейблы видны, искра-cue + soft-pulse на «Позвать маму».
  */
 const HOME_ROW_1: ChildHomeCard[] = [
   { id: 'water',  label: 'Хочу пить',     Icon: Water2DIcon,  family: 'need', go: '/child/water' },
@@ -47,84 +59,119 @@ const HOME_ROW_2: ChildHomeCard[] = [
   { id: 'speak', label: 'Сказать',   Icon: Mic2DIcon,   family: 'do',   go: '/child/speak' },
 ];
 
+interface HomeCardProps {
+  c: ChildHomeCard;
+  /** Скрывать ли лейбл (calm-режим). */
+  hideLabel?: boolean;
+}
+
 /**
- * Карточка главного экрана — БОЛЬШАЯ, без надписи.
- * 2×3 grid → ширина ~33vw, делаем квадратной 110×110px минимум,
- * с крупной иконкой 80px.
+ * Большая квадратная карточка с цветной плиткой-иконкой и лейблом
+ * (опционально, скрыт в calm).
  */
-const HomeCard: React.FC<{ c: ChildHomeCard }> = ({ c }) => {
+const HomeCard: React.FC<HomeCardProps> = ({ c, hideLabel }) => {
   const navigate = useNavigate();
-  const family = CHILD_FAMILY_STYLES[c.family];
+  const family = childFamily[c.family];
   const handleClick = () => {
     triggerHaptic('tap');
+    speak(c.label);
     navigate(c.go);
   };
   return (
     <button
       onClick={handleClick}
-      className="flex items-center justify-center bg-white rounded-[28px] shadow-card cursor-pointer aspect-square w-full min-h-[120px] transition-transform duration-200 active:scale-[0.96] hover:-translate-y-1 hover:shadow-card-lg qoldau-tap-ring"
+      className="child-home-card flex flex-col items-center justify-center gap-1.5 bg-white rounded-[28px] shadow-card aspect-square w-full min-h-[112px] transition-all duration-200 ease-out active:scale-[0.94] active:opacity-90 hover:-translate-y-0.5 hover:shadow-card-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 qoldau-tap-ring"
       aria-label={c.label}
+      data-card-id={c.id}
     >
-      <div className={`w-[88px] h-[88px] rounded-[22px] ${family.icoBg} flex items-center justify-center`}>
-        <c.Icon size={68} animated={false} />
+      <div
+        className="flex items-center justify-center rounded-[22px]"
+        style={{
+          background: family.icoBg,
+          width: childHomeSizes.tileSize,
+          height: childHomeSizes.tileSize,
+        }}
+      >
+        <c.Icon size={childHomeSizes.tileIcon} animated={false} />
       </div>
+      {!hideLabel && (
+        <span
+          className="text-[12px] font-black leading-tight text-center"
+          style={{ color: family.lbl }}
+        >
+          {c.label}
+        </span>
+      )}
     </button>
   );
 };
 
 export const ChildHome: React.FC = () => {
   const navigate = useNavigate();
-  // DEMO_PRIMARY_CHILD используется в ChildOnboarding — оставлено для совместимости.
-  void DEMO_PRIMARY_CHILD;
+  const sensoryMode = useChildSettingsStore((s) => s.sensoryMode);
+  const hideLabel = sensoryMode === 'calm';
+
+  const handleCallMom = () => {
+    // playful → cue (двойной), standard → tap, calm → off (см. haptics.ts).
+    triggerHaptic('cue');
+    speak('Позвать маму');
+    navigate('/child/call');
+  };
+
+  const handlePhraseBuilder = () => {
+    triggerHaptic('tap');
+    speak('Собрать фразу');
+    navigate('/child/phrase-builder');
+  };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-80px)]">
-      <ChildOnboarding />
-
-      {/* 6 cards: 2×3, без надписей */}
-      <div className="grid grid-cols-3 gap-3.5 px-5 pt-3 pb-1">
+    <div className="child-home max-w-[430px] mx-auto flex flex-col pb-6">
+      {/* Сетка 3×2 фикс-порядок: пить / кушать / туалет / отдохнуть / любимые / сказать. */}
+      <div className="grid grid-cols-3 gap-3.5 px-5 pt-3">
         {HOME_ROW_1.map((c) => (
-          <HomeCard key={c.id} c={c} />
+          <HomeCard key={c.id} c={c} hideLabel={hideLabel} />
         ))}
       </div>
-      <div className="grid grid-cols-3 gap-3.5 px-5 pt-3 pb-1">
+      <div className="grid grid-cols-3 gap-3.5 px-5 pt-3.5">
         {HOME_ROW_2.map((c) => (
-          <HomeCard key={c.id} c={c} />
+          <HomeCard key={c.id} c={c} hideLabel={hideLabel} />
         ))}
       </div>
 
-      {/* «Позвать маму» — крупная coral кнопка с soft-pulse (v1.5+ D1).
-         Дышащее состояние привлекает внимание без фейерверка.
-         Гасится prefers-reduced-motion и html.qoldau-paused (см. animations.css). */}
+      {/* CTA «Позвать маму» — coral, soft-pulse (гейт по CSS). */}
       <button
-        onClick={() => {
-          triggerHaptic('cue');
-          navigate('/child/call');
-        }}
-        className="mx-5 mt-4 mb-3 border-0 rounded-[24px] p-4 cursor-pointer flex items-center justify-center gap-3 active:scale-[0.97] transition-transform shadow-card min-h-[72px] qoldau-soft-pulse qoldau-tap-ring"
+        onClick={handleCallMom}
+        className="mx-5 mt-4 rounded-[24px] px-4 cursor-pointer flex items-center justify-center gap-2.5 active:scale-[0.97] transition-transform shadow-card min-h-[76px] qoldau-soft-pulse qoldau-tap-ring"
         style={{
-          background: 'linear-gradient(135deg, #fdecec 0%, #fbe0e0 100%)',
-          color: '#c95f5f',
+          background: `linear-gradient(135deg, ${ctaChildHome.callMom.bgFrom} 0%, ${ctaChildHome.callMom.bgTo} 100%)`,
+          color: ctaChildHome.callMom.text,
+          boxShadow: ctaChildHome.callMom.shadow,
         }}
         aria-label="Позвать маму"
+        data-testid="childhome-call-mom"
       >
-        <Heart2DIcon size={32} animated={false} />
+        <Heart2DIcon size={childHomeSizes.callMomIcon} animated={false} />
+        <span className="text-[16px] font-black leading-none">
+          Позвать маму
+        </span>
       </button>
 
-      {/* «Собрать фразу» — отдельная большая карточка с иконкой Puzzle2DIcon */}
+      {/* CTA «Собрать фразу» — blue/purple tint. */}
       <button
-        onClick={() => {
-          triggerHaptic('tap');
-          navigate('/child/phrase-builder');
+        onClick={handlePhraseBuilder}
+        className="mx-5 mt-2 rounded-[24px] px-4 cursor-pointer flex items-center justify-center gap-2.5 shadow-card active:scale-[0.97] transition-transform min-h-[88px] qoldau-tap-ring"
+        style={{
+          background: `linear-gradient(135deg, ${ctaChildHome.phrase.bgFrom} 0%, ${ctaChildHome.phrase.bgTo} 100%)`,
+          color: ctaChildHome.phrase.text,
         }}
-        className="mx-5 mt-1 mb-3 rounded-[24px] p-5 cursor-pointer flex items-center justify-center gap-3 shadow-card active:scale-[0.98] transition-transform min-h-[88px] qoldau-tap-ring"
-        style={{ background: 'linear-gradient(135deg, #eef4fb 0%, #f3eefb 100%)' }}
         aria-label="Собрать фразу"
+        data-testid="childhome-phrase-builder"
       >
-        <Puzzle2DIcon size={56} animated={false} />
+        <Puzzle2DIcon size={childHomeSizes.phraseIcon} animated={false} />
+        <span className="text-[15px] font-black leading-none">
+          Собрать фразу
+        </span>
       </button>
-
-      <div style={{ height: 12 }} />
     </div>
   );
 };
