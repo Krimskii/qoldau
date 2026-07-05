@@ -3,46 +3,44 @@ import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { BackArrowIcon } from '@/components/icons/child2d';
-import { ChevronRight } from 'lucide-react';
 import { QUICK_NEEDS, CATEGORIES } from '@/data/categories';
 import { speak } from '@/lib/tts/speak';
 
 /**
- * ChildCards (v0.3.25) — «Быстрые карточки».
+ * ChildCards (v1.5+ minimal) — «Быстрые карточки».
  *
- * 2 секции:
- * - **«Потребности»** (3 карточки) → открывает NeedCard (вода/еда/туалет).
- * - **«Мир вокруг»** (5 категорий) → открывает /child/category/:id с grid items.
+ * v1.5+ bugfix: убраны «хлебные крошки» (шапка с заголовком и кнопкой
+ * «назад»), описания категорий, группировка на секции и подзаголовки,
+ * бэйджи «Любимое». Карточки — большие квадратные кнопки с одной иконкой
+ * (как на главной ChildHome). Сетка 4 колонки для потребностей,
+ * 4 колонки для категорий — без надписей.
  *
- * Каждая карточка имеет:
- * - белую подложку с цветной плиткой-иконкой (AAC color coding);
- * - иконку из child2d.tsx;
- * - большой label + small description;
- * - ChevronRight для affordance;
- * - active:scale-95 + лёгкий hover-эффект.
+ * Каждая карточка:
+ * - белая подложка, цветная плитка-иконка;
+ * - touch-friendly ≥110×110px;
+ * - aria-label сохранён (a11y).
  */
 export const ChildCards: React.FC = () => {
   const navigate = useNavigate();
   const { addEvent } = useEventStore();
 
-  // Featured card — топовая категория (первая в списке)
+  // Featured card — первая категория.
   const featured = CATEGORIES[0];
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)] pb-[100px]">
-      {/* Header */}
-      <div className="flex items-center gap-2.5 px-5 pt-3.5 pb-1">
+      {/* Back — единственный элемент шапки (без заголовка). */}
+      <div className="flex items-center gap-2.5 px-3 pt-2 pb-1">
         <button
           onClick={() => navigate('/child/home')}
-          className="w-11 h-11 rounded-[13px] border border-line bg-white flex items-center justify-center hover:bg-bg transition-colors"
+          className="w-9 h-9 rounded-[12px] border border-line bg-white flex items-center justify-center hover:bg-bg transition-colors"
           aria-label="Назад"
         >
-          <BackArrowIcon size={20} />
+          <BackArrowIcon size={18} />
         </button>
-        <div className="text-xl font-black text-ink">Быстрые карточки</div>
       </div>
 
-      {/* Featured — top card (slightly larger) */}
+      {/* Featured — большая верхняя карточка с иконкой (без надписей). */}
       <button
         onClick={() => {
           speak(featured.title);
@@ -58,124 +56,71 @@ export const ChildCards: React.FC = () => {
           });
           navigate(`/child/category/${featured.id}`);
         }}
-        className="mx-5 mt-3 rounded-[24px] p-4 shadow-card flex items-center gap-4 active:scale-[0.97] transition-transform text-left"
+        className="mx-5 mt-2 mb-3 rounded-[24px] shadow-card flex items-center justify-center aspect-[2/1] min-h-[120px] active:scale-[0.97] transition-transform"
         style={{
           background: `linear-gradient(135deg, ${featured.coverFrom} 0%, ${featured.coverTo} 100%)`,
         }}
+        aria-label={featured.title}
       >
-        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-card-soft flex-shrink-0">
-          <featured.Icon size={56} animated={false} />
+        <div className="w-[88px] h-[88px] rounded-[22px] bg-white flex items-center justify-center shadow-card-soft">
+          <featured.Icon size={68} animated={false} />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[10px] font-black uppercase tracking-wide text-ink-2/70 bg-white/50 px-2 py-0.5 rounded-full">
-              Любимое
-            </span>
-          </div>
-          <h2 className="text-xl font-black text-ink leading-tight">
-            {featured.title}
-          </h2>
-          <p className="text-sm font-bold text-ink-2 mt-0.5">{featured.description}</p>
-        </div>
-        <ChevronRight className="w-5 h-5 text-ink-2 flex-shrink-0" />
       </button>
 
-      {/* Section: Потребности (8 базовых карточек — пить/есть/туалет/больно/устал/помоги/пауза/играть/домой/да/нет) */}
-      <Section title="Потребности" subtitle="Базовые сигналы">
-        <div className="grid grid-cols-4 gap-2.5">
-          {QUICK_NEEDS.map((need) => (
-            <button
-              key={need.id}
-              onClick={() => {
-                speak(need.title);
-                navigate(need.go);
-              }}
-              className="bg-white border border-line rounded-[20px] p-3 flex flex-col items-center gap-2 shadow-card-soft active:scale-[0.95] transition-transform"
-              aria-label={need.title}
+      {/* Потребности — 4 колонки, без надписей, без шапки секции. */}
+      <div className="grid grid-cols-4 gap-3 px-5 pb-2">
+        {QUICK_NEEDS.map((need) => (
+          <button
+            key={need.id}
+            onClick={() => {
+              speak(need.title);
+              navigate(need.go);
+            }}
+            className="flex items-center justify-center bg-white rounded-[22px] shadow-card-soft aspect-square w-full min-h-[88px] transition-transform active:scale-[0.94]"
+            aria-label={need.title}
+          >
+            <div
+              className={`w-[64px] h-[64px] rounded-[16px] ${need.bg} flex items-center justify-center`}
             >
-              <div
-                className={`w-12 h-12 rounded-[14px] ${need.bg} flex items-center justify-center`}
-              >
-                <need.Icon size={32} animated={false} />
-              </div>
-              <div className={`text-xs font-black text-center leading-tight ${need.text}`}>
-                {need.title}
-              </div>
-            </button>
-          ))}
-        </div>
-      </Section>
+              <need.Icon size={48} animated={false} />
+            </div>
+          </button>
+        ))}
+      </div>
 
-      {/* Section: Мир вокруг (категории) */}
-      <Section title="Мир вокруг" subtitle="Открой и выбери">
-        <div className="grid grid-cols-2 gap-3">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => {
-                speak(cat.title);
-                addEvent({
-                  childId: DEMO_PRIMARY_CHILD.id,
-                  type: 'phrase',
-                  title: `Открыл: ${cat.title}`,
-                  description: `Ребёнок открыл «${cat.title}». Это наблюдение, не диагноз.`,
-                  timestamp: new Date().toISOString(),
-                  sourceRole: 'child',
-                  status: 'confirmed',
-                  payload: { source: 'category_open', category: cat.id },
-                });
-                navigate(`/child/category/${cat.id}`);
+      {/* Категории — 4 колонки, без надписей, без шапки секции. */}
+      <div className="grid grid-cols-4 gap-3 px-5 pt-2 pb-2">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => {
+              speak(cat.title);
+              addEvent({
+                childId: DEMO_PRIMARY_CHILD.id,
+                type: 'phrase',
+                title: `Открыл: ${cat.title}`,
+                description: `Ребёнок открыл «${cat.title}». Это наблюдение, не диагноз.`,
+                timestamp: new Date().toISOString(),
+                sourceRole: 'child',
+                status: 'confirmed',
+                payload: { source: 'category_open', category: cat.id },
+              });
+              navigate(`/child/category/${cat.id}`);
+            }}
+            className="flex items-center justify-center bg-white rounded-[22px] shadow-card-soft aspect-square w-full min-h-[88px] transition-transform active:scale-[0.94]"
+            aria-label={cat.title}
+          >
+            <div
+              className="w-[64px] h-[64px] rounded-[16px] flex items-center justify-center"
+              style={{
+                background: `linear-gradient(135deg, ${cat.coverFrom} 0%, ${cat.coverTo} 100%)`,
               }}
-              className="bg-white border border-line rounded-[20px] p-3 flex items-center gap-3 shadow-card-soft active:scale-[0.95] transition-transform text-left"
-              aria-label={cat.title}
             >
-              <div
-                className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0"
-                style={{
-                  background: `linear-gradient(135deg, ${cat.coverFrom} 0%, ${cat.coverTo} 100%)`,
-                }}
-              >
-                <cat.Icon size={32} animated={false} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div
-                  className="text-sm font-black leading-tight truncate"
-                  style={{ color: cat.accent }}
-                >
-                  {cat.title}
-                </div>
-                <div className="text-[11px] text-muted truncate">{cat.description}</div>
-                <div className="text-[10px] text-muted mt-0.5">
-                  {cat.items.length} элементов
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </Section>
-
-      <p className="px-5 mt-2 text-[11px] text-muted text-center italic">
-        Это наблюдения, не диагноз. Можно обсудить со специалистом.
-      </p>
+              <cat.Icon size={48} animated={false} />
+            </div>
+          </button>
+        ))}
+      </div>
     </div>
   );
 };
-
-/** Section header + content wrapper. */
-const Section: React.FC<{
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-}> = ({ title, subtitle, children }) => (
-  <section className="mt-5">
-    <div className="px-5 mb-2 flex items-baseline justify-between">
-      <h3 className="text-sm font-black text-ink-2 uppercase tracking-wide">
-        {title}
-      </h3>
-      {subtitle && (
-        <span className="text-[11px] text-muted font-bold">{subtitle}</span>
-      )}
-    </div>
-    <div className="px-5">{children}</div>
-  </section>
-);
