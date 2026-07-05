@@ -34,7 +34,18 @@ export function assertEnv(): void {
   readPositiveIntEnv('MAX_TRANSCRIPT_CHARS', DEFAULT_MAX_TRANSCRIPT_CHARS);
   readPositiveIntEnv('SHUTDOWN_TIMEOUT_MS', DEFAULT_SHUTDOWN_TIMEOUT_MS);
 
-  if (process.env.NODE_ENV === 'production' && !process.env.OPENAI_API_KEY?.trim()) {
-    console.warn('[env] NODE_ENV=production but OPENAI_API_KEY is empty; AI will run in mock mode');
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.DATABASE_URL?.trim()) {
+      throw new Error('[env] DATABASE_URL is required in production');
+    }
+    if (!process.env.DIRECT_DATABASE_URL?.trim()) {
+      throw new Error('[env] DIRECT_DATABASE_URL is required in production for Prisma migrate/direct connections');
+    }
+    if (!/^postgres(ql)?:\/\//u.test(process.env.DATABASE_URL)) {
+      throw new Error('[env] DATABASE_URL must be a PostgreSQL connection string in production');
+    }
+    if (!process.env.OPENAI_API_KEY?.trim()) {
+      console.warn('[env] NODE_ENV=production but OPENAI_API_KEY is empty; AI will run in mock mode');
+    }
   }
 }

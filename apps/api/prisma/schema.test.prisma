@@ -1,19 +1,14 @@
-// Qoldau AI — Prisma schema (v1.6 P0).
-//
-// Production persistence uses managed PostgreSQL. For local/CI tests that do not
-// have Postgres available, use prisma/schema.test.prisma with SQLite.
+// SQLite schema used only by local/CI tests. Keep models in sync with schema.prisma.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./prisma/test.db"
 }
 
-// Ребёнок (3 демо: Демо-профиль 1/2/3, synthetic имена v0.7.4).
 model Child {
   id              String   @id
   name            String
@@ -29,9 +24,6 @@ model Child {
   @@map("children")
 }
 
-// Событие в Event Timeline.
-// Поля payload / linkedEventIds пока хранятся как JSON-строки, чтобы не менять
-// API-контракты и репозиторный слой в P0. Native JSON можно вынести в P2 sync.
 model Event {
   id             String   @id @default(cuid())
   childId        String
@@ -54,7 +46,6 @@ model Event {
   @@map("events")
 }
 
-// Запись голоса ребёнка (mic на /child/speak).
 model Recording {
   id          String   @id @default(cuid())
   childId     String
@@ -69,10 +60,6 @@ model Recording {
   @@map("recordings")
 }
 
-// Auth (v0.6.0) — magic-link flow.
-//
-// MagicToken: одноразовый токен с TTL. Создаётся через /api/auth/request-magic-link,
-// используется в /api/auth/verify. Без email-отправки (пока не подключён SMTP/Resend).
 model User {
   id        String   @id @default(cuid())
   email     String   @unique

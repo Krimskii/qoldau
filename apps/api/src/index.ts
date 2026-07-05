@@ -10,7 +10,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { logger } from './middleware/logger.js';
 import { requestId } from './middleware/requestId.js';
-import { healthRouter } from './routes/health.js';
+import { healthRouter, readyRouter } from './routes/health.js';
 import { sttRouter } from './routes/stt.js';
 import { aiRouter } from './routes/ai.js';
 import { audioRouter } from './modules/audio-pipeline/audio.routes.js';
@@ -86,6 +86,7 @@ app.get('/', (_req, res) => {
 app.use('/api/audio', express.json({ limit: JSON_BODY_LIMIT_AUDIO }), audioRouter);
 app.use(express.json({ limit: JSON_BODY_LIMIT_DEFAULT }));
 app.use('/api/health', healthRouter);
+app.use('/api/ready', readyRouter);
 app.use('/api/stt', sttRouter);
 app.use('/api/ai', aiRouter);
 

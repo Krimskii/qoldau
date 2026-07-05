@@ -2,6 +2,8 @@
 
 ## Qoldau AI — Data Model
 
+Production backend persistence is PostgreSQL as of v1.6 P0. Local/CI API tests use a separate SQLite Prisma schema only for test isolation; production and staging must use managed Postgres with Prisma migrations.
+
 ### Core Entities
 
 ```typescript

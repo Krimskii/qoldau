@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import cors from 'cors';
-import { healthRouter } from '../src/routes/health';
+import { healthRouter, readyRouter } from '../src/routes/health';
 import { requestId } from '../src/middleware/requestId';
 
 describe('GET /api/health', () => {
@@ -10,8 +10,9 @@ describe('GET /api/health', () => {
   app.use(cors());
   app.use(express.json());
   app.use('/api/health', healthRouter);
+  app.use('/api/ready', readyRouter);
 
-  it('returns stateless proxy health without db/cache/auth state', async () => {
+  it('returns stateless proxy health with database status', async () => {
     const res = await request(app).get('/api/health');
 
     expect(res.status).toBe(200);
@@ -21,7 +22,11 @@ describe('GET /api/health', () => {
     expect(res.body.version).toBeDefined();
     expect(res.body.ai).toBeDefined();
     expect(res.body.stt).toBeDefined();
-    expect(res.body.db).toBeUndefined();
+    expect(res.body.database).toEqual(expect.objectContaining({
+      ok: true,
+      provider: 'sqlite-test',
+      latencyMs: expect.any(Number),
+    }));
     expect(res.body.cache).toBeUndefined();
   });
 
@@ -32,6 +37,15 @@ describe('GET /api/health', () => {
     expect(res.body.ai.source).toBe('mock');
     expect(res.body.stt.enabled).toBe(false);
     expect(res.body.stt.source).toBe('mock');
+  });
+
+  it('returns readiness status when database is reachable', async () => {
+    const res = await request(app).get('/api/ready');
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.readiness).toBe('ready');
+    expect(res.body.database.ok).toBe(true);
   });
 });
 

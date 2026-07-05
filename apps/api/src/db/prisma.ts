@@ -20,3 +20,22 @@ if (process.env.NODE_ENV !== 'production') {
 export async function disconnectPrisma() {
   await prisma.$disconnect();
 }
+
+export async function checkDatabase(): Promise<{ ok: boolean; provider: 'postgresql' | 'sqlite-test'; latencyMs: number; error?: string }> {
+  const started = Date.now();
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return {
+      ok: true,
+      provider: process.env.NODE_ENV === 'test' ? 'sqlite-test' : 'postgresql',
+      latencyMs: Date.now() - started,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      provider: process.env.NODE_ENV === 'test' ? 'sqlite-test' : 'postgresql',
+      latencyMs: Date.now() - started,
+      error: err instanceof Error ? err.message : 'database check failed',
+    };
+  }
+}
