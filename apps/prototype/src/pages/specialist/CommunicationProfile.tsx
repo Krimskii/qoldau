@@ -31,11 +31,11 @@ interface Signal {
   category: 'aac' | 'sound' | 'gesture' | 'emotion';
 }
 
-const SIGNAL_CATEGORIES: Record<Signal['category'], { label: string; bg: string; text: string; emoji: string }> = {
-  aac: { label: 'AAC', bg: 'bg-teal-soft', text: 'text-teal-dark', emoji: '🃏' },
-  sound: { label: 'Звук', bg: 'bg-blue-soft', text: 'text-blue-dark', emoji: '🔊' },
-  gesture: { label: 'Жест', bg: 'bg-purple-soft', text: 'text-purple', emoji: '👆' },
-  emotion: { label: 'Эмоция', bg: 'bg-yellow-soft', text: 'text-yellow', emoji: '😊' },
+const SIGNAL_CATEGORIES: Record<Signal['category'], { bg: string; text: string; emoji: string }> = {
+  aac: { bg: 'bg-teal-soft', text: 'text-teal-dark', emoji: '🃏' },
+  sound: { bg: 'bg-blue-soft', text: 'text-blue-dark', emoji: '🔊' },
+  gesture: { bg: 'bg-purple-soft', text: 'text-purple', emoji: '👆' },
+  emotion: { bg: 'bg-yellow-soft', text: 'text-yellow', emoji: '😊' },
 };
 
 export const CommunicationProfile: React.FC = () => {
@@ -251,18 +251,29 @@ export const CommunicationProfile: React.FC = () => {
           <span className="text-[10px] text-muted italic ml-auto">{t('specialist.communication.demoBadge')}</span>
         </h3>
         <div className="flex flex-wrap gap-2">
-          {[
-            { name: 'AAC карточки', count: 8 },
-            { name: 'Звуки / слова', count: 6 },
-            { name: 'Жесты', count: 3 },
-            { name: 'Взгляд', count: 2 },
-            { name: 'Мимика', count: 1 },
-          ].map((m) => (
-            <span key={m.name} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-soft text-teal-dark text-xs font-bold">
-              {m.name}
-              <span className="px-1.5 rounded-full bg-white text-[10px] font-black text-teal">{m.count}</span>
-            </span>
-          ))}
+          {/* Methods Used — реальные подсчёты из signals (по category). */}
+          {/* Каждая категория считает связанные signals. */}
+          {(['aac', 'sound', 'gesture', 'emotion'] as Signal['category'][]).map((cat) => {
+            const count = signals.filter((s) => s.category === cat).length;
+            // Не показывать методы без данных.
+            if (count === 0) return null;
+            return (
+              <span
+                key={cat}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full ${SIGNAL_CATEGORIES[cat].bg} ${SIGNAL_CATEGORIES[cat].text} text-xs font-bold`}
+              >
+                <span aria-hidden="true">{SIGNAL_CATEGORIES[cat].emoji}</span>
+                {t(`specialist.communication.categories.${cat}`)}
+                <span className="px-1.5 rounded-full bg-white text-[10px] font-black opacity-80">{count}</span>
+              </span>
+            );
+          })}
+          {/* Если ни одной категории — показать честный empty. */}
+          {signals.length === 0 && (
+            <p className="text-xs text-muted italic w-full">
+              {t('specialist.communication.emptyHint')}
+            </p>
+          )}
         </div>
       </QoldauCard>
 
@@ -277,6 +288,7 @@ export const CommunicationProfile: React.FC = () => {
           <ProgressRow label={t('specialist.communication.progressAacUse')} value={signals.length > 0 ? `${signals.filter((s) => s.sources.includes('child')).length}×` : '—'} trend="up" color="teal" />
         </div>
         <p className="text-[11px] text-muted mt-3 italic">{t('specialist.communication.progressHint')}</p>
+        <p className="text-[11px] text-muted mt-2 italic">{t('specialist.communication.progressDisclaimer')}</p>
       </QoldauCard>
 
       <button onClick={() => navigate('/specialist/events')} className="w-full bg-white border-2 border-teal/30 rounded-2xl p-4 flex items-center gap-3 hover:bg-teal-soft transition-all active:scale-[0.98] text-left">

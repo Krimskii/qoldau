@@ -4,6 +4,7 @@ import { ArrowRight, Brain, Sparkles, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { AIInsightCard } from '@/components/ui/AIInsightCard';
+import { DemoBadge } from '@/components/ui/DemoBadge';
 import { ChildSelector } from '@/components/layout/ChildSelector';
 import { useEventStore } from '@/store/useEventStore';
 import { useDemoControlsStore } from '@/store/useDemoControlsStore';
@@ -141,19 +142,20 @@ export const ABCAnalysis: React.FC = () => {
         </div>
       </QoldauCard>
 
-      {/* Замеченные паттерны (явные гипотезы) */}
+      {/* Замеченные паттерны (явные гипотезы) — DEMO данные */}
       <QoldauCard variant="default" padding="md">
         <h3 className="text-sm font-black text-ink mb-3 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-yellow" />
           {t('specialist.abc.patternsTitle')}
+          <DemoBadge label={t('specialist.abc.demoBadge')} />
         </h3>
         <p className="text-[11px] text-muted italic mb-3">
           {t('specialist.abc.patternsHint')}
         </p>
         <div className="space-y-2.5">
-          <PatternRow trigger="Шум" triggerContext="громкая музыка, группа, пылесос" behavior="Закрывает уши, отводит взгляд" count={3} />
-          <PatternRow trigger="Смена активности" triggerContext="переход между занятиями" behavior="Нервозность, отказ от задания" count={2} />
-          <PatternRow trigger="Помогло" triggerContext="Пауза 2–3 минуты, тихое место" behavior="Похоже, стало спокойнее" count={5} variant="positive" />
+          <PatternRow trigger={t('specialist.abc.patternNoise')} triggerContext="громкая музыка, группа, пылесос" behavior="Закрывает уши, отводит взгляд" count={3} />
+          <PatternRow trigger={t('specialist.abc.patternChange')} triggerContext="переход между занятиями" behavior="Нервозность, отказ от задания" count={2} />
+          <PatternRow trigger={t('specialist.abc.patternHelped')} triggerContext="Пауза 2–3 минуты, тихое место" behavior={t('specialist.abc.patternHint')} count={5} variant="positive" />
         </div>
       </QoldauCard>
 

@@ -194,6 +194,9 @@ export const CarePatterns: React.FC = () => {
         <p className="text-sm text-ink-2 leading-relaxed">
           {t('specialist.carePatterns.bigPictureText')}
         </p>
+        <p className="text-[11px] text-muted italic mt-2">
+          {t('specialist.carePatterns.bigPictureDisclaimer')}
+        </p>
       </QoldauCard>
 
       <AIInsightCard text={t('specialist.carePatterns.aiInsight')} variant="warning" />
@@ -253,6 +256,7 @@ const PatternCard: React.FC<{ pattern: Pattern }> = ({ pattern }) => {
         </span>
       </div>
       <p className="text-xs text-ink-2 leading-relaxed mb-2.5">{pattern.description}</p>
+      <p className="text-[10px] text-muted italic mb-2">{t('specialist.carePatterns.hypothesisNote')}</p>
 
       {pattern.events.length >= 2 && (
         <div className="flex items-center gap-2">
