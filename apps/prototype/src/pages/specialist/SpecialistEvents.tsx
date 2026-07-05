@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TimelineItem } from '@/components/ui/TimelineItem';
 import { ChildSelector } from '@/components/layout/ChildSelector';
@@ -9,19 +10,21 @@ import { getEventSourceClassName, getEventSourceLabel } from '@/utils/eventLabel
 
 type SourceFilter = 'all' | 'parent' | 'tutor' | 'specialist' | 'child' | 'device' | 'ai';
 
-const FILTERS: { key: SourceFilter; label: string }[] = [
-  { key: 'all', label: 'Все' },
-  { key: 'parent', label: 'Родитель' },
-  { key: 'child', label: 'Ребёнок' },
-  { key: 'tutor', label: 'Тьютор' },
-  { key: 'specialist', label: 'Специалист' },
-];
-
 export const SpecialistEvents: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { events } = useEventStore();
   const { selectedChildId } = useDemoControlsStore();
   const [filter, setFilter] = useState<SourceFilter>('all');
+
+  // Локализованные фильтры
+  const FILTERS: { key: SourceFilter; label: string }[] = [
+    { key: 'all', label: t('specialist.events.filterAll') },
+    { key: 'parent', label: t('specialist.events.filterParent') },
+    { key: 'child', label: t('specialist.events.filterChild') },
+    { key: 'tutor', label: t('specialist.events.filterTutor') },
+    { key: 'specialist', label: t('specialist.events.filterSpecialist') },
+  ];
 
   const filtered = useMemo(() => {
     const childScoped = events.filter((e) => e.childId === selectedChildId);
@@ -32,8 +35,8 @@ export const SpecialistEvents: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="События"
-        subtitle={`${filtered.length} событий`}
+        title={t('specialist.events.title')}
+        subtitle={t('specialist.events.subtitle', { count: filtered.length })}
         showBack
       />
 
@@ -59,8 +62,8 @@ export const SpecialistEvents: React.FC = () => {
       {/* Timeline */}
       {filtered.length === 0 ? (
         <div className="bg-white border border-line rounded-2xl p-6 text-center">
-          <p className="text-sm font-bold mb-1">Нет событий этого источника</p>
-          <p className="text-xs text-muted">Попробуйте другой фильтр</p>
+          <p className="text-sm font-bold mb-1">{t('specialist.events.empty')}</p>
+          <p className="text-xs text-muted">{t('specialist.events.emptyHint')}</p>
         </div>
       ) : (
         <div className="relative">

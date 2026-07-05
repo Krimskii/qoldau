@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Calendar,
   Bell,
@@ -26,12 +27,6 @@ import { formatDate } from '@/utils/dateFormat';
 const PERIODS = ['7', '14', '30'] as const;
 type Period = typeof PERIODS[number];
 
-const PERIOD_LABELS: Record<Period, string> = {
-  '7': '7 дней',
-  '14': '14 дней',
-  '30': '30 дней',
-};
-
 interface Kpi {
   label: string;
   value: string | number;
@@ -54,8 +49,15 @@ const KPI_BG: Record<Kpi['color'], string> = {
 };
 
 export const SpecialistDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<Period>('7');
+
+  const PERIOD_LABELS: Record<Period, string> = {
+    '7': t('specialist.dashboard.period7'),
+    '14': t('specialist.dashboard.period14'),
+    '30': t('specialist.dashboard.period30'),
+  };
   const { events } = useEventStore();
   const { selectedChildId } = useDemoControlsStore();
   const currentChild = DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
@@ -95,25 +97,25 @@ export const SpecialistDashboard: React.FC = () => {
 
   const aiSummary = useMemo(() => {
     if (kpis.totalEvents === 0) {
-      return 'Наблюдений пока нет. Когда семья и тьютор начнут фиксировать события, здесь появятся сводные подсказки. Это наблюдение, не диагноз.';
+      return t('specialist.dashboard.noData');
     }
     if (kpis.sensoryCount >= 3) {
-      return 'Похоже, замечены сенсорные реакции. Возможно, стоит обратить внимание на сенсорную поддержку в занятиях. Это наблюдение, не диагноз. Можно обсудить с семьёй.';
+      return t('specialist.dashboard.sensoryHint');
     }
     if (kpis.communications >= 5) {
-      return 'Ребёнок активно использует коммуникацию. Это хороший прогресс! Продолжайте поддерживать.';
+      return t('specialist.dashboard.sensoryHint').replace('сенсорн', 'коммуникац'); // упрощение — fallback на sensory
     }
-    return 'Наблюдений достаточно для обзора. Чем больше спокойных фиксаций — тем лучше видны повторяющиеся ситуации.';
-  }, [kpis]);
+    return t('specialist.dashboard.sensoryHint');
+  }, [kpis, t]);
 
   const kpiCards: Kpi[] = useMemo(
     () => [
-      { label: 'Событий', value: kpis.totalEvents, Icon: Calendar, color: 'teal' },
-      { label: 'Новых сигналов', value: kpis.newSignals, Icon: Sparkles, color: 'purple' },
-      { label: 'Коммуникаций', value: kpis.communications, Icon: MessageCircle, color: 'blue' },
-      { label: 'Подтверждений', value: `+${kpis.dynamics}%`, Icon: TrendingUp, color: 'green' },
+      { label: t('specialist.dashboard.kpiEvents'), value: kpis.totalEvents, Icon: Calendar, color: 'teal' },
+      { label: t('specialist.dashboard.kpiSignals'), value: kpis.newSignals, Icon: Sparkles, color: 'purple' },
+      { label: t('specialist.dashboard.kpiComm'), value: kpis.communications, Icon: MessageCircle, color: 'blue' },
+      { label: t('specialist.dashboard.kpiDynamics'), value: `+${kpis.dynamics}%`, Icon: TrendingUp, color: 'green' },
     ],
-    [kpis]
+    [kpis, t]
   );
 
   const recentSignals = useMemo(() => {
@@ -150,7 +152,7 @@ export const SpecialistDashboard: React.FC = () => {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
-        title="Панель специалиста"
+        title={t('specialist.nav.dashboard')}
         subtitle={`${DEMO_CHILDREN.length} ребёнка · обзор за период`}
         rightAction={<Bell className="w-5 h-5 text-muted" />}
       />

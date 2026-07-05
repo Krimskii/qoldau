@@ -1,5 +1,6 @@
 import React from 'react';
-import { FileText, Download, Mail, Calendar, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Download, Mail } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { Button } from '@/components/ui/Button';
@@ -9,32 +10,16 @@ import { useDemoControlsStore } from '@/store/useDemoControlsStore';
 import { DEMO_CHILDREN, getFamilyChildName } from '@/data/demoDataset';
 import { formatDate } from '@/utils/dateFormat';
 
-const REPORT_TYPES = [
-  { key: 'weekly', title: 'Недельный отчёт', subtitle: 'Итоги за неделю', icon: Calendar, accent: 'teal' },
-  { key: 'monthly', title: 'Месячный отчёт', subtitle: 'Динамика за 30 дней', icon: TrendingUp, accent: 'blue' },
-  { key: 'individual', title: 'Индивидуальный', subtitle: 'Глубокий разбор ребёнка', icon: FileText, accent: 'purple' },
-  { key: 'specialist', title: 'Для специалиста', subtitle: 'Структура по ABC', icon: CheckCircle2, accent: 'green' },
-];
-
-const ACCENT_CLASSES: Record<string, { bg: string; text: string; pill: string }> = {
-  teal: { bg: 'bg-teal-soft', text: 'text-teal-dark', pill: 'bg-teal text-white' },
-  blue: { bg: 'bg-blue-soft', text: 'text-blue-dark', pill: 'bg-blue text-white' },
-  purple: { bg: 'bg-purple-soft', text: 'text-purple', pill: 'bg-purple text-white' },
-  green: { bg: 'bg-green-soft', text: 'text-green', pill: 'bg-green text-white' },
-};
-
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const Reports: React.FC = () => {
+  const { t } = useTranslation();
   const { showToast } = useToastStore();
   const { selectedChildId } = useDemoControlsStore();
   const currentChild =
     DEMO_CHILDREN.find((c) => c.id === selectedChildId) ?? DEMO_CHILDREN[0];
-  // Реальное имя ребёнка (с учётом семейной настройки через FamilySetupCard).
   const childName = getFamilyChildName() ?? currentChild.name;
 
-  // v1.5+ — все события выбранного ребёнка за последнюю неделю через
-  // EventStorage.query (soft-delete фильтруется, since — по occurredAt).
   const since = new Date(Date.now() - WEEK_MS).toISOString();
   const weekEvents = useEventQuery({
     childId: currentChild.id,
@@ -46,55 +31,53 @@ export const Reports: React.FC = () => {
     (e) => e.type === 'aac_card' || e.type === 'phrase',
   ).length;
   const calmCount = weekEvents.filter((e) => e.type === 'calm_mode').length;
-  // «Новых сигналов» = уникальные title за период (грубая оценка).
   const newSignals = new Set(
     weekEvents.map((e) => `${e.type}:${e.title}`),
   ).size;
 
   const hasData = total > 0;
 
-  // Период отчёта — от самой ранней до самой поздней записи, либо текущая неделя.
   const periodLabel = (() => {
     if (weekEvents.length === 0) {
       const today = formatDate(new Date());
-      return `${today} · Недельный`;
+      return t('specialist.reports.periodLabelEmpty', { today });
     }
     const timestamps = weekEvents
       .map((e) => new Date(e.timestamp).getTime())
       .sort((a, b) => a - b);
     const from = formatDate(new Date(timestamps[0]));
     const to = formatDate(new Date(timestamps[timestamps.length - 1]));
-    return `${from} – ${to} · Недельный`;
+    return t('specialist.reports.periodLabel', { from, to });
   })();
 
   const handleShareReport = async () => {
     const shareData = {
-      title: 'Qoldau — отчёт наблюдений',
-      text: `Профиль наблюдений ${childName} (Qoldau). Это наблюдения, не диагноз.`,
+      title: t('specialist.reports.shareTitle'),
+      text: t('specialist.reports.shareText', { name: childName }),
     };
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share(shareData);
       } catch {
-        // Пользователь закрыл системный лист — это не ошибка.
+        // user cancelled — not an error
       }
     } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(shareData.text);
-        showToast('Текст отчёта скопирован', 'success');
+        showToast(t('specialist.reports.shareCopied'), 'success');
       } catch {
-        showToast('Не удалось скопировать', 'info');
+        showToast(t('specialist.reports.shareFailed'), 'info');
       }
     } else {
-      showToast('Поделиться недоступно на этом устройстве', 'info');
+      showToast(t('specialist.reports.shareUnavailable'), 'info');
     }
   };
 
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Отчёты"
-        subtitle="По данным Event Timeline"
+        title={t('specialist.reports.title')}
+        subtitle={t('specialist.reports.subtitle')}
         showBack
       />
 
@@ -104,9 +87,11 @@ export const Reports: React.FC = () => {
         <div className="bg-gradient-to-br from-teal to-teal-dark text-white p-5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide opacity-80">Qoldau AI · Отчёт</p>
+              <p className="text-xs font-black uppercase tracking-wide opacity-80">
+                {t('specialist.reports.header')}
+              </p>
               <h2 className="text-2xl font-black mt-1 leading-tight">
-                {childName}, {currentChild.age} лет
+                {childName}, {t('specialist.reports.ageLabel', { age: currentChild.age })}
               </h2>
               <p className="text-sm opacity-90 mt-1">{periodLabel}</p>
             </div>
@@ -117,51 +102,48 @@ export const Reports: React.FC = () => {
         </div>
 
         <div className="p-5 space-y-5">
-          {/* Итоги недели — реальные данные */}
+          {/* Итоги недели */}
           <section>
-            <SectionHeader number="1" title="Итоги недели" />
+            <SectionHeader number="1" title={t('specialist.reports.section1Title')} />
             {hasData ? (
               <p className="text-sm text-ink-2 leading-relaxed">
-                Зафиксировано {total} событий за неделю
-                {total > 0 && ' от родителя, тьютора и ребёнка'}. Это наблюдения,
-                не диагноз. Можно продолжить наблюдать, чтобы увидеть динамику.
+                {t('specialist.reports.withDataHint', { total })}
               </p>
             ) : (
               <p className="text-sm text-ink-2 leading-relaxed">
-                Пока мало наблюдений — добавьте голосом или AAC-карточкой, и
-                здесь появятся итоги недели. Это наблюдения, не диагноз.
+                {t('specialist.reports.noDataHint')}
               </p>
             )}
           </section>
 
-          {/* KPI grid — реальные подсчёты */}
+          {/* KPI grid */}
           <section>
-            <SectionHeader number="2" title="Ключевые показатели" />
+            <SectionHeader number="2" title={t('specialist.reports.section2Title')} />
             <div className="grid grid-cols-3 gap-2.5">
               <KpiCard
-                label="AAC / фраз"
+                label={t('specialist.reports.kpiAac')}
                 value={hasData ? String(aacCount) : '—'}
-                sub="за неделю"
+                sub={t('specialist.reports.kpiAacPer')}
                 color="teal"
               />
               <KpiCard
-                label="Спокойный режим"
-                value={hasData ? `${calmCount} раз` : '—'}
-                sub="за неделю"
+                label={t('specialist.reports.kpiCalm')}
+                value={hasData ? `${calmCount} ${t('specialist.reports.kpiAacPer')}` : '—'}
+                sub={t('specialist.reports.perWeek')}
                 color="green"
               />
               <KpiCard
-                label="Новых сигналов"
+                label={t('specialist.reports.kpiNew')}
                 value={hasData ? String(newSignals) : '—'}
-                sub="за неделю"
+                sub={t('specialist.reports.perWeek')}
                 color="blue"
               />
             </div>
           </section>
 
-          {/* Ключевые наблюдения — реальные события или empty state */}
+          {/* Ключевые наблюдения */}
           <section>
-            <SectionHeader number="3" title="Ключевые наблюдения" />
+            <SectionHeader number="3" title={t('specialist.reports.section3Title')} />
             {hasData ? (
               <ul className="space-y-2 text-sm text-ink-2">
                 {weekEvents.slice(0, 4).map((e) => (
@@ -176,27 +158,25 @@ export const Reports: React.FC = () => {
               </ul>
             ) : (
               <p className="text-sm text-muted leading-relaxed">
-                Пока нет наблюдений за неделю. Когда появятся — здесь будет
-                краткий обзор.
+                {t('specialist.reports.noObservations')}
               </p>
             )}
           </section>
 
-          {/* Рекомендации — осторожные формулировки, без medical claims */}
+          {/* Рекомендации */}
           <section>
-            <SectionHeader number="4" title="Что можно попробовать" />
+            <SectionHeader number="4" title={t('specialist.reports.section4Title')} />
             <div className="bg-yellow-soft border border-yellow/20 rounded-2xl p-3">
               <p className="text-sm text-ink-2 leading-relaxed italic">
-                Похоже, что повторяющиеся сигналы и контексты помогут увидеть
-                динамику. Можно продолжить наблюдать и обсудить с семьёй.{' '}
-                <strong className="not-italic">Это наблюдение, не диагноз.</strong>
+                {t('specialist.reports.recommendation')}{' '}
+                <strong className="not-italic">{t('specialist.reports.recommendationStrong')}</strong>
               </p>
             </div>
           </section>
 
           {/* Disclaimer */}
           <p className="text-[11px] text-muted text-center italic pt-2 border-t border-line-soft">
-            Qoldau AI — профиль наблюдений, не медицинское устройство.
+            {t('specialist.reports.disclaimer')}
           </p>
         </div>
       </QoldauCard>
@@ -208,7 +188,7 @@ export const Reports: React.FC = () => {
           onClick={() => window.print()}
         >
           <Download className="w-4 h-4" />
-          Скачать PDF
+          {t('specialist.reports.downloadPdf')}
         </Button>
         <Button
           variant="secondary"
@@ -216,33 +196,9 @@ export const Reports: React.FC = () => {
           onClick={handleShareReport}
         >
           <Mail className="w-4 h-4" />
-          Отправить
+          {t('specialist.reports.send')}
         </Button>
       </div>
-
-      {/* Другие типы отчётов — клик показывает toast (в Wave 0 не генерируются) */}
-      <section>
-        <h3 className="text-sm font-black text-ink mb-3 px-1">Другие отчёты</h3>
-        <div className="grid grid-cols-2 gap-2.5">
-          {REPORT_TYPES.map((type) => {
-            const accent = ACCENT_CLASSES[type.accent];
-            const Icon = type.icon;
-            return (
-              <button
-                key={type.key}
-                onClick={() => showToast(`«${type.title}» появится в следующей версии`, 'info')}
-                className={`${accent.bg} border border-line rounded-2xl p-4 text-left hover:shadow-card-soft active:scale-[0.98] transition-all`}
-              >
-                <div className={`w-10 h-10 rounded-2xl bg-white flex items-center justify-center mb-2`}>
-                  <Icon className={`w-5 h-5 ${accent.text}`} />
-                </div>
-                <p className="text-sm font-black text-ink leading-tight">{type.title}</p>
-                <p className="text-xs text-muted mt-0.5">{type.subtitle}</p>
-              </button>
-            );
-          })}
-        </div>
-      </section>
     </div>
   );
 };
@@ -260,18 +216,17 @@ const KpiCard: React.FC<{
   label: string;
   value: string;
   sub: string;
-  color: 'teal' | 'blue' | 'green';
-}> = ({ label, value, sub, color }) => {
-  const valueClass = {
-    teal: 'text-teal-dark',
-    blue: 'text-blue-dark',
-    green: 'text-green',
-  }[color];
-  return (
-    <div className="bg-bg rounded-2xl p-3 text-center">
-      <p className={`text-xl font-black ${valueClass}`}>{value}</p>
-      <p className="text-xs font-black text-ink mt-0.5">{label}</p>
-      <p className="text-[10px] text-muted mt-0.5">{sub}</p>
-    </div>
-  );
-};
+  color: 'teal' | 'green' | 'blue';
+}> = ({ label, value, sub, color }) => (
+  <QoldauCard variant="default" padding="sm" className="text-center">
+    <p
+      className={`text-2xl font-black ${
+        color === 'teal' ? 'text-teal' : color === 'green' ? 'text-green' : 'text-blue'
+      }`}
+    >
+      {value}
+    </p>
+    <p className="text-[11px] font-black text-ink mt-0.5">{label}</p>
+    <p className="text-[10px] text-muted">{sub}</p>
+  </QoldauCard>
+);

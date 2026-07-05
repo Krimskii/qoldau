@@ -60,6 +60,7 @@ export const TutorReport: React.FC = () => {
    * Сейчас показываем toast с подсказкой «скопируйте и отправьте вручную».
    */
   const handleSend = () => {
+    // v1.5+ E2 honest state: реальная отправка появится в следующей версии.
     showToast(t('tutor.report.sendInDevelopment'), 'info');
   };
 
