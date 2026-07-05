@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import clsx from 'clsx';
 import { LogOut } from 'lucide-react';
 import { QoldauCard } from '@/components/ui/QoldauCard';
 import { useChildSettingsStore } from '@/store/useChildSettingsStore';
@@ -76,6 +77,92 @@ function ChoiceRow<T extends string | number>({ label, description, options, val
     </div>
   );
 }
+
+/**
+ * v1.5+ D2 — SensoryDial: segmented 3-way control «Спокойный / Стандарт / Игривый».
+ * Сейчас используется для `sensoryMode`, но компонент generic — можно
+ * переиспользовать для других 3-way switches.
+ */
+const SENSORY_OPTIONS = [
+  {
+    value: 'calm' as const,
+    label: 'Спокойный',
+    hint: 'Меньше цвета, без движения',
+    swatch: 'bg-coral-soft',
+  },
+  {
+    value: 'standard' as const,
+    label: 'Стандарт',
+    hint: 'Обычный ритм, обычные цвета',
+    swatch: 'bg-blue-soft',
+  },
+  {
+    value: 'playful' as const,
+    label: 'Игривый',
+    hint: 'Сочнее цвета, искорка-фидбек',
+    swatch: 'bg-yellow-soft',
+  },
+];
+
+const SensoryDial: React.FC = () => {
+  const settings = useChildSettingsStore();
+  const current = settings.sensoryMode;
+  return (
+    <div className="py-3 border-b border-line-soft last:border-0">
+      <div className="text-sm font-black text-ink leading-tight mb-1">
+        Сенсорный режим
+      </div>
+      <div className="text-xs text-muted leading-snug mb-2.5">
+        Можно менять в любой момент. «Спокойный» отключает анимации.
+      </div>
+      <div
+        role="radiogroup"
+        aria-label="Сенсорный режим"
+        className="grid grid-cols-3 gap-1.5 bg-bg p-1.5 rounded-2xl"
+      >
+        {SENSORY_OPTIONS.map((opt) => {
+          const active = current === opt.value;
+          return (
+            <button
+              key={opt.value}
+              role="radio"
+              aria-checked={active}
+              data-testid={`sensory-${opt.value}`}
+              onClick={() => settings.set({ sensoryMode: opt.value })}
+              className={clsx(
+                'flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 transition-all active:scale-[0.97] text-center',
+                active
+                  ? 'bg-white border-teal shadow-card-soft'
+                  : 'bg-transparent border-transparent hover:bg-white/50',
+              )}
+            >
+              <span
+                className={clsx(
+                  'w-5 h-5 rounded-full border-2',
+                  active ? 'border-teal bg-teal' : 'border-line',
+                  opt.swatch,
+                )}
+                aria-hidden="true"
+              />
+              <span
+                className={clsx(
+                  'text-xs font-black',
+                  active ? 'text-ink' : 'text-ink-2',
+                )}
+              >
+                {opt.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {/* Живой превью: описание текущего режима. */}
+      <div className="mt-2 text-[11px] text-muted leading-snug">
+        {SENSORY_OPTIONS.find((o) => o.value === current)?.hint}
+      </div>
+    </div>
+  );
+};
 
 /**
  * ChildSettingsSheet — bottom-sheet настроек ребёнка (v0.3.16).
@@ -172,6 +259,8 @@ export const ChildSettingsSheet: React.FC<ChildSettingsSheetProps> = ({ isOpen, 
         </QoldauCard>
 
         <QoldauCard variant="default" padding="md" className="mx-4 mt-3 mb-6">
+          {/* v1.5+ D2: сенсорный режим вверху, чтобы был виден сразу. */}
+          <SensoryDial />
           <ChoiceRow
             label="Размер шрифта"
             description="Если сложно читать — увеличь"

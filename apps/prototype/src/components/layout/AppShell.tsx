@@ -10,6 +10,7 @@ import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import type { UserRole } from '@/types/qoldau';
 import { applyTheme, loadTheme } from '@/utils/theme';
+import { useChildSettingsStore, applyChildSettings } from '@/store/useChildSettingsStore';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -31,6 +32,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
   const navigate = useNavigate();
   const { events } = useEventStore();
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  // v1.5+ D2: подписка на sensoryMode + auto-apply к <html> через applyChildSettings.
+  const childSettings = useChildSettingsStore();
 
   // Тёмная тема не должна протекать в детский интерфейс (сенсорная безопасность,
   // SENSORY_SAFE_DESIGN_GUIDE.md требует нейтральный/светлый фон) — html.dark
@@ -43,6 +46,18 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
       applyTheme(loadTheme());
     }
   }, [currentRole]);
+
+  // v1.5+ D2: применяем настройки ребёнка (paused/calmVisual/highContrast/fontScale/sensoryMode)
+  // к <html> при изменении. Старая версия (ChildTopBar) дублировала — теперь единая точка.
+  useEffect(() => {
+    applyChildSettings(childSettings);
+  }, [
+    childSettings.paused,
+    childSettings.calmVisual,
+    childSettings.highContrast,
+    childSettings.fontScale,
+    childSettings.sensoryMode,
+  ]);
 
   // currentRole === 'overview' → пользователь на landing, не в роли.
   if (currentRole === 'overview') {
@@ -125,10 +140,21 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
           </header>
         )}
 
-        {/* Main content — no horizontal padding for child (ChildHome/Cards etc. manage their own) */}
-        <main className={`flex-1 ${isChild ? '' : 'px-5'} ${showNav ? 'pb-28' : 'pb-8'} ${isChild ? 'pt-0' : 'pt-4'}`}>
-          {children}
-        </main>
+        {/* Main content — no horizontal padding for child (ChildHome/Cards etc. manage their own).
+            v1.5+ D2: для child role оборачиваем в .child-root + data-sensory, чтобы
+            CSS-vars и анимационный гейт из sensory.css применялись только к child UI. */}
+        {isChild ? (
+          <main
+            data-sensory={childSettings.sensoryMode}
+            className={`child-root flex-1 ${showNav ? 'pb-28' : 'pb-8'} pt-0`}
+          >
+            {children}
+          </main>
+        ) : (
+          <main className={`flex-1 px-5 ${showNav ? 'pb-28' : 'pb-8'} pt-4`}>
+            {children}
+          </main>
+        )}
 
         {showNav && <BottomNav role={normalizedRole} />}
 
