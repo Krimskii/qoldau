@@ -8,6 +8,7 @@ import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { formatTime as formatClock } from '@/utils/dateFormat';
 import { useSpeechRecognition } from '@/lib/stt/useSpeechRecognition';
 import { speak, stopSpeaking } from '@/lib/tts/speak';
+import { DemoBadge } from '@/components/ui/DemoBadge';
 
 const MAX_RECORDING_SEC = 30;
 
@@ -370,7 +371,8 @@ export const ChildSpeak: React.FC = () => {
       {/* Status text */}
       <div className="text-center px-5">
         {isRecording ? (
-          <div>
+          <div className="flex flex-col items-center gap-2">
+            <DemoBadge label="Распознавание — демо" />
             <div className="text-4xl font-black text-ink tabular-nums">
               {formatTime(recordingTime)}
             </div>

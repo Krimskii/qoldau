@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { DemoBadge } from '@/components/ui/DemoBadge';
 import { DEMO_PRIMARY_CHILD, getFamilyChildName, getDemoTimelineSummary } from '@/data/demoDataset';
 
 interface Message {
@@ -18,7 +19,7 @@ const PRESETS = [
 const initialMessages: Message[] = [
   {
     role: 'ai',
-    text: 'Привет! Это демо-помощник Qoldau: пока отвечает по заготовленным шаблонам. Все ответы — гипотезы, не диагноз.',
+    text: 'Привет! Это демо-помощник Qoldau: отвечает по заготовленным шаблонам на основе ваших наблюдений. Реальный AI появится в следующей версии. Все ответы — гипотезы, не диагноз.',
   },
 ];
 
@@ -80,7 +81,7 @@ export const ParentAIChat: React.FC = () => {
         title="AI-помощник"
         subtitle={`Спросите по наблюдениям ${childName}`}
         showBack
-        rightAction={<Sparkles className="w-5 h-5 text-teal" />}
+        rightAction={<DemoBadge label="AI — демо" />}
       />
 
       <div ref={scrollRef} className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1">

@@ -14,6 +14,7 @@ import {
 } from '@/components/icons/child2d';
 import { formatDuration } from '@/utils/formatDuration';
 import { triggerHaptic } from '@/lib/feedback/haptics';
+import { DemoBadge } from '@/components/ui/DemoBadge';
 
 const TIMER_SECONDS = 60;
 // Mock-длительность «аудио от мамы» — имитирует воспроизведение без реального файла.
@@ -258,10 +259,13 @@ export const CalmMode: React.FC = () => {
         ))}
       </div>
 
-      {/* Мини-прогресс «Запись» — без отдельной карточки. */}
+      {/* Мини-прогресс «Запись» — без отдельной карточки. v1.5+ E4: помечено как демо. */}
       {audioState !== 'idle' && (
-        <div className="mt-4 px-2 text-[11px] text-muted text-center tabular-nums">
-          {formatDuration(audioProgress)} / {formatDuration(MOCK_AUDIO_DURATION)}
+        <div className="mt-4 px-2 text-center flex flex-col items-center gap-2">
+          <DemoBadge label="Аудио — демо" size="sm" />
+          <div className="text-[11px] text-muted tabular-nums">
+            {formatDuration(audioProgress)} / {formatDuration(MOCK_AUDIO_DURATION)}
+          </div>
         </div>
       )}
 

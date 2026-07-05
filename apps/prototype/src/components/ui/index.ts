@@ -8,6 +8,7 @@
 
 export { QoldauCard, type QoldauCardProps } from './QoldauCard';
 export { ConfirmSheet, type ConfirmSheetProps } from './ConfirmSheet';
+export { DemoBadge, type DemoBadgeProps } from './DemoBadge';
 export {
   QoldauIconCard,
   COLOR_MAP,
