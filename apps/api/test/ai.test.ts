@@ -110,7 +110,7 @@ describe('GET /api/ai/health', () => {
     expect(res.status).toBe(200);
     expect(res.body.service).toBe('ai');
     expect(res.body.model).toBeDefined();
-    expect(res.body.promptVersion).toBe('parse-ru.v3');
+    expect(res.body.promptVersion).toBe('parse-ru.v4');
   });
 });
 

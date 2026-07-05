@@ -357,6 +357,12 @@ function buildABC(text: string, behavior: string): AIParserABC | undefined {
   };
 }
 
+function attachABC(events: AIParserEvent[], abc: AIParserABC | undefined) {
+  if (!abc || events.some((event) => event.abc)) return;
+  const preferred = events.find((event) => event.type !== 'sensory') ?? events[0];
+  if (preferred) preferred.abc = abc;
+}
+
 function sensoryContextFrom(text: string): string[] {
   const contexts: string[] = [];
   if (hasAny(text, [/шум/u, /громк/u, /музык/u, /звук/u])) contexts.push('шум или громкий звук');
@@ -373,6 +379,7 @@ function parseMock(transcript: string): AIParserResult {
   const seen = new Set<string>();
   const timestamp = firstTime(transcript);
   const sensoryContext = sensoryContextFrom(text);
+  const sharedABC = buildABC(text, 'Наблюдаемое действие или состояние ребёнка.');
 
   if (hasAny(text, [/\bпоел[аи]?\b/u, /\bел[аи]?\b/u, /\bсъел[аи]?\b/u, /\bкушал[аи]?\b/u, /кашу/u, /суп/u, /йогурт/u, /печень/u, /обед/u, /завтрак/u, /ужин/u])) {
     addEvent(events, seen, transcript, { timestamp, type: 'food', title: 'Приём пищи', description: 'Похоже, был зафиксирован приём пищи.' });
@@ -389,7 +396,7 @@ function parseMock(transcript: string): AIParserResult {
   if (sensoryContext.length > 0 || hasAny(text, [/закрывал[аи]? уши/u, /зажимал[аи]? уши/u, /уши закры/u, /сенсор/u])) {
     addEvent(events, seen, transcript, { timestamp, type: 'sensory', title: 'Сенсорный контекст', description: 'Похоже, была сенсорная реакция на окружающие стимулы.', sensoryContext });
   }
-  if (hasAny(text, [/плакал[аи]?/u, /кричал[аи]?/u, /расстроил[с]?/u, /злил[с]?/u, /убежал[аи]?/u, /ударил[аи]?/u, /нервничал[аи]?/u, /истерик/u, /хотел уйти/u])) {
+  if (hasAny(text, [/плакал[аи]?/u, /кричал[аи]?/u, /кричать/u, /стал[аи]? крич/u, /расстроил[с]?/u, /злил[с]?/u, /убежал[аи]?/u, /уш[её]л/u, /ударил[аи]?/u, /нервничал[аи]?/u, /истерик/u, /хотел уйти/u, /бегал[аи]?/u, /не хотел[аи]? разговаривать/u, /тянул[аи]? воротник/u])) {
     addEvent(events, seen, transcript, {
       timestamp,
       type: 'behavior',
@@ -399,12 +406,13 @@ function parseMock(transcript: string): AIParserResult {
       sensoryContext,
     });
   }
-  if (hasAny(text, [/сказал[аи]?/u, /произн[её]с/u, /повторил[аи]?/u, /попросил[аи]?/u, /показал[аи]?/u, /жест/u, /\bмама\b/u, /\bпапа\b/u, /\bдай\b/u, /\bнет\b/u, /\bда\b/u])) {
+  if (hasAny(text, [/сказал[аи]?/u, /произн[её]с/u, /повторил[аи]?/u, /повторял[аи]?/u, /попросил[аи]?/u, /просил[аи]?/u, /просил[аи]?сь/u, /показал[аи]?/u, /жест/u, /\bмама\b/u, /\bпапа\b/u, /\bдай\b/u, /\bнет\b/u, /\bда\b/u])) {
     addEvent(events, seen, transcript, { timestamp, type: 'communication', title: 'Коммуникация', description: 'Похоже, ребёнок использовал речь, звук или жест для коммуникации.' });
   }
-  if (hasAny(text, [/спокойн/u, /устал[аи]?/u, /вес[её]л/u, /возбужден/u, /возбужд[её]н/u, /сонн/u])) {
+  if (hasAny(text, [/споко/u, /устал[аи]?/u, /вес[её]л/u, /возбужден/u, /возбужд[её]н/u, /сонн/u])) {
     addEvent(events, seen, transcript, { timestamp, type: 'state', title: 'Состояние', description: 'Похоже, было отмечено общее состояние ребёнка.' });
   }
+  attachABC(events, sharedABC);
 
   const insight = events.length > 0
     ? `Похоже, в наблюдении выделено ${events.length} ${events.length === 1 ? 'событие' : 'события'}. ${SAFE_INSIGHT_SUFFIX}`

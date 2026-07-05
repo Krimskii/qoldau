@@ -4,7 +4,7 @@ import { fieldBreakdown, loadGoldenSet, runEval, scoreCase } from './runEval';
 describe('golden RU eval harness', () => {
   it('loads the expanded golden set', () => {
     const cases = loadGoldenSet();
-    expect(cases.length).toBe(28);
+    expect(cases.length).toBe(31);
     expect(cases.some((item) => item.expect.safetyFlag)).toBe(true);
     expect(cases.some((item) => item.expect.sensory.length > 0)).toBe(true);
   });
@@ -48,10 +48,19 @@ describe('golden RU eval harness', () => {
     const result = await runEval({ live: false });
 
     process.env.OPENAI_API_KEY = previousKey;
-    expect(result.rows.length).toBe(28);
-    expect(result.scorePct).toBeGreaterThanOrEqual(0);
+    expect(result.rows.length).toBe(31);
+    expect(result.scorePct).toBeGreaterThanOrEqual(75);
     expect(result.scorePct).toBeLessThanOrEqual(100);
     expect(result.breakdown.safety).toBeGreaterThan(0);
     expect(result.rows.some((row) => row.passed)).toBe(true);
+  });
+
+  it('requires OPENAI_API_KEY for live eval', async () => {
+    const previousKey = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+
+    await expect(runEval({ live: true })).rejects.toThrow('OPENAI_API_KEY is required for live eval');
+
+    process.env.OPENAI_API_KEY = previousKey;
   });
 });

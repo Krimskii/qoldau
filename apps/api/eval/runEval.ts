@@ -90,6 +90,9 @@ export function fieldBreakdown(rows: EvalRow[]): Record<FieldKey, number> {
 }
 
 export async function runEval(options: { live?: boolean } = {}): Promise<{ rows: EvalRow[]; scorePct: number; breakdown: Record<FieldKey, number> }> {
+  if (options.live && !process.env.OPENAI_API_KEY?.trim()) {
+    throw new Error('OPENAI_API_KEY is required for live eval');
+  }
   if (!options.live) delete process.env.OPENAI_API_KEY;
   const { llmService } = await import('../src/services/llmService.js');
   const golden = loadGoldenSet();
