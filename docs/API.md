@@ -28,6 +28,25 @@ curl http://localhost:4000/api/health
 }
 ```
 
+The response includes `database.ok` and `database.provider` so deploy checks can see whether persistence is reachable.
+
+### `GET /api/ready`
+
+Readiness probe. Returns `200` when PostgreSQL is reachable and `503` when the database check fails.
+
+```bash
+curl http://localhost:4000/api/ready
+```
+
+```json
+{
+  "ok": true,
+  "service": "qoldau-ai-proxy",
+  "readiness": "ready",
+  "database": { "ok": true, "provider": "postgresql", "latencyMs": 12 }
+}
+```
+
 ### `POST /api/reset`
 
 Полный сброс in-memory store (для demo / tests).

@@ -8,6 +8,8 @@
 - [ ] OpenAI key pasted into chats/logs has been revoked/rotated.
 - [ ] OpenAI billing/quota is active.
 - [ ] Production proxy URL is HTTPS and health endpoints pass.
+- [ ] Backend `/api/ready` is `200` and reports PostgreSQL `database.ok=true`.
+- [ ] Backend deploy uses `npm run db:deploy`/`npm run start:prod`; never `prisma db push`.
 - [ ] `CORS_ORIGIN` includes `capacitor://localhost` if required by device requests.
 - [ ] Android APK installs on a real device.
 - [ ] Consent gate is visible before first audio upload.

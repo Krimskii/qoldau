@@ -15,6 +15,10 @@ import { eventsRepo } from '../repositories/events.js';
 import { getCache } from './cache.js';
 
 export async function seed(): Promise<void> {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PROD_SEED !== 'true') {
+    throw new Error('[seed] Refusing to seed production without ALLOW_PROD_SEED=true');
+  }
+
   console.log('[seed] Starting...');
 
   // === Children ===
