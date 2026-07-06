@@ -64,6 +64,9 @@ html.dark body {
 
 html {
   scroll-behavior: smooth;
+  /* E8.5: scroll-padding для якорей и snap-контейнеров.
+     96px = высота safe-area-top + минимальный header landing. */
+  scroll-padding-top: 96px;
 }
 
 body {

@@ -142,16 +142,18 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
 
         {/* Main content — no horizontal padding for child (ChildHome/Cards etc. manage their own).
             v1.5+ D2: для child role оборачиваем в .child-root + data-sensory, чтобы
-            CSS-vars и анимационный гейт из sensory.css применялись только к child UI. */}
+            CSS-vars и анимационный гейт из sensory.css применялись только к child UI.
+            E8.3: pb-36 (144px) — BottomNav FAB выступает ~28px над баром, плюс
+            safe-area-bottom. Раньше pb-28 было мало — FAB перекрывал контент. */}
         {isChild ? (
           <main
             data-sensory={childSettings.sensoryMode}
-            className={`child-root flex-1 ${showNav ? 'pb-28' : 'pb-8'} pt-0`}
+            className={`child-root flex-1 ${showNav ? 'pb-36' : 'pb-8'} pt-0`}
           >
             {children}
           </main>
         ) : (
-          <main className={`flex-1 px-5 ${showNav ? 'pb-28' : 'pb-8'} pt-4`}>
+          <main className={`flex-1 px-5 ${showNav ? 'pb-36' : 'pb-8'} pt-4`}>
             {children}
           </main>
         )}

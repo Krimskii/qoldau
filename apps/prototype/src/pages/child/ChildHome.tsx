@@ -80,12 +80,16 @@ const HomeCard: React.FC<HomeCardProps> = ({ c, hideLabel }) => {
   return (
     <button
       onClick={handleClick}
-      className="child-home-card flex flex-col items-center justify-center gap-1.5 bg-white rounded-[28px] shadow-card aspect-square w-full min-h-[112px] transition-all duration-200 ease-out active:scale-[0.94] active:opacity-90 hover:-translate-y-0.5 hover:shadow-card-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 qoldau-tap-ring"
+      // E8.6: добавлен overflow-hidden + min-w-0 — без этого CSS-grid не
+      // сжимает элемент меньше intrinsic-content-width, и длинный лейбл
+      // (напр. «Хочу кушать», kk «Тамақ ішкім келеді») мог вылезать в
+      // соседнюю колонку (симптом: буква «ы» между карточками).
+      className="child-home-card flex flex-col items-center justify-center gap-1.5 bg-white rounded-[28px] shadow-card aspect-square w-full min-w-0 min-h-[112px] overflow-hidden transition-all duration-200 ease-out active:scale-[0.94] active:opacity-90 hover:-translate-y-0.5 hover:shadow-card-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 qoldau-tap-ring"
       aria-label={c.label}
       data-card-id={c.id}
     >
       <div
-        className="flex items-center justify-center rounded-[22px]"
+        className="flex items-center justify-center rounded-[22px] flex-shrink-0"
         style={{
           background: family.icoBg,
           width: childHomeSizes.tileSize,
@@ -96,8 +100,17 @@ const HomeCard: React.FC<HomeCardProps> = ({ c, hideLabel }) => {
       </div>
       {!hideLabel && (
         <span
-          className="text-[12px] font-black leading-tight text-center"
-          style={{ color: family.lbl }}
+          className="text-[12px] font-black leading-tight text-center w-full px-1.5"
+          style={{
+            color: family.lbl,
+            // 2 строки максимум, потом ellipsis. Для kk/en где фразы
+            // длиннее ru.
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            wordBreak: 'break-word',
+          }}
         >
           {c.label}
         </span>

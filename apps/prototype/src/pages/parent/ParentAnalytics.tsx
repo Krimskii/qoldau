@@ -171,13 +171,15 @@ export const ParentAnalytics: React.FC = () => {
           </div>
           <div className="flex-1 flex flex-col gap-1.5">
             {displayTop3.map((item) => (
-              <div key={item.type} className="flex items-center gap-2 text-xs">
+              // E8.4: явный text-ink-2 для label и count — раньше наследовалось
+              // от родителя (text-muted) и было плохо читаемо (контраст < 3:1).
+              <div key={item.type} className="flex items-center gap-2 text-sm text-ink-2">
                 <span
-                  className={`w-3 h-3 rounded-sm ${item.dotClass}`}
+                  className={`w-3 h-3 rounded-sm flex-shrink-0 ${item.dotClass}`}
                   aria-hidden="true"
                 />
-                <span className="flex-1">{item.label}</span>
-                <span className="font-bold tabular-nums">{item.count}</span>
+                <span className="flex-1 font-medium">{item.label}</span>
+                <span className="font-bold tabular-nums text-ink">{item.count}</span>
               </div>
             ))}
           </div>

@@ -89,17 +89,20 @@ export const HealthCheckBanner: React.FC = () => {
           label="API"
           status={state.api === 'online' ? 'ok' : state.api === 'offline' ? 'error' : 'pending'}
         />
+        {/* E8.2: AI/STT model names — только в DEV. На проде/HF-сборке
+            показываем только статус (live/mock), без имён моделей —
+            это внутренняя инфра, не для пользователя. */}
         <StatusRow
           icon={Cpu}
           label="AI"
           status={state.ai?.source === 'openai' ? 'live' : 'mock'}
-          hint={state.ai?.model ?? 'mock'}
+          hint={import.meta.env.DEV ? state.ai?.model ?? 'mock' : undefined}
         />
         <StatusRow
           icon={Mic}
           label="STT"
           status={state.stt?.source === 'whisper' ? 'live' : 'mock'}
-          hint={state.stt?.model ?? 'mock'}
+          hint={import.meta.env.DEV ? state.stt?.model ?? 'mock' : undefined}
         />
       </div>
 

@@ -75,13 +75,15 @@ export const BottomNav: React.FC<{ role: UserRole }> = ({ role }) => {
           const isActive = location.pathname === item.path;
 
           if (item.isCenter) {
-            // Floating center button — круглая teal-кнопка с микрофоном
+            // Floating center button — круглая teal-кнопка с микрофоном.
+            // E8.3: -mt-6 вместо -mt-7 (24px вместо 28px) — меньше торчит,
+            // меньше шанс перекрыть контент.
             return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 aria-label="Добавить наблюдение"
-                className="-mt-7 w-14 h-14 rounded-full bg-gradient-to-br from-teal to-teal-dark text-white shadow-card hover:shadow-card-hover transition-shadow flex items-center justify-center active:scale-95"
+                className="-mt-6 w-14 h-14 rounded-full bg-gradient-to-br from-teal to-teal-dark text-white shadow-card hover:shadow-card-hover transition-shadow flex items-center justify-center active:scale-95"
               >
                 <Mic className="w-6 h-6" />
               </button>

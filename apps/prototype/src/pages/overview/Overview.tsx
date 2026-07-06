@@ -193,7 +193,13 @@ export const Overview: React.FC = () => {
       </header>
 
       {/* Hero */}
-      <section className="max-w-[1100px] mx-auto px-6 pt-16 pb-12">
+      {/* E8.5: pt-24 (96px) + safe-area-inset-top — раньше pt-16 (64px) было
+          мало, h1 обрезался сверху на телефонах со статус-баром/notch.
+          Также scroll-padding-top в globals.css для якорей. */}
+      <section
+        className="max-w-[1100px] mx-auto px-6 pb-12"
+        style={{ paddingTop: 'max(env(safe-area-inset-top), 96px)' }}
+      >
         <div className="text-center max-w-3xl mx-auto">
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal-soft text-teal-dark text-xs font-bold uppercase tracking-wide">
             <Sparkles className="w-3 h-3" />

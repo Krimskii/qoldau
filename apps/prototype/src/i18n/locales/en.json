@@ -102,7 +102,7 @@
     "title": "Demo data",
     "description": "Reset restores 3 children, 13 events, parent role.",
     "reset": "Reset",
-    "resetDone": "{count} events · {time}"
+    "resetDone": "{{count}} events · {{time}}"
   },
   "demo": {
     "exit": "Exit",
