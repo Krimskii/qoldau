@@ -6,23 +6,9 @@
  */
 import { prisma } from '../db/prisma.js';
 import { getCache } from '../db/cache.js';
+import type { CanonicalEventType } from '../domain/eventTypes.js';
 
-export type EventType =
-  | 'food'
-  | 'water'
-  | 'toilet'
-  | 'sleep'
-  | 'behavior'
-  | 'sensory'
-  | 'communication'
-  | 'aac_card'
-  | 'voice_observation'
-  | 'phrase'
-  | 'media_request'
-  | 'sos'
-  | 'tutor_note'
-  | 'calm_mode'
-  | 'state';
+export type EventType = CanonicalEventType;
 
 export type EventStatus = 'pending' | 'confirmed' | 'rejected';
 export type SourceRole = 'parent' | 'child' | 'tutor' | 'specialist' | 'device' | 'ai';
