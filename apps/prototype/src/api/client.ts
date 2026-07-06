@@ -35,6 +35,12 @@ class ApiError extends Error {
 let getJwtFn: (() => string | null) | null = null;
 /** Колбэк для редиректа на /auth/login при 401 (вызывается из caller-роутера). */
 let on401Fn: ((path: string) => void) | null = null;
+/** v1.6 E9.1: колбэк refresh — auth-стор умеет обновить access JWT через
+ *  refresh-токен. Возвращает Promise<boolean> (true если refresh удался). */
+let refreshFn: (() => Promise<boolean>) | null = null;
+/** v1.6 E9.1: колбэк logout — если refresh не удался, нужно почистить сессию
+ *  и (опционально) редиректнуть. */
+let onLogoutFn: (() => void | Promise<void>) | null = null;
 
 /** Регистрирует getter текущего JWT. Вызывается один раз при инициализации auth-стора. */
 export function registerAuthGetter(getter: () => string | null): void {
@@ -45,6 +51,22 @@ export function registerAuthGetter(getter: () => string | null): void {
 export function register401Handler(handler: (path: string) => void): void {
   on401Fn = handler;
 }
+
+/** Регистрирует refresh callback (v1.6 E9.1). */
+export function registerRefreshHandler(handler: () => Promise<boolean>): void {
+  refreshFn = handler;
+}
+
+/** Регистрирует logout callback (v1.6 E9.1). */
+export function registerLogoutHandler(handler: () => void | Promise<void>): void {
+  onLogoutFn = handler;
+}
+
+/**
+ * Внутренний флаг: один запрос в процессе refresh — остальные ждут.
+ * Иначе при нескольких параллельных 401 все одновременно вызовут refresh.
+ */
+let refreshInFlight: Promise<boolean> | null = null;
 
 export async function request<T>(
   path: string,
@@ -59,10 +81,33 @@ export async function request<T>(
   if (jwt && !headers.Authorization) {
     headers.Authorization = `Bearer ${jwt}`;
   }
-  const res = await fetch(url, {
+  let res = await fetch(url, {
     ...options,
     headers,
   });
+  // v1.6 E9.1: 401 → попытка refresh → retry. Только ОДИН раз. Если refresh
+  // не помог — logout и (если REQUIRE_AUTH) редирект.
+  if (res.status === 401 && refreshFn && jwt) {
+    if (!refreshInFlight) {
+      refreshInFlight = refreshFn().finally(() => {
+        // Сбрасываем через микротаск, чтобы pending запросы дождались.
+        queueMicrotask(() => { refreshInFlight = null; });
+      });
+    }
+    const refreshed = await refreshInFlight;
+    if (refreshed) {
+      const newJwt = getJwtFn?.() ?? null;
+      if (newJwt) {
+        headers.Authorization = `Bearer ${newJwt}`;
+      }
+      res = await fetch(url, { ...options, headers });
+    } else {
+      // Refresh не сработал — refresh-токен протух. Logout.
+      if (onLogoutFn) {
+        try { await onLogoutFn(); } catch { /* ignore */ }
+      }
+    }
+  }
   if (!res.ok) {
     // v1.5+ E7.5: 401 → мягкий редирект на /auth/login (если REQUIRE_AUTH).
     if (res.status === 401) {

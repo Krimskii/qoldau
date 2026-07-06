@@ -6,7 +6,9 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { PageLoader } from '@/components/ui/PageLoader';
 import { useAuthStore } from '@/store/useAuthStore';
-import { registerAuthGetter, register401Handler } from '@/api/client';
+import { useSyncStore } from '@/store/useSyncStore';
+import { registerAuthGetter, register401Handler, registerRefreshHandler, registerLogoutHandler } from '@/api/client';
+import { syncAll, SYNC_ENABLED, wireSyncTriggers } from '@/lib/sync/syncService';
 
 // Parent Pages (eager — small, frequently visited)
 import { ParentHome } from '@/pages/parent/ParentHome';
@@ -79,11 +81,28 @@ const AppInit: React.FC = () => {
   const location = useLocation();
   const initAuth = useAuthStore((s) => s.init);
   const logout = useAuthStore((s) => s.logout);
+  const authStatus = useAuthStore((s) => s.status);
 
   useEffect(() => {
+    // v1.6 E9.2: подключаем useEventStore → syncService (без circular).
+    wireSyncTriggers();
     // Регистрируем getter JWT — теперь каждый fetch в api/client.ts будет
     // автоматически подмешивать Authorization: Bearer <jwt>.
     registerAuthGetter(() => useAuthStore.getState().jwt);
+    // v1.6 E9.1: refresh-handler — api/client.ts вызовет его при 401 (один раз
+    // на группу параллельных запросов), чтобы обновить access JWT через
+    // refresh-токен без пере-логина.
+    registerRefreshHandler(() => useAuthStore.getState().refresh());
+    // logout-handler — вызывается если refresh не сработал. Чистим сессию и
+    // редиректим на /auth/login (если REQUIRE_AUTH).
+    registerLogoutHandler(async () => {
+      await useAuthStore.getState().logout();
+      useSyncStore.getState().reset();
+      if (!location.pathname.startsWith('/auth/')) {
+        const returnTo = location.pathname + location.search;
+        navigate(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
+      }
+    });
     // Регистрируем 401-handler — мягкий редирект на /auth/login с returnTo.
     register401Handler((_path) => {
       if (!location.pathname.startsWith('/auth/')) {
@@ -99,6 +118,14 @@ const AppInit: React.FC = () => {
   useEffect(() => {
     void logout;
   }, [logout]);
+
+  // v1.6 E9.2: триггер sync при логине (authStatus → authenticated).
+  // syncAll запускает push→pull для всех childIds юзера.
+  useEffect(() => {
+    if (authStatus === 'authenticated' && SYNC_ENABLED) {
+      void syncAll();
+    }
+  }, [authStatus]);
 
   return null;
 };

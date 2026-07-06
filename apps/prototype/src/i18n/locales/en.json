@@ -3,6 +3,19 @@
     "name": "Qoldau AI",
     "tagline": "Voice-first support"
   },
+  "sync": {
+    "statusDemo": "Demo (not signed in)",
+    "statusIdle": "Synced",
+    "statusSyncing": "Syncing…",
+    "statusOffline": "Offline",
+    "statusError": "Error",
+    "syncNow": "Sync now",
+    "lastSync": "Last synced",
+    "pendingLabel": "Pending",
+    "signedInAs": "Signed in as",
+    "notSignedIn": "Sign in to sync across devices",
+    "devLoginHint": "In dev mode magic-link returns the token in response (no email)"
+  },
   "auth": {
     "login": "Sign in",
     "logout": "Sign out",

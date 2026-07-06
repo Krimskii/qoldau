@@ -7,6 +7,10 @@ import { ChildTopBar } from './ChildTopBar';
 import { ExitConfirmDialog } from './ExitConfirmDialog';
 import { useRoleStore } from '@/store/useRoleStore';
 import { useEventStore } from '@/store/useEventStore';
+import { useSyncStore } from '@/store/useSyncStore';
+import { useCurrentChild } from '@/store/useCurrentChild';
+import { syncForChild } from '@/lib/sync/syncService';
+import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import type { UserRole } from '@/types/qoldau';
 import { applyTheme, loadTheme } from '@/utils/theme';
@@ -91,6 +95,12 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
     navigate('/overview');
   };
 
+  const handleSyncRetry = () => {
+    if (useSyncStore.getState().status === 'error') {
+      void syncForChild(useCurrentChild().id);
+    }
+  };
+
   const roleLabel = normalizedRole === 'parent' ? t('landing.roleParent') : t('landing.roleTutor');
 
   return (
@@ -115,6 +125,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children, showNav = true }) 
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {/* v1.6 E9.4: compact sync badge в header. */}
+              <SyncStatusBadge variant="compact" onRetry={handleSyncRetry} />
               <button
                 onClick={() => navigate('/parent/notifications')}
                 className="relative w-11 h-11 rounded-2xl bg-white border border-line flex items-center justify-center hover:bg-teal-soft transition-colors shadow-card-soft"

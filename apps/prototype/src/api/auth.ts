@@ -1,12 +1,18 @@
 /**
- * Auth API client (v0.6.0) — magic-link flow.
+ * Auth API client (v0.6.0 → v1.6 E9.1) — magic-link + refresh flow.
  *
  * Endpoints:
  * - auth.requestMagicLink(email) → { token, expiresAt, devMagicUrl }
- * - auth.verify(token) → { jwt, user }
+ * - auth.verify(token) → { jwt, refreshToken, user {id,email,role,childIds} }
+ * - auth.refresh(refreshToken) → { jwt, refreshToken, user }
+ * - auth.logout(refreshToken) → { ok }
  * - auth.me() → { user } (требует Bearer JWT)
  *
- * Все запросы идут через общий request() с auto-attach Authorization header из localStorage.
+ * v1.6 E9.1: добавлены refresh-токены (для обновления access JWT без
+ * пере-логина), childIds в user (фильтр sync-скоупа).
+ *
+ * Все запросы идут через общий request() с auto-attach Authorization header
+ * из localStorage (registerAuthGetter в api/client.ts).
  */
 
 import { request, BASE_URL } from './client';
@@ -15,12 +21,16 @@ export interface AuthUser {
   id: string;
   email: string;
   role: string;
+  /** v1.6 E9.1: ребёнки, к которым у юзера есть доступ (для sync-скоупа). */
+  childIds: string[];
 }
 
-const STORAGE_KEY = 'qoldau-auth-v1';
+const STORAGE_KEY = 'qoldau-auth-v2';
 
 interface AuthState {
   jwt: string;
+  /** v1.6 E9.1: refresh-токен для обновления access JWT. */
+  refreshToken: string;
   user: AuthUser;
   expiresAt: number;
 }
@@ -30,12 +40,17 @@ export function loadAuth(): AuthState | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as AuthState;
+    const parsed = JSON.parse(raw) as Partial<AuthState>;
+    // Backward-compat: v1 storage без refreshToken → null (принуждаем re-login).
+    if (!parsed.refreshToken || !parsed.jwt || !parsed.user) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
     if (typeof parsed.expiresAt === 'number' && parsed.expiresAt < Date.now()) {
       window.localStorage.removeItem(STORAGE_KEY);
       return null;
     }
-    return parsed;
+    return parsed as AuthState;
   } catch {
     return null;
   }
@@ -67,10 +82,36 @@ export const authApi = {
     });
   },
 
-  async verify(token: string): Promise<{ ok: true; jwt: string; user: AuthUser }> {
+  async verify(token: string): Promise<{
+    ok: true;
+    jwt: string;
+    refreshToken: string;
+    user: AuthUser;
+  }> {
     return request('/api/auth/verify', {
       method: 'POST',
       body: JSON.stringify({ token }),
+    });
+  },
+
+  /** v1.6 E9.1: обновить access JWT через refresh-токен. */
+  async refresh(refreshToken: string): Promise<{
+    ok: true;
+    jwt: string;
+    refreshToken: string;
+    user: AuthUser;
+  }> {
+    return request('/api/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    });
+  },
+
+  /** v1.6 E9.1: revoke refresh-токен на сервере (best-effort). */
+  async logout(refreshToken: string): Promise<{ ok: true }> {
+    return request('/api/auth/logout', {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
     });
   },
 

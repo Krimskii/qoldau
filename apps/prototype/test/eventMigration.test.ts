@@ -32,7 +32,7 @@ describe('event migration v2 → v3', () => {
     expect(migrated.timestamp).toBe('2026-07-01T08:30:00');
     expect(migrated.occurredAt).toBe('2026-07-01T08:30:00');
     expect(migrated.recordedAt).toBe('2026-07-01T08:30:00');
-    expect(migrated.schemaVersion).toBe(3);
+    expect(migrated.schemaVersion).toBe(4);
     expect(migrated.source).toBe('manual');
   });
 
@@ -80,7 +80,7 @@ describe('event migration v2 → v3', () => {
     expect(migrated.timestamp).toBeTruthy();
     expect(migrated.occurredAt).toBeTruthy();
     expect(migrated.recordedAt).toBeTruthy();
-    expect(migrated.schemaVersion).toBe(3);
+    expect(migrated.schemaVersion).toBe(4);
   });
 
   it('preserves extra fields (linkedEventIds, payload)', () => {
@@ -116,7 +116,7 @@ describe('event migration v2 → v3', () => {
       source: 'voice',
     };
     const migrated = migrateEvent(old);
-    expect(migrated.schemaVersion).toBe(3);
+    expect(migrated.schemaVersion).toBe(4);
     expect(migrated.occurredAt).toBe('2026-07-01T11:55:00');
     expect(migrated.source).toBe('voice');
   });
@@ -142,3 +142,4 @@ describe('defaultSourceFromRole helper', () => {
     expect(defaultSourceFromRole(undefined)).toBe('manual');
   });
 });
+

@@ -50,7 +50,9 @@ export interface EventStorage {
 
 /** Предикат: пропустить soft-deleted. */
 function isLive(e: QoldauEvent): boolean {
-  return !e.deleted;
+  // v1.6 E9.3: deletedAt — ISO-timestamp или null/undefined для активных.
+  // boolean deleted оставлен только для legacy-миграций (v3 → v4).
+  return !e.deletedAt;
 }
 
 /** Предикат фильтрации по EventQuery. */
