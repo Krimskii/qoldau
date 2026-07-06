@@ -25,9 +25,12 @@ import { useEventStore } from '@/store/useEventStore';
 import { useSyncStore } from '@/store/useSyncStore';
 import type { QoldauEvent } from '@/types/qoldau';
 
-/** Включён ли sync? VITE_ENABLE_SYNC=true (env) — да; default false (demo). */
+/** Включён ли sync? VITE_ENABLE_SYNC=true (env) — да; default false (demo).
+ *  В тестах можно переопределить через vi.stubEnv (см. test/setup.ts). */
 export const SYNC_ENABLED =
-  (import.meta.env.VITE_ENABLE_SYNC as string | undefined) === 'true';
+  (import.meta.env.VITE_ENABLE_SYNC as string | undefined) === 'true' ||
+  // Fallback для jsdom-тестов: vi.stubEnv пробрасывает в process.env.
+  (typeof process !== 'undefined' && process.env?.VITE_ENABLE_SYNC === 'true');
 
 /** Тип результата sync-операции. */
 export type SyncResult =

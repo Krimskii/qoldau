@@ -2,9 +2,16 @@
  * Vitest setup для frontend.
  */
 import '@testing-library/jest-dom/vitest';
-import { afterEach, beforeAll } from 'vitest';
+import { afterEach, beforeAll, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import i18n from '@/i18n/config';
+
+// v1.6 E9.5: для sync-тестов нужен VITE_ENABLE_SYNC=true.
+// import.meta.env в Vite-режиме — это frozen объект, поэтому подменяем через
+// vi.stubEnv + env-loader прокси. Простейший способ: vi.stubEnv пробрасывает
+// в process.env, а Vite проксирует import.meta.env на process.env.
+vi.stubEnv('VITE_ENABLE_SYNC', 'true');
+vi.stubEnv('VITE_REQUIRE_AUTH', 'false');
 
 // i18n — async init. Дожидаемся готовности до запуска тестов,
 // чтобы `t('auth.loginEmailPlaceholder')` сразу возвращал текст, не ключ.
