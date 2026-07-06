@@ -347,7 +347,16 @@ export const PhraseBuilderPage: React.FC = () => {
         <div className="text-[11px] font-bold text-ink-soft mb-2">
           Частые фразы
         </div>
-        <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-5 px-5">
+        {/* E10.1.3: горизонтальный scroll с snap + padding, чтобы карточки
+            не обрезались на 390/430px и не уходили под safe-area. */}
+        <div
+          className="flex gap-2.5 overflow-x-auto pb-2 -mx-5 px-5"
+          style={{
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            paddingRight: 'max(env(safe-area-inset-right), 20px)',
+          }}
+        >
           {visiblePresets.map((preset) => {
             const Icon = preset.Icon;
             return (
@@ -356,7 +365,7 @@ export const PhraseBuilderPage: React.FC = () => {
                 onClick={() => handleSelectPreset(preset.words)}
                 className="flex-shrink-0 bg-white border border-line rounded-[18px] p-2.5 flex items-center gap-2 active:scale-[0.95] transition-transform shadow-card-soft hover:shadow-card"
                 aria-label={preset.label}
-                style={{ minWidth: 140 }}
+                style={{ minWidth: 140, scrollSnapAlign: 'start' }}
               >
                 <div
                   className="w-10 h-10 rounded-[12px] flex items-center justify-center flex-shrink-0"
