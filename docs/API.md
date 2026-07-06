@@ -348,9 +348,31 @@ curl -X POST http://localhost:4000/api/auth/verify \
 ```json
 {
   "ok": true,
-  "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "refresh-token",
+  "jwt": "same-as-accessToken",
   "user": { "id": "cmr2rnksc00008gdi043zfyif", "email": "parent@example.com", "role": "parent" }
 }
+```
+
+### `POST /api/auth/refresh`
+
+Rotates a refresh token and returns a new access/refresh pair.
+
+```bash
+curl -X POST http://localhost:4000/api/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"refresh-token"}'
+```
+
+### `POST /api/auth/logout`
+
+Revokes a refresh token.
+
+```bash
+curl -X POST http://localhost:4000/api/auth/logout \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"refresh-token"}'
 ```
 
 ### `GET /api/auth/me`
@@ -379,6 +401,55 @@ curl http://localhost:4000/api/ai/health
 ```
 
 `enabled: true` — если `ANTHROPIC_API_KEY` задан. `mode: "claude"` значит реальный LLM; `mode: "mock"` — keyword-fallback.
+
+---
+
+## Sync API (v1.6 P2)
+
+All sync routes require Bearer access tokens. `pull` requires read access to the
+child; `push` requires write/owner access depending on entity.
+
+### `GET /api/sync/pull?childId=xxx&since=ISO`
+
+Returns rows with `updatedAt > since`, including tombstones (`deletedAt`).
+
+```json
+{
+  "ok": true,
+  "events": [],
+  "recordings": [],
+  "children": [],
+  "serverTime": "2026-07-06T00:00:00.000Z"
+}
+```
+
+### `POST /api/sync/push`
+
+Accepts up to 100 `events`, 100 `recordings`, and 100 `children` per request.
+Conflict resolution is last-write-wins by `updatedAt`: older client rows are
+reported in `conflicts`, equal versions are idempotent duplicates.
+
+```json
+{
+  "events": [
+    {
+      "id": "evt-1",
+      "childId": "child-1",
+      "type": "food",
+      "title": "Lunch",
+      "description": "Ate lunch",
+      "sourceRole": "parent",
+      "updatedAt": "2026-07-06T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+Response:
+
+```json
+{ "ok": true, "applied": 1, "conflicts": [], "serverTime": "2026-07-06T00:00:01.000Z" }
+```
 
 ---
 

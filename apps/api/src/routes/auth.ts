@@ -23,8 +23,9 @@ authRouter.post('/request-magic-link', authRateLimit, async (req, res) => {
   try {
     const result = await authService.requestMagicLink(email);
     res.json(result);
-  } catch (err) {
-    res.status(400).json({
+  } catch (err: unknown) {
+    const status = typeof err === 'object' && err && 'status' in err && typeof err.status === 'number' ? err.status : 400;
+    res.status(status).json({
       ok: false,
       error: err instanceof Error ? err.message : 'request failed',
     });
@@ -44,6 +45,35 @@ authRouter.post('/verify', authRateLimit, async (req, res) => {
       ok: false,
       error: err instanceof Error ? err.message : 'verify failed',
     });
+  }
+});
+
+authRouter.post('/refresh', authRateLimit, async (req, res) => {
+  const { refreshToken } = req.body as { refreshToken?: string };
+  if (!refreshToken || typeof refreshToken !== 'string') {
+    return res.status(400).json({ ok: false, error: 'refreshToken required' });
+  }
+  try {
+    const result = await authService.refresh(refreshToken);
+    res.json(result);
+  } catch (err) {
+    res.status(401).json({
+      ok: false,
+      error: err instanceof Error ? err.message : 'refresh failed',
+    });
+  }
+});
+
+authRouter.post('/logout', async (req, res, next) => {
+  const { refreshToken } = req.body as { refreshToken?: string };
+  if (!refreshToken || typeof refreshToken !== 'string') {
+    return res.status(400).json({ ok: false, error: 'refreshToken required' });
+  }
+  try {
+    await authService.logout(refreshToken);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
   }
 });
 

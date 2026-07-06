@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import { prisma } from '../db/prisma.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { assertChildAccess, requireChildAccess } from '../middleware/requireChildAccess.js';
 import { childrenRepo } from '../repositories/children.js';
+import { emailService } from '../services/emailService.js';
 
 export const childrenRouter = Router();
 
@@ -49,12 +51,21 @@ childrenRouter.post('/:id/access', async (req, res, next) => {
       if (!email) {
         return res.status(400).json({ ok: false, error: 'userId or email required' });
       }
-      const user = await prisma.user.upsert({
-        where: { email },
-        create: { email, role },
-        update: {},
+      const invite = await prisma.childInvite.create({
+        data: {
+          email,
+          childId: req.params.id,
+          role,
+          invitedBy: req.user!.id,
+          token: randomUUID(),
+        },
       });
-      userId = user.id;
+      await emailService.send({
+        to: email,
+        subject: 'Qoldau child access invitation',
+        text: `You have been invited to access a child profile in Qoldau. Sign in with this email to accept the invitation. Invite: ${invite.token}`,
+      });
+      return res.status(202).json({ ok: true, invite });
     } else {
       const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
       if (!user) {

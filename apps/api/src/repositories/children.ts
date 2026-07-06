@@ -17,6 +17,8 @@ export interface ChildInput {
 export interface ChildRecord extends ChildInput {
   createdAt: Date;
   ownerUserId: string;
+  updatedAt: Date;
+  deletedAt?: Date;
 }
 
 const CACHE_TTL_SEC = 60;
@@ -35,6 +37,8 @@ export const childrenRepo = {
     currentState: string | null;
     avatar: string | null;
     createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date | null;
   }): ChildRecord {
     return {
       id: child.id,
@@ -45,6 +49,8 @@ export const childrenRepo = {
       currentState: child.currentState ?? undefined,
       avatar: child.avatar ?? undefined,
       createdAt: child.createdAt,
+      updatedAt: child.updatedAt,
+      deletedAt: child.deletedAt ?? undefined,
     };
   },
 
@@ -53,7 +59,7 @@ export const childrenRepo = {
     const cached = await cache.get<ChildRecord[]>(cacheKey());
     if (cached) return cached;
 
-    const children = await prisma.child.findMany({ orderBy: { name: 'asc' } });
+    const children = await prisma.child.findMany({ where: { deletedAt: null }, orderBy: { name: 'asc' } });
     const serialized = children.map((c) => childrenRepo.serialize(c));
     await cache.set(cacheKey(), serialized, CACHE_TTL_SEC);
     return serialized;
@@ -66,6 +72,7 @@ export const childrenRepo = {
           { ownerUserId: userId },
           { accessList: { some: { userId, revokedAt: null } } },
         ],
+        deletedAt: null,
       },
       orderBy: { name: 'asc' },
     });
@@ -79,6 +86,7 @@ export const childrenRepo = {
           { ownerUserId: userId },
           { accessList: { some: { userId, revokedAt: null } } },
         ],
+        deletedAt: null,
       },
       select: { id: true },
     });
@@ -90,7 +98,7 @@ export const childrenRepo = {
     const cached = await cache.get<ChildRecord>(cacheKey(id));
     if (cached) return cached;
 
-    const child = await prisma.child.findUnique({ where: { id } });
+    const child = await prisma.child.findFirst({ where: { id, deletedAt: null } });
     if (!child) return null;
     const serialized = childrenRepo.serialize(child);
     await cache.set(cacheKey(id), serialized, CACHE_TTL_SEC);

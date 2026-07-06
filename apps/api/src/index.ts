@@ -17,6 +17,7 @@ import { authRouter } from './routes/auth.js';
 import { childrenRouter } from './routes/children.js';
 import { eventsRouter } from './routes/events.js';
 import { recordingsRouter } from './routes/recordings.js';
+import { syncRouter } from './routes/sync.js';
 import { audioRouter } from './modules/audio-pipeline/audio.routes.js';
 import { llmService } from './services/llmService.js';
 import { sttService } from './services/sttService.js';
@@ -95,6 +96,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/children', childrenRouter);
 app.use('/api/events', eventsRouter);
 app.use('/api/recordings', recordingsRouter);
+app.use('/api/sync', syncRouter);
 app.use('/api/stt', sttRouter);
 app.use('/api/ai', aiRouter);
 
