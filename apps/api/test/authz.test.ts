@@ -184,17 +184,18 @@ describe('data route authorization', () => {
       .post(`/api/children/${ownerChildId}/access`)
       .set('Authorization', `Bearer ${ownerJwt}`)
       .send({ email: grantedTutorEmail, role: 'tutor' });
-    expect(grant.status).toBe(201);
-    expect(grant.body.access.childId).toBe(ownerChildId);
+    expect(grant.status).toBe(202);
+    expect(grant.body.invite.childId).toBe(ownerChildId);
 
     const grantedJwt = await issueJwt(grantedTutorEmail);
+    const grantedUser = await prisma.user.findUniqueOrThrow({ where: { email: grantedTutorEmail } });
     const read = await request(app)
       .get(`/api/children/${ownerChildId}`)
       .set('Authorization', `Bearer ${grantedJwt}`);
     expect(read.status).toBe(200);
 
     const revoke = await request(app)
-      .delete(`/api/children/${ownerChildId}/access/${grant.body.access.userId}`)
+      .delete(`/api/children/${ownerChildId}/access/${grantedUser.id}`)
       .set('Authorization', `Bearer ${ownerJwt}`);
     expect(revoke.status).toBe(200);
 

@@ -47,6 +47,35 @@ authRouter.post('/verify', authRateLimit, async (req, res) => {
   }
 });
 
+authRouter.post('/refresh', authRateLimit, async (req, res) => {
+  const { refreshToken } = req.body as { refreshToken?: string };
+  if (!refreshToken || typeof refreshToken !== 'string') {
+    return res.status(400).json({ ok: false, error: 'refreshToken required' });
+  }
+  try {
+    const result = await authService.refresh(refreshToken);
+    res.json(result);
+  } catch (err) {
+    res.status(401).json({
+      ok: false,
+      error: err instanceof Error ? err.message : 'refresh failed',
+    });
+  }
+});
+
+authRouter.post('/logout', async (req, res, next) => {
+  const { refreshToken } = req.body as { refreshToken?: string };
+  if (!refreshToken || typeof refreshToken !== 'string') {
+    return res.status(400).json({ ok: false, error: 'refreshToken required' });
+  }
+  try {
+    await authService.logout(refreshToken);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 authRouter.get('/me', async (req, res, next) => {
   const result = authService.verifyJwtHeader(req.headers.authorization);
   if (!result.ok) {

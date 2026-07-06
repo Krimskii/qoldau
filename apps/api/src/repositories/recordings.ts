@@ -13,6 +13,8 @@ export interface RecordingInput {
 export interface RecordingRecord extends RecordingInput {
   id: string;
   timestamp: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
 }
 
 const CACHE_TTL_SEC = 30;
@@ -26,6 +28,26 @@ async function invalidateCache(): Promise<void> {
   await cache.clear(); // Простая инвалидация
 }
 
+function serialize(recording: {
+  id: string;
+  childId: string;
+  label: string;
+  durationSec: number;
+  timestamp: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}): RecordingRecord {
+  return {
+    id: recording.id,
+    childId: recording.childId,
+    label: recording.label,
+    durationSec: recording.durationSec,
+    timestamp: recording.timestamp,
+    updatedAt: recording.updatedAt,
+    deletedAt: recording.deletedAt ?? undefined,
+  };
+}
+
 export const recordingsRepo = {
   async list(filter?: { childId?: string; childIds?: string[] }): Promise<RecordingRecord[]> {
     const cache = getCache();
@@ -34,20 +56,25 @@ export const recordingsRepo = {
     if (cached) return cached;
 
     const recordings = await prisma.recording.findMany({
-      where: filter?.childId
-        ? { childId: filter.childId }
-        : filter?.childIds
-          ? { childId: { in: filter.childIds } }
-          : undefined,
+      where: {
+        deletedAt: null,
+        ...(filter?.childId
+          ? { childId: filter.childId }
+          : filter?.childIds
+            ? { childId: { in: filter.childIds } }
+            : {}),
+      },
       orderBy: { timestamp: 'desc' },
     });
 
-    await cache.set(key, recordings, CACHE_TTL_SEC);
-    return recordings;
+    const serialized = recordings.map(serialize);
+    await cache.set(key, serialized, CACHE_TTL_SEC);
+    return serialized;
   },
 
   async get(id: string): Promise<RecordingRecord | null> {
-    return prisma.recording.findUnique({ where: { id } });
+    const recording = await prisma.recording.findUnique({ where: { id } });
+    return recording ? serialize(recording) : null;
   },
 
   async create(input: RecordingInput): Promise<RecordingRecord> {
@@ -60,12 +87,12 @@ export const recordingsRepo = {
       },
     });
     await invalidateCache();
-    return recording;
+    return serialize(recording);
   },
 
   async delete(id: string): Promise<boolean> {
     try {
-      await prisma.recording.delete({ where: { id } });
+      await prisma.recording.update({ where: { id }, data: { deletedAt: new Date() } });
       await invalidateCache();
       return true;
     } catch {

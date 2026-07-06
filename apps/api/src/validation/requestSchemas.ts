@@ -5,6 +5,7 @@ const MAX_DIGEST_STRING_CHARS = 500;
 const MAX_DIGEST_ARRAY_ITEMS = 50;
 const MAX_EVENT_COUNT_KEYS = 50;
 const MAX_AUDIO_BASE64_CHARS = 50 * 1024 * 1024;
+const MAX_SYNC_BATCH_ITEMS = 100;
 
 const digestString = z.string().trim().max(MAX_DIGEST_STRING_CHARS);
 
@@ -76,3 +77,51 @@ export const audioIngestBodySchema = z.object({
   mimeType: z.string().trim().max(128).optional(),
   mode: z.enum(['observation', 'child_speech', 'tutor_note']).optional(),
 }).passthrough();
+
+const isoDateString = z.string().datetime({ offset: true });
+
+export const syncEventSchema = z.object({
+  id: z.string().trim().min(1).max(128),
+  childId: z.string().trim().min(1).max(128),
+  type: z.string().trim().min(1).max(64).optional(),
+  title: z.string().trim().max(256).optional(),
+  description: z.string().trim().max(4000).optional(),
+  timestamp: isoDateString.optional(),
+  sourceRole: z.string().trim().max(32).optional(),
+  status: z.string().trim().max(32).optional(),
+  confidence: z.number().finite().min(0).max(1).optional(),
+  rawText: z.string().trim().max(4000).optional(),
+  linkedEventIds: z.array(z.string().trim().max(128)).max(50).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
+  updatedAt: isoDateString,
+  deletedAt: isoDateString.nullable().optional(),
+});
+
+export const syncRecordingSchema = z.object({
+  id: z.string().trim().min(1).max(128),
+  childId: z.string().trim().min(1).max(128),
+  label: z.string().trim().max(256).optional(),
+  durationSec: z.number().finite().nonnegative().max(24 * 60 * 60).optional(),
+  timestamp: isoDateString.optional(),
+  updatedAt: isoDateString,
+  deletedAt: isoDateString.nullable().optional(),
+});
+
+export const syncChildSchema = z.object({
+  id: z.string().trim().min(1).max(128),
+  name: z.string().trim().max(256).optional(),
+  age: z.number().int().nonnegative().max(40).optional(),
+  diagnosisLabel: z.string().trim().max(256).nullable().optional(),
+  currentState: z.string().trim().max(256).nullable().optional(),
+  avatar: z.string().trim().max(512).nullable().optional(),
+  updatedAt: isoDateString,
+  deletedAt: isoDateString.nullable().optional(),
+});
+
+export const syncPushBodySchema = z.object({
+  events: z.array(syncEventSchema).max(MAX_SYNC_BATCH_ITEMS).optional(),
+  recordings: z.array(syncRecordingSchema).max(MAX_SYNC_BATCH_ITEMS).optional(),
+  children: z.array(syncChildSchema).max(MAX_SYNC_BATCH_ITEMS).optional(),
+}).strict().refine((value) => Boolean(value.events?.length || value.recordings?.length || value.children?.length), {
+  message: 'sync batch is empty',
+});

@@ -45,6 +45,8 @@ export interface EventRecord extends EventInput {
   id: string;
   timestamp: Date;
   status: EventStatus;
+  updatedAt: Date;
+  deletedAt?: Date;
 }
 
 const CACHE_TTL_SEC = 30;
@@ -69,11 +71,14 @@ export const eventsRepo = {
     }
 
     const events = await prisma.event.findMany({
-      where: filter?.childId
-        ? { childId: filter.childId }
-        : filter?.childIds
-          ? { childId: { in: filter.childIds } }
-          : undefined,
+      where: {
+        deletedAt: null,
+        ...(filter?.childId
+          ? { childId: filter.childId }
+          : filter?.childIds
+            ? { childId: { in: filter.childIds } }
+            : {}),
+      },
       orderBy: { timestamp: 'desc' },
     });
 
@@ -90,6 +95,8 @@ export const eventsRepo = {
       rawText: e.rawText ?? undefined,
       linkedEventIds: e.linkedEventIds ? JSON.parse(e.linkedEventIds) : undefined,
       payload: e.payload ? JSON.parse(e.payload) : undefined,
+      updatedAt: e.updatedAt,
+      deletedAt: e.deletedAt ?? undefined,
     }));
 
     await cache.set(key, serialized, CACHE_TTL_SEC);
@@ -112,6 +119,8 @@ export const eventsRepo = {
       rawText: event.rawText ?? undefined,
       linkedEventIds: event.linkedEventIds ? JSON.parse(event.linkedEventIds) : undefined,
       payload: event.payload ? JSON.parse(event.payload) : undefined,
+      updatedAt: event.updatedAt,
+      deletedAt: event.deletedAt ?? undefined,
     };
   },
 
@@ -146,6 +155,8 @@ export const eventsRepo = {
       rawText: event.rawText ?? undefined,
       linkedEventIds: input.linkedEventIds,
       payload: input.payload,
+      updatedAt: event.updatedAt,
+      deletedAt: event.deletedAt ?? undefined,
     };
   },
 
@@ -186,12 +197,14 @@ export const eventsRepo = {
       rawText: event.rawText ?? undefined,
       linkedEventIds: patch.linkedEventIds ?? (event.linkedEventIds ? JSON.parse(event.linkedEventIds) : undefined),
       payload: patch.payload ?? (event.payload ? JSON.parse(event.payload) : undefined),
+      updatedAt: event.updatedAt,
+      deletedAt: event.deletedAt ?? undefined,
     };
   },
 
   async delete(id: string): Promise<boolean> {
     try {
-      await prisma.event.delete({ where: { id } });
+      await prisma.event.update({ where: { id }, data: { deletedAt: new Date() } });
       const cache = getCache();
       await cache.clear();
       return true;

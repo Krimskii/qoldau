@@ -23,13 +23,17 @@ model Child {
   currentState    String?
   avatar          String?
   createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
 
   owner      User          @relation("OwnedChildren", fields: [ownerUserId], references: [id], onDelete: Restrict)
   accessList ChildAccess[]
+  invites    ChildInvite[]
   events     Event[]
   recordings Recording[]
 
   @@index([ownerUserId])
+  @@index([ownerUserId, updatedAt])
   @@map("children")
 }
 
@@ -49,10 +53,13 @@ model Event {
   rawText        String?
   linkedEventIds String?
   payload        String?
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
 
   child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@index([childId])
+  @@index([childId, updatedAt])
   @@index([timestamp])
   @@index([type])
   @@map("events")
@@ -65,10 +72,13 @@ model Recording {
   label       String
   durationSec Int
   timestamp   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
 
   child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@index([childId])
+  @@index([childId, updatedAt])
   @@index([timestamp])
   @@map("recordings")
 }
@@ -84,8 +94,10 @@ model User {
   createdAt DateTime @default(now())
 
   magicTokens MagicToken[]
+  refreshTokens RefreshToken[]
   ownedChildren Child[]       @relation("OwnedChildren")
   childAccess   ChildAccess[]
+  sentInvites    ChildInvite[] @relation("ChildInviteSender")
 
   @@index([email])
   @@map("users")
@@ -109,6 +121,25 @@ model ChildAccess {
   @@map("child_access")
 }
 
+model ChildInvite {
+  id         String    @id @default(cuid())
+  email      String
+  childId    String
+  role       String
+  invitedBy  String
+  token      String    @unique
+  createdAt  DateTime  @default(now())
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+
+  child   Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  inviter User  @relation("ChildInviteSender", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([childId])
+  @@map("child_invites")
+}
+
 model MagicToken {
   token     String   @id
   userId    String
@@ -121,4 +152,18 @@ model MagicToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("magic_tokens")
+}
+
+model RefreshToken {
+  token     String   @id
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }

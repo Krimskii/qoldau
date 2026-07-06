@@ -33,6 +33,8 @@ export function assertEnv(): void {
   readNonNegativeIntEnv('OPENAI_MAX_RETRIES', DEFAULT_OPENAI_MAX_RETRIES);
   readPositiveIntEnv('MAX_TRANSCRIPT_CHARS', DEFAULT_MAX_TRANSCRIPT_CHARS);
   readPositiveIntEnv('SHUTDOWN_TIMEOUT_MS', DEFAULT_SHUTDOWN_TIMEOUT_MS);
+  readPositiveIntEnv('ACCESS_TOKEN_TTL_MS', 1000 * 60 * 15);
+  readPositiveIntEnv('REFRESH_TOKEN_TTL_MS', 1000 * 60 * 60 * 24 * 30);
 
   if (process.env.NODE_ENV === 'production') {
     if (!process.env.DATABASE_URL?.trim()) {
@@ -46,6 +48,22 @@ export function assertEnv(): void {
     }
     if (process.env.REQUIRE_AUTH?.trim().toLowerCase() === 'false') {
       throw new Error('[env] REQUIRE_AUTH=false is not allowed in production');
+    }
+    const emailProvider = process.env.EMAIL_PROVIDER?.trim().toLowerCase() || 'none';
+    if (!['none', 'resend', 'smtp'].includes(emailProvider)) {
+      throw new Error('[env] EMAIL_PROVIDER must be none, resend, or smtp');
+    }
+    if (emailProvider === 'none') {
+      throw new Error('[env] EMAIL_PROVIDER=none is not allowed in production');
+    }
+    if (emailProvider !== 'none' && !process.env.APP_URL?.trim()) {
+      throw new Error('[env] APP_URL is required when EMAIL_PROVIDER sends email');
+    }
+    if (emailProvider === 'resend' && !process.env.RESEND_API_KEY?.trim()) {
+      throw new Error('[env] RESEND_API_KEY is required for EMAIL_PROVIDER=resend');
+    }
+    if (emailProvider === 'smtp' && !process.env.SMTP_HOST?.trim()) {
+      throw new Error('[env] SMTP_HOST is required for EMAIL_PROVIDER=smtp');
     }
     if (!process.env.OPENAI_API_KEY?.trim()) {
       console.warn('[env] NODE_ENV=production but OPENAI_API_KEY is empty; AI will run in mock mode');

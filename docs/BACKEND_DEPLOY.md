@@ -14,6 +14,9 @@ DATABASE_URL=postgresql://USER:PASS@HOST:PORT/DB?schema=public
 DIRECT_DATABASE_URL=postgresql://USER:PASS@HOST:PORT/DB?schema=public
 JWT_SECRET=<rotated-production-secret>
 REQUIRE_AUTH=true
+EMAIL_PROVIDER=resend
+APP_URL=https://<frontend-host>
+RESEND_API_KEY=<server-side-resend-key>
 OPENAI_API_KEY=<server-side-key>
 ```
 
