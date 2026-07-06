@@ -65,6 +65,12 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function emailDeliveryDisabledError(): Error & { status?: number } {
+  const err = new Error('email_delivery_not_configured') as Error & { status?: number };
+  err.status = 503;
+  return err;
+}
+
 async function issueTokens(user: { id: string; email: string; role: string }) {
   const accessTtlMs = readTtlMs('ACCESS_TOKEN_TTL_MS', DEFAULT_ACCESS_TOKEN_TTL_MS);
   const refreshTtlMs = readTtlMs('REFRESH_TOKEN_TTL_MS', DEFAULT_REFRESH_TOKEN_TTL_MS);
@@ -121,6 +127,10 @@ export const authService = {
   }> {
     const e = email.trim().toLowerCase();
     if (!isValidEmail(e)) throw new Error('invalid email');
+
+    if (process.env.NODE_ENV === 'production' && !emailService.shouldSend()) {
+      throw emailDeliveryDisabledError();
+    }
 
     const user = await prisma.user.upsert({
       where: { email: e },

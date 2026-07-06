@@ -23,8 +23,9 @@ authRouter.post('/request-magic-link', authRateLimit, async (req, res) => {
   try {
     const result = await authService.requestMagicLink(email);
     res.json(result);
-  } catch (err) {
-    res.status(400).json({
+  } catch (err: unknown) {
+    const status = typeof err === 'object' && err && 'status' in err && typeof err.status === 'number' ? err.status : 400;
+    res.status(status).json({
       ok: false,
       error: err instanceof Error ? err.message : 'request failed',
     });

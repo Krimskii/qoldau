@@ -54,7 +54,7 @@ export function assertEnv(): void {
       throw new Error('[env] EMAIL_PROVIDER must be none, resend, or smtp');
     }
     if (emailProvider === 'none') {
-      throw new Error('[env] EMAIL_PROVIDER=none is not allowed in production');
+      console.warn('[env] EMAIL_PROVIDER=none; email delivery is disabled and cloud login is unavailable');
     }
     if (emailProvider !== 'none' && !process.env.APP_URL?.trim()) {
       throw new Error('[env] APP_URL is required when EMAIL_PROVIDER sends email');

@@ -3,6 +3,7 @@ import express from 'express';
 import request from 'supertest';
 import { authRouter } from '../src/routes/auth';
 import { childrenRouter } from '../src/routes/children';
+import { assertEnv } from '../src/config/env';
 import { prisma } from '../src/db/prisma';
 import { authService } from '../src/services/authService';
 
@@ -19,6 +20,11 @@ describe('Auth P2 refresh/logout and invites', () => {
   const previousRequireAuth = process.env.REQUIRE_AUTH;
   const previousJwtSecret = process.env.JWT_SECRET;
   const previousEmailProvider = process.env.EMAIL_PROVIDER;
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousDatabaseUrl = process.env.DATABASE_URL;
+  const previousDirectDatabaseUrl = process.env.DIRECT_DATABASE_URL;
+  const previousAppUrl = process.env.APP_URL;
+  const previousResendApiKey = process.env.RESEND_API_KEY;
 
   async function issue(email: string) {
     const link = await authService.requestMagicLink(email);
@@ -54,7 +60,50 @@ describe('Auth P2 refresh/logout and invites', () => {
     else process.env.JWT_SECRET = previousJwtSecret;
     if (previousEmailProvider === undefined) delete process.env.EMAIL_PROVIDER;
     else process.env.EMAIL_PROVIDER = previousEmailProvider;
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+    if (previousDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previousDatabaseUrl;
+    if (previousDirectDatabaseUrl === undefined) delete process.env.DIRECT_DATABASE_URL;
+    else process.env.DIRECT_DATABASE_URL = previousDirectDatabaseUrl;
+    if (previousAppUrl === undefined) delete process.env.APP_URL;
+    else process.env.APP_URL = previousAppUrl;
+    if (previousResendApiKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = previousResendApiKey;
     await prisma.$disconnect();
+  });
+
+  it('allows production startup with EMAIL_PROVIDER=none but keeps real provider fail-fast', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/qoldau?schema=public';
+    process.env.DIRECT_DATABASE_URL = 'postgresql://user:pass@localhost:5432/qoldau?schema=public';
+    process.env.JWT_SECRET = 'auth-p2-secret';
+    process.env.REQUIRE_AUTH = 'true';
+    process.env.EMAIL_PROVIDER = 'none';
+    expect(() => assertEnv()).not.toThrow();
+
+    process.env.EMAIL_PROVIDER = 'resend';
+    process.env.APP_URL = 'https://app.example.test';
+    delete process.env.RESEND_API_KEY;
+    expect(() => assertEnv()).toThrow(/RESEND_API_KEY/);
+
+    process.env.NODE_ENV = 'test';
+    process.env.EMAIL_PROVIDER = 'none';
+  });
+
+  it('returns 503 without token or magic token in production when email delivery is disabled', async () => {
+    const email = `p2-prod-none-${suffix}@qoldau.test`;
+    process.env.NODE_ENV = 'production';
+    process.env.EMAIL_PROVIDER = 'none';
+    const before = await prisma.magicToken.count({ where: { user: { email } } });
+    const res = await request(app).post('/api/auth/request-magic-link').send({ email });
+    const after = await prisma.magicToken.count({ where: { user: { email } } });
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({ ok: false, error: 'email_delivery_not_configured' });
+    expect(res.body.token).toBeUndefined();
+    expect(res.body.devMagicUrl).toBeUndefined();
+    expect(after).toBe(before);
+    process.env.NODE_ENV = 'test';
   });
 
   it('request -> verify returns access and refresh tokens', async () => {
