@@ -4,6 +4,22 @@ import { QoldauEvent, EventType, EventSource } from '@/types/qoldau';
 import { DEMO_EVENTS, seedDemoEvents } from '@/data/demoScenario';
 import { getProfileMode } from '@/data/demoDataset';
 
+/**
+ * v1.6 E9.2: glue-функция для sync-триггера без circular-import.
+ * syncService.registerEventTrigger(fn) устанавливает этот callback.
+ * useEventStore вызывает notifyLocalChangeDebounced(childId) после мутаций.
+ * Если callback не зарегистрирован (demo, syncService не загружен) —
+ * noop (старое локальное поведение).
+ */
+type TriggerFn = (childId: string) => void;
+let triggerFn: TriggerFn | null = null;
+export function notifyLocalChangeDebounced(childId: string): void {
+  triggerFn?.(childId);
+}
+export function _setLocalChangeTrigger(fn: TriggerFn | null): void {
+  triggerFn = fn;
+}
+
 interface ClarifyingAnswers {
   [question: string]: string;
 }
@@ -99,6 +115,9 @@ export const useEventStore = create<EventState>()(
           deletedAt: partial.deletedAt ?? null,
         };
         set((state) => ({ events: [newEvent, ...state.events] }));
+        // v1.6 E9.2: триггерим debounced sync (через subscribe в syncService —
+        // здесь прямого импорта нет, чтобы избежать circular).
+        notifyLocalChangeDebounced(newEvent.childId);
         return newEvent;
       },
 
@@ -119,27 +138,35 @@ export const useEventStore = create<EventState>()(
           } as QoldauEvent;
         });
         set((state) => ({ events: [...newEvents, ...state.events] }));
+        // v1.6 E9.2: один триггер на пачку.
+        if (newEvents[0]) notifyLocalChangeDebounced(newEvents[0].childId);
         return newEvents;
       },
 
       updateEvent: (id, updates) => {
         // v1.6 E9.3: любой update проставляет updatedAt = now (нужно для sync LWW).
+        let childId: string | null = null;
         set((state) => ({
-          events: state.events.map((e) =>
-            e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } : e,
-          ),
+          events: state.events.map((e) => {
+            if (e.id !== id) return e;
+            childId = e.childId;
+            return { ...e, ...updates, updatedAt: new Date().toISOString() };
+          }),
         }));
+        if (childId) notifyLocalChangeDebounced(childId);
       },
 
       deleteEvent: (id) => {
         // v1.6 E9.3: soft-delete через deletedAt (ISO), не boolean.
+        let childId: string | null = null;
         set((state) => ({
-          events: state.events.map((e) =>
-            e.id === id
-              ? { ...e, deletedAt: new Date().toISOString(), deleted: undefined, updatedAt: new Date().toISOString() }
-              : e,
-          ),
+          events: state.events.map((e) => {
+            if (e.id !== id) return e;
+            childId = e.childId;
+            return { ...e, deletedAt: new Date().toISOString(), deleted: undefined, updatedAt: new Date().toISOString() };
+          }),
         }));
+        if (childId) notifyLocalChangeDebounced(childId);
       },
 
       getEventsByType: (type) =>
