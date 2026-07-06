@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { sttService } from '../../services/sttService.js';
 import { llmService } from '../../services/llmService.js';
+import { isCanonicalEventType } from '../../domain/eventTypes.js';
 import type { EventType, SourceRole } from '../../repositories/events.js';
 import {
   AudioPipelineError,
@@ -14,23 +15,6 @@ const MAX_AUDIO_MB = Number(process.env.AUDIO_MAX_MB ?? 25);
 const MAX_AUDIO_BYTES = MAX_AUDIO_MB * 1024 * 1024;
 
 const VALID_SOURCE_ROLES: SourceRole[] = ['parent', 'child', 'tutor', 'specialist', 'device', 'ai'];
-const VALID_EVENT_TYPES: EventType[] = [
-  'food',
-  'water',
-  'toilet',
-  'sleep',
-  'behavior',
-  'sensory',
-  'communication',
-  'aac_card',
-  'voice_observation',
-  'phrase',
-  'media_request',
-  'sos',
-  'tutor_note',
-  'calm_mode',
-  'state',
-];
 
 function estimateBase64Bytes(base64: string): number {
   const clean = base64.replace(/^data:[^;]+;base64,/, '').replace(/\s/g, '');
@@ -73,7 +57,7 @@ function validateInput(input: AudioIngestRequest): AudioPipelineInput {
 }
 
 function normalizeEventType(type: string): EventType {
-  return VALID_EVENT_TYPES.includes(type as EventType) ? (type as EventType) : 'voice_observation';
+  return isCanonicalEventType(type) ? type : 'voice_observation';
 }
 
 function toOccurredAt(timestamp?: string): string | undefined {

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DEFAULT_MAX_TRANSCRIPT_CHARS, readPositiveIntEnv } from '../config/env.js';
+import { canonicalEventTypeSchema } from '../domain/eventTypes.js';
 
 const MAX_DIGEST_STRING_CHARS = 500;
 const MAX_DIGEST_ARRAY_ITEMS = 50;
@@ -83,7 +84,7 @@ const isoDateString = z.string().datetime({ offset: true });
 export const syncEventSchema = z.object({
   id: z.string().trim().min(1).max(128),
   childId: z.string().trim().min(1).max(128),
-  type: z.string().trim().min(1).max(64).optional(),
+  type: canonicalEventTypeSchema.optional(),
   title: z.string().trim().max(256).optional(),
   description: z.string().trim().max(4000).optional(),
   timestamp: isoDateString.optional(),

@@ -106,6 +106,52 @@ describe('Sync API', () => {
     expect(pull.body.serverTime).toBeDefined();
   });
 
+  it('rejects sync push events with non-canonical event types', async () => {
+    const response = await request(app)
+      .post('/api/sync/push')
+      .set('Authorization', `Bearer ${ownerJwt}`)
+      .send({
+        events: [{
+          id: `sync-invalid-type-${suffix}`,
+          childId,
+          type: 'safety_call',
+          title: 'Invalid',
+          description: 'Should be rejected',
+          sourceRole: 'parent',
+          updatedAt: '2026-07-06T00:00:00.000Z',
+        }],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.ok).toBe(false);
+    expect(response.body.issues[0]).toEqual(expect.objectContaining({ path: 'events.0.type' }));
+
+    const stored = await prisma.event.findUnique({ where: { id: `sync-invalid-type-${suffix}` } });
+    expect(stored).toBeNull();
+  });
+
+  it('pull returns legacy event types without read-time validation', async () => {
+    const legacyId = `sync-legacy-type-${suffix}`;
+    await prisma.event.create({
+      data: {
+        id: legacyId,
+        childId,
+        type: 'legacy_custom',
+        title: 'Legacy',
+        description: 'Old data',
+        sourceRole: 'parent',
+        updatedAt: new Date('2026-07-09T00:00:00.000Z'),
+      },
+    });
+
+    const pull = await request(app)
+      .get(`/api/sync/pull?childId=${childId}&since=2026-07-01T00:00:00.000Z`)
+      .set('Authorization', `Bearer ${ownerJwt}`);
+
+    expect(pull.status).toBe(200);
+    expect(pull.body.events).toContainEqual(expect.objectContaining({ id: legacyId, type: 'legacy_custom' }));
+  });
+
   it('forbids pulling and pushing a foreign child', async () => {
     const pull = await request(app)
       .get(`/api/sync/pull?childId=${foreignChildId}`)

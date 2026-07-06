@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { assertChildAccess } from '../middleware/requireChildAccess.js';
+import { isCanonicalEventType } from '../domain/eventTypes.js';
 import { childrenRepo } from '../repositories/children.js';
 import { eventsRepo, type EventInput } from '../repositories/events.js';
 import { realtimeService } from '../services/realtimeService.js';
@@ -47,6 +48,9 @@ eventsRouter.post('/', async (req, res, next) => {
         error: 'Missing required fields: childId, type, title, description, sourceRole',
       });
     }
+    if (!isCanonicalEventType(body.type)) {
+      return res.status(400).json({ ok: false, error: 'Unknown event type' });
+    }
     if (!(await assertChildAccess(req.user!.id, body.childId, 'write'))) {
       return res.status(403).json({ ok: false, error: 'forbidden' });
     }
@@ -66,6 +70,9 @@ eventsRouter.patch('/:id', async (req, res, next) => {
     }
     if (!(await assertChildAccess(req.user!.id, existing.childId, 'write'))) {
       return res.status(403).json({ ok: false, error: 'forbidden' });
+    }
+    if (req.body?.type !== undefined && !isCanonicalEventType(req.body.type)) {
+      return res.status(400).json({ ok: false, error: 'Unknown event type' });
     }
     const updated = await eventsRepo.update(req.params.id, req.body as Partial<EventInput>);
     if (!updated) {
