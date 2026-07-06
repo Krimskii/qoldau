@@ -22,6 +22,8 @@ const MOCK_AUDIO_DURATION = 18;
 
 interface CalmCard {
   id: string;
+  /** Видимый текст под иконкой (E10.2.9 — без icon-only в детском режиме). */
+  label: string;
   Icon: React.FC<{ size?: number; animated?: boolean }>;
   family: ChildCardFamily;
   go?: string;
@@ -39,12 +41,17 @@ const CalmTile: React.FC<{ c: CalmCard; onClick: () => void }> = ({
   return (
     <button
       onClick={handle}
-      className="flex items-center justify-center bg-white rounded-[24px] shadow-card cursor-pointer aspect-square w-full min-h-[110px] transition-transform active:scale-[0.96] qoldau-tap-ring"
-      aria-label={c.id}
+      // E10.2.9: иконка + видимый текст под ней (был icon-only). aria-label =
+      // видимый текст. Touch-target ≥112px.
+      className="flex flex-col items-center justify-center gap-1.5 bg-white rounded-[24px] shadow-card cursor-pointer aspect-square w-full min-h-[112px] px-2 py-3 transition-transform active:scale-[0.96] qoldau-tap-ring"
+      aria-label={c.label}
     >
-      <div className={`w-[80px] h-[80px] rounded-[20px] ${family.icoBg} flex items-center justify-center`}>
-        <c.Icon size={60} animated={false} />
+      <div className={`w-[72px] h-[72px] rounded-[20px] ${family.icoBg} flex items-center justify-center`}>
+        <c.Icon size={56} animated={false} />
       </div>
+      <span className="text-[12px] font-black text-ink leading-tight text-center">
+        {c.label}
+      </span>
     </button>
   );
 };
@@ -170,12 +177,13 @@ export const CalmMode: React.FC = () => {
     navigate('/child/home');
   };
 
-  // 4 плитки — 2×2: Таймер / Запись / Дыхание / Позвать маму.
+  // 4 плитки — 2×2: Пауза / Дыхание / Наушники / Позвать взрослого.
+  // E10.2.9: каждый тайл имеет icon + видимый текст, aria-label = label.
   const CALM_TILES: CalmCard[] = [
-    { id: 'timer',     Icon: Pause2DIcon,  family: 'feel' },
-    { id: 'recording', Icon: Play2DIcon,   family: 'fav'  },
-    { id: 'breath',    Icon: Breath2DIcon, family: 'need' },
-    { id: 'call-mom',  Icon: Mom2DIcon,    family: 'help', go: '/child/home' },
+    { id: 'timer',     label: 'Пауза',                Icon: Pause2DIcon,  family: 'feel' },
+    { id: 'breath',    label: 'Дыхание',              Icon: Breath2DIcon, family: 'need' },
+    { id: 'recording', label: 'Наушники (тихая музыка)', Icon: Play2DIcon,   family: 'fav'  },
+    { id: 'call-mom',  label: 'Позвать взрослого',    Icon: Mom2DIcon,    family: 'help', go: '/child/call' },
   ];
 
   const minutes = Math.floor(remaining / 60);
@@ -202,8 +210,13 @@ export const CalmMode: React.FC = () => {
         </button>
       </div>
 
-      {/* Timer card — единый блок с большим таймером и кнопками. */}
+      {/* Timer card — единый блок с большим таймером и кнопками.
+          E10.2.9: добавляем понятный заголовок «Отдых» — раньше был только
+          таймер «1:00», что непонятно для ребёнка. */}
       <div className="bg-white rounded-3xl p-5 mt-3 shadow-card">
+        <p className="text-xs font-bold text-muted uppercase tracking-wide mb-1">
+          Отдых
+        </p>
         <div className="text-[56px] font-black tabular-nums tracking-tight leading-none" style={{ color: '#0d5c5c' }}>
           {startedAt === null ? '1:00' : `${minutes}:${String(seconds).padStart(2, '0')}`}
         </div>

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 /**
- * useChildSettingsStore — настройки ребёнка (v0.3.16 + v1.5+ D2).
+ * useChildSettingsStore — настройки ребёнка (v0.3.16 + v1.5+ D2 + v1.6 E10.2.10).
  *
  * Обязательные настройки по DESIGN_RULES для child UI:
  * - calmVisual: убирает градиенты и анимации (полностью статичный визуал).
@@ -12,12 +12,18 @@ import { persist } from 'zustand/middleware';
  * - fontScale: 1 / 1.1 / 1.2 — размер шрифта.
  * - sensoryMode (v1.5+ D2): 'calm' | 'standard' | 'playful' — общий сенсорный
  *   регулятор. Заменяет «один toggle» на сегментированный переключатель.
+ * - communicationLevel (v1.6 E10.2.10): 'beginner' | 'basic' | 'advanced' —
+ *   уровень сборщика фраз. beginner — только быстрые пресеты (≤6),
+ *   basic — категории (6-9), advanced — полный сборщик.
  *
- * Persist в localStorage (`qoldau-child-settings-v1`, version 2 — добавили
- * sensoryMode со значением по умолчанию 'standard').
+ * Persist в localStorage (`qoldau-child-settings-v1`, version 3 — добавили
+ * communicationLevel).
  */
 
 export type SensoryMode = 'calm' | 'standard' | 'playful';
+
+/** v1.6 E10.2.10: уровень сложности сборщика фраз. */
+export type CommunicationLevel = 'beginner' | 'basic' | 'advanced';
 
 export interface ChildSettings {
   calmVisual: boolean;
@@ -27,6 +33,8 @@ export interface ChildSettings {
   fontScale: 1 | 1.1 | 1.2;
   /** v1.5+ D2 — сенсорный режим (CSS-vars + haptics + personalization). */
   sensoryMode: SensoryMode;
+  /** v1.6 E10.2.10 — уровень сборщика фраз (PhraseBuilderPage). */
+  communicationLevel: CommunicationLevel;
 }
 
 interface ChildSettingsState extends ChildSettings {
@@ -41,6 +49,7 @@ const DEFAULTS: ChildSettings = {
   paused: false,
   fontScale: 1,
   sensoryMode: 'standard',
+  communicationLevel: 'basic',
 };
 
 export const useChildSettingsStore = create<ChildSettingsState>()(
@@ -52,15 +61,18 @@ export const useChildSettingsStore = create<ChildSettingsState>()(
     }),
     {
       name: 'qoldau-child-settings-v1',
-      version: 2,
-      // v1 → v2: добавлено поле sensoryMode (default 'standard'). Старые
-      // записи без sensoryMode получат значение по умолчанию при migrate.
+      version: 3,
+      // v2 → v3: добавлено поле communicationLevel (default 'basic').
+      // v1 → v2: sensoryMode (default 'standard').
       migrate: (persistedState, fromVersion) => {
         const state = (persistedState ?? {}) as Partial<ChildSettings> & {
           events?: unknown;
         };
         if (fromVersion < 2 && !state.sensoryMode) {
           return { ...DEFAULTS, ...state, sensoryMode: 'standard' };
+        }
+        if (fromVersion < 3 && !state.communicationLevel) {
+          return { ...DEFAULTS, ...state, communicationLevel: 'basic' };
         }
         return state as ChildSettings;
       },

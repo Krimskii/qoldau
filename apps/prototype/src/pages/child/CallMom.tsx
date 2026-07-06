@@ -113,9 +113,11 @@ export const ChildCall: React.FC = () => {
     const asset = getContactAsset(contact.builtinKey);
     addEvent({
       childId: DEMO_PRIMARY_CHILD.id,
-      type: 'sos',
-      title: `SOS: ${contact.label}`,
-      description: `Ребёнок позвал ${contact.label}`,
+      // E10.2.12: канонические типы. «Позвать» (обычный звонок/видео) →
+      // 'communication'. Только ConfirmSheet-подтверждённый «Срочно» → 'sos'.
+      type: 'communication',
+      title: `Позвал: ${contact.label}`,
+      description: `Ребёнок позвал ${contact.label} через ${contact.channel === 'video' ? 'видео' : 'звонок'}`,
       timestamp: new Date().toISOString(),
       sourceRole: 'child',
       status: 'confirmed',
@@ -292,7 +294,12 @@ export const ChildCall: React.FC = () => {
           }}
           style={{ background: 'rgba(7, 27, 58, 0.28)' }}
         >
-          <div className="w-full max-w-[430px] bg-white rounded-t-[28px] shadow-card p-5 mx-3 mb-3 qoldau-fade-in-up">
+          {/* E10.1.1: safe-area-inset-bottom + запас чтобы кнопки-фразы
+              не прижимались к жест-бару. */}
+          <div
+            className="w-full max-w-[430px] bg-white rounded-t-[28px] shadow-card p-5 mx-3 mb-3 qoldau-fade-in-up"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+          >
             <div className="flex items-center justify-between mb-4">
               <p className="text-[18px] font-black text-ink">Написать сообщение</p>
               <button
