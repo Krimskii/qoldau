@@ -6,7 +6,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { PageLoader } from '@/components/ui/PageLoader';
 import { useAuthStore } from '@/store/useAuthStore';
-import { registerAuthGetter, register401Handler } from '@/api/client';
+import { registerAuthGetter, register401Handler, registerRefreshHandler, registerLogoutHandler } from '@/api/client';
 
 // Parent Pages (eager — small, frequently visited)
 import { ParentHome } from '@/pages/parent/ParentHome';
@@ -84,6 +84,19 @@ const AppInit: React.FC = () => {
     // Регистрируем getter JWT — теперь каждый fetch в api/client.ts будет
     // автоматически подмешивать Authorization: Bearer <jwt>.
     registerAuthGetter(() => useAuthStore.getState().jwt);
+    // v1.6 E9.1: refresh-handler — api/client.ts вызовет его при 401 (один раз
+    // на группу параллельных запросов), чтобы обновить access JWT через
+    // refresh-токен без пере-логина.
+    registerRefreshHandler(() => useAuthStore.getState().refresh());
+    // logout-handler — вызывается если refresh не сработал. Чистим сессию и
+    // редиректим на /auth/login (если REQUIRE_AUTH).
+    registerLogoutHandler(async () => {
+      await useAuthStore.getState().logout();
+      if (!location.pathname.startsWith('/auth/')) {
+        const returnTo = location.pathname + location.search;
+        navigate(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
+      }
+    });
     // Регистрируем 401-handler — мягкий редирект на /auth/login с returnTo.
     register401Handler((_path) => {
       if (!location.pathname.startsWith('/auth/')) {
