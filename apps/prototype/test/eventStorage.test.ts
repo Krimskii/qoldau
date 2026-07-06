@@ -185,10 +185,10 @@ describe('EventStorage — query/getAll', () => {
     // После soft-delete query/getAll НЕ возвращает событие.
     expect(eventStorage.getAll().length).toBe(0);
     expect(eventStorage.query().length).toBe(0);
-    // Но стор по-прежнему содержит событие (с deleted=true).
+    // Но стор по-прежнему содержит событие (с deletedAt: ISO).
     const inStore = useEventStore.getState().events.find((e) => e.id === created.id);
     expect(inStore).toBeTruthy();
-    expect(inStore?.deleted).toBe(true);
+    expect(inStore?.deletedAt).toBeTruthy();
   });
 });
 

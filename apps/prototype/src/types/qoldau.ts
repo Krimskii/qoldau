@@ -282,7 +282,7 @@ export interface QoldauEvent<T extends EventType = EventType> {
   /** Роль оператора (parent/child/tutor/specialist/device/ai). */
   sourceRole: 'parent' | 'child' | 'tutor' | 'specialist' | 'device' | 'ai';
   status: EventStatus;
-  /** Версия схемы (3 для wave 2). */
+  /** Версия схемы (4 для v1.6 — добавили updatedAt/deletedAt). */
   schemaVersion: number;
   confidence?: number;
   rawText?: string;
@@ -299,10 +299,20 @@ export interface QoldauEvent<T extends EventType = EventType> {
   /** Метаданные AI, обработавшего событие (если применимо). */
   ai?: EventAi;
   /**
-   * Soft-delete флаг. Реальное удаление событий не используется —
-   * данные ценны для аналитики и истории. {@link EventStorage.remove}
-   * просто выставляет deleted:true; query-фильтр исключает такие
-   * события из выборок.
+   * v1.6 E9.3 — sync-метаданные:
+   * updatedAt — ISO-timestamp последнего изменения записи (локально или
+   *   сервером). Используется для LWW-конфликт-резолва при push.
+   *   Все create/update ставят updatedAt=now.
+   * deletedAt — ISO-timestamp soft-delete. Если null — запись активна.
+   *   Soft-delete вместо реального удаления: данные ценны для аналитики
+   *   и истории, tombstone нужен для синхронизации с сервером.
+   */
+  updatedAt: string;
+  deletedAt?: string | null;
+  /**
+   * УСТАРЕЛО (v1.6). Использовать `deletedAt !== null && deletedAt !== undefined`.
+   * Оставлено для обратной совместимости миграций.
+   * @deprecated
    */
   deleted?: boolean;
 }

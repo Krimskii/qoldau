@@ -65,7 +65,7 @@ describe('useEventStore', () => {
     expect(useEventStore.getState().events[0].title).toBe('New');
   });
 
-  it('deleteEvent soft-deletes (sets deleted:true, keeps record)', () => {
+  it('deleteEvent soft-deletes (sets deletedAt: ISO, keeps record)', () => {
     const created = useEventStore.getState().addEvent({
       type: 'food',
       title: 'To delete',
@@ -75,11 +75,13 @@ describe('useEventStore', () => {
       sourceRole: 'parent',
     });
     useEventStore.getState().deleteEvent(created.id);
-    // v1.5+ — soft-delete: событие остаётся в сторе, но помечено deleted:true.
+    // v1.6 E9.3 — soft-delete: событие остаётся в сторе, но помечено
+    // deletedAt: ISO-timestamp (раньше было deleted:true boolean).
     // EventStorage.query фильтрует такие события из выборок.
     const events = useEventStore.getState().events;
     expect(events.length).toBe(1);
-    expect(events[0].deleted).toBe(true);
+    expect(events[0].deletedAt).toBeTruthy();
+    expect(typeof events[0].deletedAt).toBe('string');
   });
 
   it('getEventsByType filters correctly', () => {
