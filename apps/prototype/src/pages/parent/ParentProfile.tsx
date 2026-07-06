@@ -21,6 +21,7 @@ import {
 } from '@/data/demoDataset';
 import { useCurrentChild } from '@/store/useCurrentChild';
 import { ChildSelector } from '@/components/layout/ChildSelector';
+import { SyncSection } from '@/components/parent/SyncSection';
 import { useConsentStore } from '@/store/useConsentStore';
 import { useToastStore } from '@/store/useToastStore';
 import { clearAllChildData, hasChildData } from '@/lib/privacy/dataControl';
@@ -170,6 +171,10 @@ export const ParentProfile: React.FC = () => {
       <p className="text-xs font-black text-muted uppercase tracking-wide px-1 mt-2">Настройки</p>
 
       <div className="flex flex-col gap-2.5">
+        {/* v1.6 E9.4: Sync-секция (между устройствами). Показывает email
+            залогиненного, статус sync, кнопку "Синхронизировать сейчас",
+            время последнего успешного push/pull. */}
+        <SyncSection />
         <ProfileItem
           icon={Smartphone}
           label="Устройства"

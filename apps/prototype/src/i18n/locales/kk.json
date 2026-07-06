@@ -3,6 +3,19 @@
     "name": "Qoldau AI",
     "tagline": "Дауыс-бірінші сүйемелдеу"
   },
+  "sync": {
+    "statusDemo": "Демо (кірусіз)",
+    "statusIdle": "Синхрондалды",
+    "statusSyncing": "Синхрондау…",
+    "statusOffline": "Офлайн",
+    "statusError": "Қате",
+    "syncNow": "Қазір синхрондау",
+    "lastSync": "Соңғы синхрондау",
+    "pendingLabel": "Жіберуді күтуде",
+    "signedInAs": "Кіру жасалды",
+    "notSignedIn": "Құрылғылар арасында синхрондау үшін кіріңіз",
+    "devLoginHint": "Dev-режимде magic-link жауапта токен қайтарады (почтасыз)"
+  },
   "auth": {
     "login": "Кіру",
     "logout": "Шығу",

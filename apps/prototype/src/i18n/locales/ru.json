@@ -3,6 +3,19 @@
     "name": "Qoldau AI",
     "tagline": "Voice-first сопровождение"
   },
+  "sync": {
+    "statusDemo": "Демо (без входа)",
+    "statusIdle": "Синхронизировано",
+    "statusSyncing": "Синхронизация…",
+    "statusOffline": "Офлайн",
+    "statusError": "Ошибка",
+    "syncNow": "Синхронизировать сейчас",
+    "lastSync": "Последняя синхронизация",
+    "pendingLabel": "Ожидает отправки",
+    "signedInAs": "Вход выполнен как",
+    "notSignedIn": "Войдите, чтобы синхронизировать между устройствами",
+    "devLoginHint": "В dev-режиме magic-link возвращает токен в ответе (без почты)"
+  },
   "auth": {
     "login": "Войти",
     "logout": "Выйти",
