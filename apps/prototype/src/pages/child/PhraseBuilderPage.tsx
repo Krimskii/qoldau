@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEventStore } from '@/store/useEventStore';
+import { useChildSettingsStore } from '@/store/useChildSettingsStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { BackArrowIcon } from '@/components/icons/child2d';
 import { Trash2, Delete, Volume2 } from 'lucide-react';
@@ -216,11 +217,24 @@ const VOCAB: Word[] = [
 export const PhraseBuilderPage: React.FC = () => {
   const navigate = useNavigate();
   const { addEvent } = useEventStore();
+  // E10.2.10: уровень сборщика фраз (из настроек ребёнка).
+  const communicationLevel = useChildSettingsStore((s) => s.communicationLevel);
   const [phrase, setPhrase] = useState<string[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [speaking, setSpeaking] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // E10.2.10: beginner — только 4 базовых пресета (без words builder).
+  // basic — все пресеты + words builder (default).
+  // advanced — только words builder (без пресетов).
+  const BASIC_PRESET_IDS = new Set(['want-drink', 'need-help', 'too-loud', 'want-pause']);
+  const visiblePresets = communicationLevel === 'advanced'
+    ? []
+    : communicationLevel === 'beginner'
+      ? PRESET_PHRASES.filter((p) => BASIC_PRESET_IDS.has(p.id))
+      : PRESET_PHRASES;
+  const showWordBuilder = communicationLevel !== 'beginner';
 
   useEffect(() => {
     return () => {
@@ -325,13 +339,25 @@ export const PhraseBuilderPage: React.FC = () => {
         <div className="text-xl font-black text-ink">Собрать фразу</div>
       </div>
 
-      {/* PRESET PHRASES — быстрые готовые фразы для Wave 0 */}
+      {/* PRESET PHRASES — быстрые готовые фразы. E10.2.10:
+          beginner → 4 базовых, basic → все 8, advanced → скрыты.
+          E10.2.11: sentence case без капс (low-stimulation). */}
+      {visiblePresets.length > 0 && (
       <div className="px-5 pt-2 pb-1">
-        <div className="text-[11px] font-black text-ink-soft uppercase tracking-wide mb-2">
-          Частые фразы — одно касание
+        <div className="text-[11px] font-bold text-ink-soft mb-2">
+          Частые фразы
         </div>
-        <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-5 px-5">
-          {PRESET_PHRASES.map((preset) => {
+        {/* E10.1.3: горизонтальный scroll с snap + padding, чтобы карточки
+            не обрезались на 390/430px и не уходили под safe-area. */}
+        <div
+          className="flex gap-2.5 overflow-x-auto pb-2 -mx-5 px-5"
+          style={{
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            paddingRight: 'max(env(safe-area-inset-right), 20px)',
+          }}
+        >
+          {visiblePresets.map((preset) => {
             const Icon = preset.Icon;
             return (
               <button
@@ -339,7 +365,7 @@ export const PhraseBuilderPage: React.FC = () => {
                 onClick={() => handleSelectPreset(preset.words)}
                 className="flex-shrink-0 bg-white border border-line rounded-[18px] p-2.5 flex items-center gap-2 active:scale-[0.95] transition-transform shadow-card-soft hover:shadow-card"
                 aria-label={preset.label}
-                style={{ minWidth: 140 }}
+                style={{ minWidth: 140, scrollSnapAlign: 'start' }}
               >
                 <div
                   className="w-10 h-10 rounded-[12px] flex items-center justify-center flex-shrink-0"
@@ -358,6 +384,7 @@ export const PhraseBuilderPage: React.FC = () => {
           })}
         </div>
       </div>
+      )}
 
       {/* Phrase strip (large, dashed → solid) */}
       <div
@@ -445,9 +472,12 @@ export const PhraseBuilderPage: React.FC = () => {
         </button>
       </div>
 
-      {/* ВЫБИРАЙ СЛОВА label */}
-      <div className="px-5 pt-2 pb-1 text-[13px] font-black text-ink-soft tracking-wide">
-        ВЫБИРАЙ СЛОВА
+      {/* E10.2.10 + E10.2.11: word grid виден на basic/advanced (не beginner).
+          Sentence case вместо капс. */}
+      {showWordBuilder && (
+        <>
+      <div className="px-5 pt-2 pb-1 text-[13px] font-bold text-ink-soft">
+        Выбирай слова
       </div>
 
       {/* Word grid 3-col, color-coded by function */}
@@ -488,6 +518,8 @@ export const PhraseBuilderPage: React.FC = () => {
           );
         })}
       </div>
+        </>
+      )}
 
       {/* Legend */}
       <div className="flex flex-wrap gap-x-3.5 gap-y-1.5 px-5 pt-2 pb-1 text-[11px] text-ink-soft font-semibold">

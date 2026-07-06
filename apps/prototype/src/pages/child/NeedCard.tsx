@@ -268,8 +268,9 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
 
           {/* Words card — 2×2 сетка */}
           <div className="bg-white border border-line rounded-[20px] shadow-card p-2.5">
-            <div className="text-[11px] font-black text-ink-soft tracking-wide px-1.5 mb-2">
-              СОБРАТЬ ИЗ СЛОВ
+            {/* E10.2.11: sentence case «Собрать из слов» (low-stimulation). */}
+            <div className="text-[11px] font-bold text-ink-soft px-1.5 mb-2">
+              Собрать из слов
             </div>
             <div className="grid grid-cols-2 gap-2">
               {config.words.map((word, i) => {
@@ -311,32 +312,31 @@ export const NeedCard: React.FC<{ config: NeedCardConfig }> = ({ config }) => {
           </div>
         </div>
 
-        {/* Speak + clear row */}
-        <div className="flex gap-2 px-5 pt-1.5 pb-1.5">
-          <button
-            onClick={handleSpeak}
-            disabled={phrase.length === 0}
-            className="flex-1 border-0 rounded-[15px] py-3 px-3 font-black text-[14px] flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
-            style={{
-              background: phrase.length > 0 ? '#e9f7f5' : '#f4f8f8',
-              color: phrase.length > 0 ? '#12807a' : '#9fb3ba',
-              cursor: phrase.length === 0 ? 'not-allowed' : 'pointer',
-              animation: speaking === '__speak__' ? 'need-speak-pulse 600ms ease-out both' : undefined,
-            }}
-          >
-            <Volume2 className="w-[18px] h-[18px]" />
-            Озвучить фразу
-          </button>
-          <button
-            onClick={clearPhrase}
-            disabled={phrase.length === 0}
-            className="w-12 border border-line rounded-[15px] bg-white flex items-center justify-center active:scale-[0.94] transition-transform"
-            style={{ opacity: phrase.length === 0 ? 0.4 : 1 }}
-            aria-label="Очистить"
-          >
-            <Trash2 className="w-5 h-5 text-[#c56a6a]" />
-          </button>
-        </div>
+        {/* Speak + clear row — E10.2.6: показываем ТОЛЬКО когда фраза собрана.
+            Раньше был disabled-серый мусор, который сбивал с толку. */}
+        {phrase.length > 0 && (
+          <div className="flex gap-2 px-5 pt-1.5 pb-1.5">
+            <button
+              onClick={handleSpeak}
+              className="flex-1 border-0 rounded-[15px] py-3 px-3 font-black text-[14px] flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
+              style={{
+                background: '#e9f7f5',
+                color: '#12807a',
+                animation: speaking === '__speak__' ? 'need-speak-pulse 600ms ease-out both' : undefined,
+              }}
+            >
+              <Volume2 className="w-[18px] h-[18px]" />
+              Озвучить фразу
+            </button>
+            <button
+              onClick={clearPhrase}
+              className="w-12 border border-line rounded-[15px] bg-white flex items-center justify-center active:scale-[0.94] transition-transform"
+              aria-label="Очистить"
+            >
+              <Trash2 className="w-5 h-5 text-[#c56a6a]" />
+            </button>
+          </div>
+        )}
 
         {/* Optional extra (timer for toilet) */}
         {config.extra && <div className="px-5 pt-1.5 pb-1.5">{config.extra}</div>}

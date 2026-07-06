@@ -128,7 +128,9 @@ describe('CallMom (v1.5+ D)', () => {
     const after = useEventStore.getState().events;
     expect(after.length).toBe(eventsBefore + 1);
     const last = after[after.length - 1];
-    expect(last.type).toBe('sos');
+    // v1.6 E10.2.12: канонический тип. Обычное «Позвать» (телефон/видео) →
+    // 'communication'. Только ConfirmSheet-подтверждённый «Срочно» → 'sos'.
+    expect(last.type).toBe('communication');
     expect((last.payload as any).targetPerson).toBe('mom');
     expect((last.payload as any).channel).toBe('call');
   });

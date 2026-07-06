@@ -85,6 +85,13 @@ export const ConfirmSheet: React.FC<ConfirmSheetProps> = ({
     if (e.target === e.currentTarget) handleCancel();
   };
 
+  // v1.6 E10.1.1: safe-area-inset-bottom для кнопок ✓/✕ (не прижимаются
+  // к жест-бару). Также учитываем bottomNav (z-40), т.к. sheet рендерится
+  // ПОВЕРХ навбара (z-60) — кнопки не должны скрываться под ним.
+  const safeAreaStyle: React.CSSProperties = {
+    paddingBottom: 'max(env(safe-area-inset-bottom), 24px)',
+  };
+
   return (
     <div
       className="fixed inset-0 z-[60] flex items-end justify-center"
@@ -96,6 +103,7 @@ export const ConfirmSheet: React.FC<ConfirmSheetProps> = ({
     >
       <div
         className="w-full max-w-[430px] bg-white rounded-t-[28px] shadow-card p-6 mx-3 mb-3 qoldau-fade-in-up"
+        style={safeAreaStyle}
       >
         <div className="text-center mb-5">
           <p className="text-[18px] font-black text-ink leading-snug">{title}</p>

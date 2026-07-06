@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, MicOff, Play, Pause, Trash2, Clock, Volume2 } from 'lucide-react';
-import { BackArrowIcon, Music2DIcon, Water2DIcon, Mom2DIcon, Toilet2DIcon, Home2DIcon, CHILD_FAMILY_STYLES, type ChildCardFamily } from '@/components/icons/child2d';
-import { useRecordingsStore, type Recording } from '@/store/useRecordingsStore';
+import { Mic, MicOff, Volume2 } from 'lucide-react';
+import { BackArrowIcon, Water2DIcon, Mom2DIcon, Toilet2DIcon, Home2DIcon, CHILD_FAMILY_STYLES, type ChildCardFamily } from '@/components/icons/child2d';
+import { useRecordingsStore } from '@/store/useRecordingsStore';
 import { useEventStore } from '@/store/useEventStore';
 import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
-import { formatTime as formatClock } from '@/utils/dateFormat';
 import { useSpeechRecognition } from '@/lib/stt/useSpeechRecognition';
-import { speak, stopSpeaking } from '@/lib/tts/speak';
+import { speak } from '@/lib/tts/speak';
 import { DemoBadge } from '@/components/ui/DemoBadge';
 
 const MAX_RECORDING_SEC = 30;
@@ -29,15 +28,9 @@ const DEMO_LABELS = [
 
 /**
  * Быстрые варианты для отложенного воспроизведения (минуты).
- * Каждый вариант → таймер на N минут, по истечении запись автоматически
- * переходит в режим playback.
+ * v1.6 E10.2.7: SCHEDULE_PRESETS удалены — ScheduleButton убран из child UI.
+ * История записей и schedule — прерогатива parent/tutor.
  */
-const SCHEDULE_PRESETS = [
-  { label: '5 мин',   minutes: 5 },
-  { label: '15 мин',  minutes: 15 },
-  { label: '30 мин',  minutes: 30 },
-  { label: '1 час',   minutes: 60 },
-] as const;
 
 /**
  * Fallback-карточки для невокализующих детей (v1.5+ D §2).
@@ -63,51 +56,40 @@ const formatTime = (s: number) => {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 };
 
-const formatRelative = (timestamp: string): string => {
-  const diff = Date.now() - new Date(timestamp).getTime();
-  const min = Math.floor(diff / 60_000);
-  if (min < 1) return 'только что';
-  if (min < 60) return `${min} мин назад`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr} ч назад`;
-  return `${Math.floor(hr / 24)} д назад`;
-};
-
 /**
- * ChildSpeak (v0.3.23) — большой микрофон + список недавних записей.
+ * ChildSpeak (v0.3.23 + v1.6 E10.2.7) — большой микрофон + simple feedback.
+ *
+ * E10.2.7: убрано «взрослое» управление аудио (play/pause/delete/schedule).
+ * Для ребёнка — это перегруз. Вместо списка записей с прогресс-баром и
+ * кнопками теперь только статус «Фраза отправлена взрослому» после записи.
+ * История записей остаётся в useRecordingsStore для parent/tutor UI.
  *
  * Структура:
  * - Header (back + title).
  * - **Большой микрофон 150×150** — tap to record (mock STT, max 30 сек, авто-стоп).
- * - Status text (timer во время записи).
- * - **«Недавние записи»** — список карточек с:
- *   - иконкой `Music2DIcon` (40×40, teal-soft фон)
- *   - лейблом + тайм-кодом (progress / total)
- *   - кнопкой play/pause
- *   - **«Поставить»** (clock icon) — быстрые варианты 5/15/30/60 мин
- *     → запись автоматически запустится через N минут (визуально).
- *   - кнопкой удаления.
+ * - Status text (timer во время записи + «Идёт запись…»).
+ * - Fallback-карточки «или выбери карточку» (v1.5+ D §2) — скрыты во время записи.
+ * - **Статус последней записи** — простой ✓ «Фраза отправлена взрослому» (вместо
+ *   «Недавние записи»). Нет play/delete/schedule — это для parent/tutor.
+ * - Empty → EmptyState с объяснением (тап на микрофон → запись).
  *
- * Создание записи также порождает `voice_observation` event в Event Timeline.
+ * Создание записи порождает `voice_observation` event в Event Timeline (E10.2.12).
  */
 export const ChildSpeak: React.FC = () => {
   const navigate = useNavigate();
-  const { recordings, addRecording, removeRecording } = useRecordingsStore();
+  // E10.2.7: removeRecording и recording-manipulation handlers удалены
+  // из child UI (история — прерогатива parent/tutor). Оставляем только
+  // addRecording при stopRecording + recordings.length для счётчика.
+  const { recordings, addRecording } = useRecordingsStore();
   const { addEvent } = useEventStore();
 
   // === Recording state ===
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Кроме state — держим актуальное значение в ref: setInterval создаётся один
-  // раз за сессию записи (deps=[isRecording]), поэтому stopRecording(), вызванный
-  // из его замыкания (авто-стоп на MAX_RECORDING_SEC), видел бы протухшее
-  // recordingTime из рендера, когда запись только началась (т.е. 0).
   const recordingTimeRef = useRef(0);
 
   // === Web Speech API (v0.6.9) — реальное распознавание голоса ребёнка.
-  // Если браузер поддерживает, transcript используется как label записи.
-  // Иначе fallback на случайный mock label из DEMO_LABELS.
   const speech = useSpeechRecognition({
     lang: 'ru-RU',
     interimResults: true,
@@ -115,23 +97,13 @@ export const ChildSpeak: React.FC = () => {
     mockTranscript: DEMO_LABELS[0],
   });
 
-  // === Playback state ===
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const [playbackProgress, setPlaybackProgress] = useState<Record<string, number>>({});
-  const playbackIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // === Schedule state ===
-  // recordingId → setTimeout id (для остановки таймера при удалении / отмене)
-  const scheduleTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  // recordingId → ISO-время, когда запись должна прозвучать
-  const [scheduledAt, setScheduledAt] = useState<Record<string, string>>({});
+  // E10.2.7: playback state (playingId/playbackProgress) и schedule state
+  // удалены — взрослое управление для parent/tutor.
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
-      if (playbackIntervalRef.current) clearInterval(playbackIntervalRef.current);
-      Object.values(scheduleTimeoutsRef.current).forEach(clearTimeout);
     };
   }, []);
 
@@ -144,7 +116,6 @@ export const ChildSpeak: React.FC = () => {
     recordingIntervalRef.current = setInterval(() => {
       setRecordingTime((t) => {
         if (t >= MAX_RECORDING_SEC - 1) {
-          // Авто-стоп через 30 сек
           recordingTimeRef.current = MAX_RECORDING_SEC;
           setTimeout(() => stopRecording(), 0);
           return MAX_RECORDING_SEC;
@@ -158,32 +129,6 @@ export const ChildSpeak: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording]);
-
-  // === Playback timer ===
-  useEffect(() => {
-    if (!playingId) {
-      if (playbackIntervalRef.current) clearInterval(playbackIntervalRef.current);
-      return;
-    }
-    const rec = recordings.find((r) => r.id === playingId);
-    if (!rec) {
-      setPlayingId(null);
-      return;
-    }
-    playbackIntervalRef.current = setInterval(() => {
-      setPlaybackProgress((prev) => {
-        const cur = prev[playingId] ?? 0;
-        if (cur >= rec.durationSec) {
-          setPlayingId(null);
-          return prev;
-        }
-        return { ...prev, [playingId]: cur + 1 };
-      });
-    }, 1000);
-    return () => {
-      if (playbackIntervalRef.current) clearInterval(playbackIntervalRef.current);
-    };
-  }, [playingId, recordings]);
 
   // === Handlers ===
   const startRecording = () => {
@@ -235,66 +180,7 @@ export const ChildSpeak: React.FC = () => {
     else startRecording();
   };
 
-  const togglePlay = (rec: Recording) => {
-    if (playingId === rec.id) {
-      setPlayingId(null);
-      stopSpeaking();
-    } else {
-      setPlayingId(rec.id);
-      // Озвучиваем label записи — feedback «вот что я сказал».
-      speak(rec.label);
-      if (playbackProgress[rec.id] === undefined) {
-        setPlaybackProgress((p) => ({ ...p, [rec.id]: 0 }));
-      }
-    }
-  };
-
-  const handleRemove = (id: string) => {
-    if (playingId === id) setPlayingId(null);
-    cancelSchedule(id);
-    removeRecording(id);
-  };
-
-  // === Schedule handlers ===
-  const scheduleRecording = (rec: Recording, minutes: number) => {
-    // Отменить предыдущий таймер для этой записи
-    if (scheduleTimeoutsRef.current[rec.id]) {
-      clearTimeout(scheduleTimeoutsRef.current[rec.id]);
-    }
-
-    const fireAt = Date.now() + minutes * 60_000;
-    const timeoutId = setTimeout(() => {
-      // Запустить playback этой записи
-      setPlayingId(rec.id);
-      setPlaybackProgress((p) => ({ ...p, [rec.id]: 0 }));
-      // Убрать из scheduled
-      setScheduledAt((prev) => {
-        const next = { ...prev };
-        delete next[rec.id];
-        return next;
-      });
-      delete scheduleTimeoutsRef.current[rec.id];
-    }, minutes * 60_000);
-
-    scheduleTimeoutsRef.current[rec.id] = timeoutId;
-    setScheduledAt((prev) => ({ ...prev, [rec.id]: new Date(fireAt).toISOString() }));
-    // Озвучиваем подтверждение что запись поставлена.
-    speak(`${rec.label} через ${minutes} минут`);
-  };
-
-  const cancelSchedule = (recId: string) => {
-    if (scheduleTimeoutsRef.current[recId]) {
-      clearTimeout(scheduleTimeoutsRef.current[recId]);
-      delete scheduleTimeoutsRef.current[recId];
-    }
-    setScheduledAt((prev) => {
-      const next = { ...prev };
-      delete next[recId];
-      return next;
-    });
-  };
-
-  /**
+    /**
    * Тап fallback-карточки — выражение потребности без голоса (v1.5+ D §2).
    * Без навигации — ребёнок остаётся на Speak, короткий ✓-feedback.
    */
@@ -368,7 +254,8 @@ export const ChildSpeak: React.FC = () => {
         )}
       </button>
 
-      {/* Status text */}
+      {/* Status text — E10.2.7: убрана техническая формулировка «задать время
+          воспроизведения» (это для родителя). Теперь по-детски. */}
       <div className="text-center px-5">
         {isRecording ? (
           <div className="flex flex-col items-center gap-2">
@@ -381,8 +268,8 @@ export const ChildSpeak: React.FC = () => {
                 «{speech.transcript}»
               </p>
             ) : (
-              <p className="text-sm text-muted mt-1">
-                Идёт запись… нажми ещё раз, чтобы остановить
+              <p className="text-sm text-ink-soft mt-1 font-bold">
+                Нажми и говори
               </p>
             )}
             <p className="text-[11px] text-muted mt-0.5 italic">
@@ -390,8 +277,10 @@ export const ChildSpeak: React.FC = () => {
             </p>
           </div>
         ) : (
+          // E10.2.8: helper-текст по-детски — «Нажми и говори» (без технических
+          // формулировок «время воспроизведения», «задать время» и т.д.).
           <p className="text-base text-ink-soft font-bold">
-            Нажми и говори. Можно задать время воспроизведения ↓
+            Нажми и говори
           </p>
         )}
       </div>
@@ -426,106 +315,33 @@ export const ChildSpeak: React.FC = () => {
         </div>
       )}
 
-      {/* Recent recordings */}
+      {/* E10.2.7: вместо «Недавние записи» с play/delete/schedule —
+          простой статус «Фраза отправлена взрослому» + DemoBadge для честности
+          про мок-STT. История остаётся в useRecordingsStore для parent/tutor. */}
       <div className="mx-5 mt-6 mb-2">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-black text-ink">Недавние записи</h3>
-          {recordings.length > 0 && (
-            <span className="text-xs text-muted font-bold tabular-nums">
-              {recordings.length}
-            </span>
+        <div className="bg-white border border-line rounded-2xl p-5 text-center">
+          <div className="flex justify-center mb-2">
+            <div className="w-14 h-14 rounded-2xl bg-teal-soft flex items-center justify-center">
+              <Volume2 className="w-7 h-7 text-teal-dark" aria-hidden="true" />
+            </div>
+          </div>
+          {recordings.length === 0 ? (
+            <>
+              <p className="text-sm font-black text-ink mt-2">Нажми и говори</p>
+              <p className="text-xs text-muted mt-1 leading-relaxed">
+                Сообщение сразу уйдёт взрослому
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-black text-teal-dark">✓ Фраза отправлена взрослому</p>
+              <p className="text-xs text-muted mt-1 leading-relaxed">
+                Последнее сообщение · {recordings.length}{' '}
+                {recordings.length === 1 ? 'запись' : 'записей'}
+              </p>
+            </>
           )}
         </div>
-
-        {recordings.length === 0 ? (
-          <div className="bg-white border border-line rounded-2xl p-6 text-center">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-teal-soft flex items-center justify-center mb-2">
-              <Volume2 className="w-7 h-7 text-teal-dark" />
-            </div>
-            <p className="text-sm font-bold text-ink mt-2">Пока нет записей</p>
-            <p className="text-xs text-muted mt-1 leading-relaxed">
-              Нажми на микрофон выше, чтобы записать первое сообщение
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2.5">
-            {recordings.slice(0, 10).map((rec) => {
-              const isPlaying = playingId === rec.id;
-              const progress = playbackProgress[rec.id] ?? 0;
-              const progressPct = Math.min(100, (progress / rec.durationSec) * 100);
-              const scheduled = scheduledAt[rec.id];
-              return (
-                <div
-                  key={rec.id}
-                  className="bg-white border border-line rounded-2xl p-3 flex items-center gap-2.5"
-                >
-                  <button
-                    onClick={() => togglePlay(rec)}
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                      isPlaying ? 'bg-coral text-white' : 'bg-teal-soft text-teal-dark'
-                    }`}
-                    aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-5 h-5" />
-                    ) : (
-                      <Play className="w-5 h-5" />
-                    )}
-                  </button>
-
-                  <div className="w-10 h-10 rounded-xl bg-teal-soft flex items-center justify-center flex-shrink-0">
-                    <Music2DIcon size={24} animated={false} />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-black text-ink truncate flex-1 min-w-0">
-                        {rec.label}
-                      </p>
-                      <span className="text-[11px] text-muted tabular-nums flex-shrink-0">
-                        {formatTime(progress)} / {formatTime(rec.durationSec)}
-                      </span>
-                    </div>
-                    {isPlaying ? (
-                      <div className="h-1 bg-bg rounded-full mt-1.5 overflow-hidden">
-                        <div
-                          className="h-full bg-teal transition-all duration-1000 ease-linear"
-                          style={{ width: `${progressPct}%` }}
-                        />
-                      </div>
-                    ) : scheduled ? (
-                      <p className="text-[11px] text-coral mt-0.5 font-bold flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        Запланировано на {formatClock(scheduled)}
-                      </p>
-                    ) : (
-                      <p className="text-[11px] text-muted mt-0.5">
-                        {formatRelative(rec.timestamp)}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Schedule button — открывает quick-picker */}
-                  {!isPlaying && (
-                    <ScheduleButton
-                      isScheduled={!!scheduled}
-                      onSchedule={(minutes) => scheduleRecording(rec, minutes)}
-                      onCancel={() => cancelSchedule(rec.id)}
-                    />
-                  )}
-
-                  <button
-                    onClick={() => handleRemove(rec.id)}
-                    className="w-11 h-11 rounded-lg flex items-center justify-center text-muted hover:bg-coral-soft hover:text-coral transition-colors flex-shrink-0"
-                    aria-label="Удалить запись"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       <div style={{ height: 12 }} />
@@ -540,79 +356,6 @@ export const ChildSpeak: React.FC = () => {
           <div className="bg-teal-soft border-2 border-teal/30 rounded-3xl px-6 py-3 shadow-card text-center">
             <p className="text-base font-black text-teal-dark">✓ {fallbackFeedback}</p>
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/**
- * ScheduleButton — иконка часов с popover-выпадашкой быстрых вариантов
- * (5 / 15 / 30 / 60 мин). Если запись уже запланирована — кнопка красная и
- * при клике отменяет schedule.
- */
-const ScheduleButton: React.FC<{
-  isScheduled: boolean;
-  onSchedule: (minutes: number) => void;
-  onCancel: () => void;
-}> = ({ isScheduled, onSchedule, onCancel }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Close popover on outside click
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  if (isScheduled) {
-    return (
-      <button
-        onClick={onCancel}
-        className="w-11 h-11 rounded-lg flex items-center justify-center text-coral bg-coral-soft transition-colors flex-shrink-0"
-        aria-label="Отменить воспроизведение"
-        title="Отменить"
-      >
-        <Clock className="w-4 h-4" />
-      </button>
-    );
-  }
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-11 h-11 rounded-lg flex items-center justify-center text-ink-soft hover:bg-teal-soft hover:text-teal-dark transition-colors flex-shrink-0"
-        aria-label="Поставить на воспроизведение"
-        title="Поставить на воспроизведение"
-      >
-        <Clock className="w-4 h-4" />
-      </button>
-      {open && (
-        <div
-          className="absolute right-0 top-full mt-1 z-30 bg-white border border-line rounded-2xl shadow-card-hover p-1.5 flex flex-col gap-0.5 min-w-[120px]"
-        >
-          <p className="text-[10px] font-black text-muted uppercase tracking-wide px-2 py-1">
-            Через
-          </p>
-          {SCHEDULE_PRESETS.map((preset) => (
-            <button
-              key={preset.minutes}
-              onClick={() => {
-                onSchedule(preset.minutes);
-                setOpen(false);
-              }}
-              className="text-sm font-bold text-ink-2 hover:bg-teal-soft hover:text-teal-dark rounded-xl px-3 py-2 text-left transition-colors"
-            >
-              {preset.label}
-            </button>
-          ))}
         </div>
       )}
     </div>
