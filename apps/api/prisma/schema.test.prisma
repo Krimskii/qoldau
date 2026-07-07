@@ -62,6 +62,8 @@ model Recording {
   childId     String
   label       String
   durationSec Int
+  transcript  String?
+  mimeType    String?
   timestamp   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deletedAt   DateTime?

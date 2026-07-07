@@ -8,6 +8,8 @@ export interface RecordingInput {
   childId: string;
   label: string;
   durationSec: number;
+  transcript?: string | null;
+  mimeType?: string | null;
 }
 
 export interface RecordingRecord extends RecordingInput {
@@ -33,6 +35,8 @@ function serialize(recording: {
   childId: string;
   label: string;
   durationSec: number;
+  transcript: string | null;
+  mimeType: string | null;
   timestamp: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -42,6 +46,8 @@ function serialize(recording: {
     childId: recording.childId,
     label: recording.label,
     durationSec: recording.durationSec,
+    transcript: recording.transcript,
+    mimeType: recording.mimeType,
     timestamp: recording.timestamp,
     updatedAt: recording.updatedAt,
     deletedAt: recording.deletedAt ?? undefined,
@@ -83,6 +89,8 @@ export const recordingsRepo = {
         childId: input.childId,
         label: input.label,
         durationSec: input.durationSec,
+        transcript: input.transcript,
+        mimeType: input.mimeType,
         timestamp: new Date(),
       },
     });

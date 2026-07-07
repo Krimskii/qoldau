@@ -13,7 +13,7 @@
  */
 import { randomUUID } from 'node:crypto';
 
-interface ServiceEnv {
+export interface STTServiceEnv {
   apiKey: string | null;
   enabled: boolean;
   /** 'whisper-1' default; override через env WHISPER_MODEL */
@@ -21,8 +21,8 @@ interface ServiceEnv {
   client: WhisperClient | null;
 }
 
-interface WhisperClient {
-  transcribe(input: { audio: string; language?: string }): Promise<{ text: string }>;
+export interface WhisperClient {
+  transcribe(input: { audio: string; language?: string; mimeType?: string }): Promise<{ text: string }>;
 }
 
 /** Простой in-process mock — для тестов / fallback. */
@@ -42,7 +42,18 @@ function createMockClient(): WhisperClient {
  * даёт 400 Invalid file format. Детект по сигнатуре надёжнее, чем доверять
  * заявленному mimeType.
  */
-function detectAudioFormat(buffer: Buffer): { ext: string; mime: string } {
+function formatFromMimeType(mimeType?: string): { ext: string; mime: string } | null {
+  const mime = mimeType?.split(';')[0]?.trim().toLowerCase();
+  if (!mime) return null;
+  if (mime === 'audio/webm' || mime === 'video/webm') return { ext: 'webm', mime: 'audio/webm' };
+  if (mime === 'audio/mp4' || mime === 'video/mp4' || mime === 'audio/aac') return { ext: 'mp4', mime: 'audio/mp4' };
+  if (mime === 'audio/mpeg' || mime === 'audio/mp3') return { ext: 'mp3', mime: 'audio/mpeg' };
+  if (mime === 'audio/ogg' || mime === 'application/ogg') return { ext: 'ogg', mime: 'audio/ogg' };
+  if (mime === 'audio/wav' || mime === 'audio/wave' || mime === 'audio/x-wav') return { ext: 'wav', mime: 'audio/wav' };
+  return null;
+}
+
+function detectAudioFormat(buffer: Buffer, mimeType?: string): { ext: string; mime: string } {
   const ascii = (start: number, end: number) =>
     buffer.length >= end ? buffer.toString('ascii', start, end) : '';
   // EBML (WebM / Matroska): 1A 45 DF A3
@@ -57,12 +68,14 @@ function detectAudioFormat(buffer: Buffer): { ext: string; mime: string } {
   if (buffer.length >= 2 && buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0) {
     return { ext: 'mp3', mime: 'audio/mpeg' };
   }
+  const declared = formatFromMimeType(mimeType);
+  if (declared) return declared;
   // По умолчанию — webm (самый частый контейнер web MediaRecorder).
   return { ext: 'webm', mime: 'audio/webm' };
 }
 
 /** Real Whisper client (через fetch к OpenAI API, без external SDK). */
-function createWhisperClient(apiKey: string, model: string): WhisperClient {
+function createWhisperClient(apiKey: string, model: string, timeoutMs: number): WhisperClient {
   return {
     async transcribe(input) {
       // Whisper API принимает multipart/form-data с file.
@@ -73,8 +86,8 @@ function createWhisperClient(apiKey: string, model: string): WhisperClient {
       const base64 = raw.startsWith('data:') ? raw.slice(raw.indexOf(',') + 1) : raw;
       // Конвертируем base64 → Buffer → File с ПРАВИЛЬНЫМ расширением по сигнатуре.
       const buffer = Buffer.from(base64, 'base64');
-      const fmt = detectAudioFormat(buffer);
-      console.info('[stt] whisper upload', { bytes: buffer.length, ext: fmt.ext });
+      const fmt = detectAudioFormat(buffer, input.mimeType);
+      console.info('[stt] whisper upload', { bytes: buffer.length, ext: fmt.ext, mime: fmt.mime });
       const formData = new FormData();
       // Создаём File из Buffer (Node 18+ имеет File global).
       const file = new File([buffer], `audio.${fmt.ext}`, { type: fmt.mime });
@@ -82,13 +95,21 @@ function createWhisperClient(apiKey: string, model: string): WhisperClient {
       formData.append('model', model);
       if (input.language) formData.append('language', input.language);
 
-      const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: formData,
-      });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      let res: Response;
+      try {
+        res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: formData,
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
       if (!res.ok) {
         const text = await res.text().catch(() => '');
         throw new Error(`Whisper API error: ${res.status} ${text.slice(0, 200)}`);
@@ -99,13 +120,14 @@ function createWhisperClient(apiKey: string, model: string): WhisperClient {
   };
 }
 
-function loadEnv(): ServiceEnv {
+function loadEnv(): STTServiceEnv {
   const apiKey = process.env.WHISPER_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim() || null;
   const model = process.env.WHISPER_MODEL?.trim() || 'whisper-1';
+  const timeoutMs = Number(process.env.WHISPER_TIMEOUT_MS ?? 30_000);
   if (!apiKey) {
     return { apiKey: null, enabled: false, model, client: null };
   }
-  return { apiKey: '[set]', enabled: true, model, client: createWhisperClient(apiKey, model) };
+  return { apiKey: '[set]', enabled: true, model, client: createWhisperClient(apiKey, model, timeoutMs) };
 }
 
 const env = loadEnv();
@@ -115,6 +137,8 @@ export interface STTInput {
   audio: string;
   /** Language code (ru, en, kk). */
   language?: string;
+  /** Browser MediaRecorder mime type, e.g. audio/webm;codecs=opus or audio/mp4. */
+  mimeType?: string;
 }
 
 export interface STTResult {
@@ -124,47 +148,51 @@ export interface STTResult {
   source: 'whisper' | 'mock';
 }
 
-export const sttService = {
-  enabled: env.enabled,
-  model: env.model,
+export function createSTTService(serviceEnv: STTServiceEnv) {
+  return {
+    enabled: serviceEnv.enabled,
+    model: serviceEnv.model,
 
-  status(): { enabled: boolean; model: string; source: 'whisper' | 'mock' } {
-    return { enabled: env.enabled, model: env.model, source: env.enabled ? 'whisper' : 'mock' };
-  },
+    status(): { enabled: boolean; model: string; source: 'whisper' | 'mock' } {
+      return { enabled: serviceEnv.enabled, model: serviceEnv.model, source: serviceEnv.enabled ? 'whisper' : 'mock' };
+    },
 
-  async transcribe(input: STTInput): Promise<STTResult> {
-    const t0 = Date.now();
-    if (!env.client) {
-      // Mock fallback — фиксированный transcript с confidence 0.87.
-      const result = await createMockClient().transcribe({ audio: input.audio });
-      return {
-        transcript: result.text,
-        confidence: 0.87,
-        durationSec: 18,
-        source: 'mock',
-      };
-    }
-    try {
-      const result = await env.client.transcribe({ audio: input.audio, language: input.language });
-      const duration = Math.round((Date.now() - t0) / 1000);
-      return {
-        transcript: result.text,
-        confidence: 0.95,
-        durationSec: duration,
-        source: 'whisper',
-      };
-    } catch (err) {
-      console.error('[stt] Whisper transcribe failed, fallback to mock:', err instanceof Error ? err.message : err);
-      const result = await createMockClient().transcribe({ audio: input.audio });
-      return {
-        transcript: result.text,
-        confidence: 0.5,
-        durationSec: 18,
-        source: 'mock',
-      };
-    }
-  },
-};
+    async transcribe(input: STTInput): Promise<STTResult> {
+      const t0 = Date.now();
+      if (!serviceEnv.client) {
+        // Mock fallback — фиксированный transcript с confidence 0.87.
+        const result = await createMockClient().transcribe({ audio: input.audio });
+        return {
+          transcript: result.text,
+          confidence: 0.87,
+          durationSec: 18,
+          source: 'mock',
+        };
+      }
+      try {
+        const result = await serviceEnv.client.transcribe({ audio: input.audio, language: input.language, mimeType: input.mimeType });
+        const duration = Math.round((Date.now() - t0) / 1000);
+        return {
+          transcript: result.text,
+          confidence: 0.95,
+          durationSec: duration,
+          source: 'whisper',
+        };
+      } catch (err) {
+        console.error('[stt] Whisper transcribe failed, fallback to mock:', err instanceof Error ? err.message : err);
+        const result = await createMockClient().transcribe({ audio: input.audio });
+        return {
+          transcript: result.text,
+          confidence: 0.5,
+          durationSec: 18,
+          source: 'mock',
+        };
+      }
+    },
+  };
+}
+
+export const sttService = createSTTService(env);
 
 export function genSTTId(): string {
   return `stt-${Date.now()}-${randomUUID().slice(0, 8)}`;

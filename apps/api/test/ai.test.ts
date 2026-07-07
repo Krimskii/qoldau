@@ -84,6 +84,20 @@ describe('POST /api/ai/parse', () => {
     expect(res.body.aiFallback).toBe(false);
   });
 
+  it('parses tutor transcripts without changing the AI proxy contract', async () => {
+    const res = await request(app)
+      .post('/api/ai/parse')
+      .send({ transcript: 'Тьютор отметил: ребёнок спокойно попросил карточку пить и после занятия был спокоен.' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(Array.isArray(res.body.events)).toBe(true);
+    expect(res.body).toEqual(expect.objectContaining({
+      aiSource: expect.any(String),
+      model: expect.any(String),
+    }));
+  });
+
   it('returns a safe specialist referral template for red-flag transcripts', async () => {
     const res = await request(app)
       .post('/api/ai/parse')

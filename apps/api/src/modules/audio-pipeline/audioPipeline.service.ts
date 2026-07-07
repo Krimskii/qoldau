@@ -114,6 +114,7 @@ export const audioPipelineService = {
     const stt = await sttService.transcribe({
       audio: input.audioBase64,
       language: input.language,
+      mimeType: input.mimeType,
     });
 
     const transcript = stt.transcript.trim();
