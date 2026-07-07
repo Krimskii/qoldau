@@ -65,7 +65,15 @@ describe('Sync API', () => {
       .set('Authorization', `Bearer ${ownerJwt}`)
       .send({
         events: [{ id: `sync-event-${suffix}`, childId, type: 'food', title: 'Food', description: 'Ate', sourceRole: 'parent', updatedAt: t1 }],
-        recordings: [{ id: `sync-rec-${suffix}`, childId, label: 'Voice', durationSec: 3, updatedAt: t1 }],
+        recordings: [{
+          id: `sync-rec-${suffix}`,
+          childId,
+          label: 'Voice',
+          durationSec: 3,
+          transcript: 'Ребёнок попросил воды.',
+          mimeType: 'audio/webm;codecs=opus',
+          updatedAt: t1,
+        }],
       });
     expect(create.status).toBe(200);
     expect(create.body.applied).toBe(2);
@@ -101,7 +109,12 @@ describe('Sync API', () => {
       .set('Authorization', `Bearer ${ownerJwt}`);
     expect(pull.status).toBe(200);
     expect(pull.body.events.some((event: { id: string; deletedAt?: string }) => event.id === `sync-event-${suffix}` && event.deletedAt)).toBe(true);
-    expect(pull.body.recordings.some((recording: { id: string }) => recording.id === `sync-rec-${suffix}`)).toBe(true);
+    expect(pull.body.recordings).toContainEqual(expect.objectContaining({
+      id: `sync-rec-${suffix}`,
+      transcript: 'Ребёнок попросил воды.',
+      mimeType: 'audio/webm;codecs=opus',
+    }));
+    expect(JSON.stringify(pull.body.recordings)).not.toContain('audioId');
     expect(pull.body.children.some((child: { id: string }) => child.id === childId)).toBe(true);
     expect(pull.body.serverTime).toBeDefined();
   });
@@ -128,6 +141,38 @@ describe('Sync API', () => {
 
     const stored = await prisma.event.findUnique({ where: { id: `sync-invalid-type-${suffix}` } });
     expect(stored).toBeNull();
+  });
+
+  it('accepts the full canonical product taxonomy in sync push', async () => {
+    const canonicalProductTypes = [
+      'tutor_note',
+      'specialist_note',
+      'voice_observation',
+      'aac_card',
+      'communication',
+      'calm_mode',
+      'media_request',
+      'sos',
+      'phrase',
+    ];
+
+    const response = await request(app)
+      .post('/api/sync/push')
+      .set('Authorization', `Bearer ${ownerJwt}`)
+      .send({
+        events: canonicalProductTypes.map((type, index) => ({
+          id: `sync-taxonomy-${type}-${suffix}`,
+          childId,
+          type,
+          title: type,
+          description: type,
+          sourceRole: 'parent',
+          updatedAt: `2026-07-06T00:00:${String(index).padStart(2, '0')}.000Z`,
+        })),
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.applied).toBe(canonicalProductTypes.length);
   });
 
   it('pull returns legacy event types without read-time validation', async () => {

@@ -67,6 +67,7 @@ export const aiDigestBodySchema = z.object({
 export const sttTranscribeBodySchema = z.object({
   audio: z.string({ error: 'audio required' }).trim().min(1, 'audio required').max(MAX_AUDIO_BASE64_CHARS, 'audio too large'),
   language: z.string().trim().max(16).optional(),
+  mimeType: z.string().trim().max(128).optional(),
 }).passthrough();
 
 export const audioIngestBodySchema = z.object({
@@ -103,6 +104,8 @@ export const syncRecordingSchema = z.object({
   childId: z.string().trim().min(1).max(128),
   label: z.string().trim().max(256).optional(),
   durationSec: z.number().finite().nonnegative().max(24 * 60 * 60).optional(),
+  transcript: z.string().trim().max(4000).nullable().optional(),
+  mimeType: z.string().trim().max(128).nullable().optional(),
   timestamp: isoDateString.optional(),
   updatedAt: isoDateString,
   deletedAt: isoDateString.nullable().optional(),

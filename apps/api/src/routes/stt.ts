@@ -4,7 +4,7 @@
  * Phase 1: mock (фиксированный transcript после 1.5с задержки).
  * Phase 2: opt-in Whisper API через WHISPER_API_KEY env.
  *
- * Body: { audio: base64-encoded file, language?: string }
+ * Body: { audio: base64-encoded file, language?: string, mimeType?: string }
  * Response: { ok, transcript, confidence, durationSec, sttSource }
  */
 import { Router } from 'express';
@@ -17,10 +17,10 @@ export const sttRouter = Router();
 
 sttRouter.post('/transcribe', sttRateLimit, validateBody(sttTranscribeBodySchema), async (req, res, next) => {
   try {
-    const { audio = '', language } = req.body as { audio?: string; language?: string };
+    const { audio = '', language, mimeType } = req.body as { audio?: string; language?: string; mimeType?: string };
     // Минимальная задержка 400мс для UX-консистентности.
     const t0 = Date.now();
-    const result = await sttService.transcribe({ audio, language });
+    const result = await sttService.transcribe({ audio, language, mimeType });
     const elapsed = Date.now() - t0;
     if (elapsed < 400) {
       await new Promise((r) => setTimeout(r, 400 - elapsed));
