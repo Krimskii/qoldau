@@ -128,10 +128,17 @@
   },
   "parent": {
     "profile": {
-      "yearsOld": "years old"
+      "title": "Profile",
+      "subtitle": "Settings and data"
     },
-    "home": {"title": "Home", "subtitle": "What's happening now"},
-    "voice": {"title": "Voice observation", "subtitle": "Record what happened — AI structures"},
+    "home": {
+      "title": "Home",
+      "subtitle": "What's happening now"
+    },
+    "voice": {
+      "title": "Voice observation",
+      "subtitle": "Record what happened — AI structures"
+    },
     "aiReview": {
       "title": "AI review",
       "subtitle": "Review and confirm",
@@ -154,30 +161,89 @@
       "ariaLabelEvent": "Event: {{title}}",
       "confidence": "Confidence {{percent}}%"
     },
-    "clarify": {"title": "Clarifying", "subtitle": "Help AI understand better"},
-    "events": {"title": "Events", "subtitle": "All observations in one place"},
-    "care": {"title": "Care diary", "subtitle": "Food, water, sleep, toilet"},
-    "behavior": {"title": "Behavior & sensory", "subtitle": "Reactions, patterns"},
-    "assistant": {"title": "AI assistant", "subtitle": "Ask anything about your child"},
-    "analytics": {"title": "Analytics", "subtitle": "Trends and patterns"},
-    "profile": {"title": "Profile", "subtitle": "Settings and data"},
-    "notifications": {"title": "Notifications", "subtitle": "What's new"}
+    "clarify": {
+      "title": "Clarifying",
+      "subtitle": "Help AI understand better"
+    },
+    "events": {
+      "title": "Events",
+      "subtitle": "All observations in one place"
+    },
+    "care": {
+      "title": "Care diary",
+      "subtitle": "Food, water, sleep, toilet"
+    },
+    "behavior": {
+      "title": "Behavior & sensory",
+      "subtitle": "Reactions, patterns"
+    },
+    "assistant": {
+      "title": "AI assistant",
+      "subtitle": "Ask anything about your child"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "subtitle": "Trends and patterns"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "What's new"
+    }
   },
   "child": {
-    "home": {"title": "Home", "greeting": "Hi!"},
-    "cards": {"title": "Cards", "subtitle": "Pick what you want"},
-    "favorites": {"title": "Favorites", "subtitle": "Things I like"},
-    "speak": {"title": "Speak", "subtitle": "Press and talk", "press": "Press and talk", "recording": "Recording… press again to stop", "noRecordings": "No recordings yet"},
-    "phraseBuilder": {"title": "Build a phrase"},
-    "calm": {"title": "Calm mode", "subtitle": "I'm safe"},
-    "nowNext": {"title": "Now and next"},
-    "choice": {"title": "Choose from options"},
-    "interfaceGuide": {"title": "What matters in the interface"},
-    "call": {"title": "Call"},
-    "progress": {"title": "My progress"},
-    "needWater": {"title": "Drink", "subtitle": "I want water"},
-    "needFood": {"title": "Eat", "subtitle": "I want food"},
-    "needToilet": {"title": "Toilet", "subtitle": "I need toilet"}
+    "home": {
+      "title": "Home",
+      "greeting": "Hi!"
+    },
+    "cards": {
+      "title": "Cards",
+      "subtitle": "Pick what you want"
+    },
+    "favorites": {
+      "title": "Favorites",
+      "subtitle": "Things I like"
+    },
+    "speak": {
+      "title": "Speak",
+      "subtitle": "Press and talk",
+      "press": "Press and talk",
+      "recording": "Recording… press again to stop",
+      "noRecordings": "No recordings yet"
+    },
+    "phraseBuilder": {
+      "title": "Build a phrase"
+    },
+    "calm": {
+      "title": "Calm mode",
+      "subtitle": "I'm safe"
+    },
+    "nowNext": {
+      "title": "Now and next"
+    },
+    "choice": {
+      "title": "Choose from options"
+    },
+    "interfaceGuide": {
+      "title": "What matters in the interface"
+    },
+    "call": {
+      "title": "Call"
+    },
+    "progress": {
+      "title": "My progress"
+    },
+    "needWater": {
+      "title": "Drink",
+      "subtitle": "I want water"
+    },
+    "needFood": {
+      "title": "Eat",
+      "subtitle": "I want food"
+    },
+    "needToilet": {
+      "title": "Toilet",
+      "subtitle": "I need toilet"
+    }
   },
   "tutor": {
     "nav": {
@@ -188,8 +254,6 @@
       "childProfile": "Child profile"
     },
     "home": {
-      "title": "Tutor home",
-      "subtitle": "Quick observations",
       "today": "Today",
       "statusHint": "General tips · examples (demo)",
       "schedule": "Schedule",
@@ -265,7 +329,6 @@
       "toClarifyAac": "How often AAC 'Water' is used"
     },
     "childProfile": {
-      "title": "Child profile",
       "profile": "Profile",
       "keySignals": "Key signals",
       "whatHelps": "What helps",
@@ -415,7 +478,12 @@
         "childAac": "The child is starting to use AAC cards — great progress in communication!",
         "moreData": "The more observations, the more accurate the profile. Keep recording signals."
       },
-      "categories": { "aac": "AAC", "sound": "Sound", "gesture": "Gesture", "emotion": "Emotion" }
+      "categories": {
+        "aac": "AAC",
+        "sound": "Sound",
+        "gesture": "Gesture",
+        "emotion": "Emotion"
+      }
     },
     "carePatterns": {
       "title": "Care patterns",
@@ -460,15 +528,43 @@
       "toConfirm": "To confirm with observations",
       "discussTitle": "What to discuss with a specialist:",
       "discussBody": "current behavior patterns, sensory support, communication development.",
-      "schedule": ["Morning", "Lessons", "Lunch", "Rest", "Walk"],
-      "sensory": [
-        { "label": "Quiet corner", "desc": "Always available" },
-        { "label": "Headphones", "desc": "When noisy" },
-        { "label": "Pause", "desc": "On request" }
+      "schedule": [
+        "Morning",
+        "Lessons",
+        "Lunch",
+        "Rest",
+        "Walk"
       ],
-      "whatHelpsList": ["Visual schedule", "AAC cards", "2–3 min pauses", "Tactile tools"],
-      "toTryList": ["Transition timer (2 min before activity change)", "«Loud» card for self-signaling", "Sensory box in the corner"],
-      "toConfirmList": ["Connection between noise and anxiety", "AAC usage frequency", "Effect of visual schedule"]
+      "sensory": [
+        {
+          "label": "Quiet corner",
+          "desc": "Always available"
+        },
+        {
+          "label": "Headphones",
+          "desc": "When noisy"
+        },
+        {
+          "label": "Pause",
+          "desc": "On request"
+        }
+      ],
+      "whatHelpsList": [
+        "Visual schedule",
+        "AAC cards",
+        "2–3 min pauses",
+        "Tactile tools"
+      ],
+      "toTryList": [
+        "Transition timer (2 min before activity change)",
+        "«Loud» card for self-signaling",
+        "Sensory box in the corner"
+      ],
+      "toConfirmList": [
+        "Connection between noise and anxiety",
+        "AAC usage frequency",
+        "Effect of visual schedule"
+      ]
     },
     "reports": {
       "title": "Reports",
@@ -635,116 +731,17 @@
     "boundaryReload": "Refresh page",
     "boundaryReset": "Reset"
   },
-  "tutor": {
-    "nav": {
-      "home": "Tutor",
-      "voice": "Observation recording",
-      "aiReview": "AI review",
-      "report": "Report to parent",
-      "childProfile": "Child profile"
-    },
-    "home": {
-      "today": "Today",
-      "statusHint": "General tips · examples (demo)",
-      "schedule": "Schedule",
-      "voiceCta": "Record observation",
-      "voiceCtaAria": "Record observation",
-      "hintsTitle": "Tips for {{childName}}",
-      "hints": [
-        "Before transitions, give a 1–2 minute warning.",
-        "A 2–3 minute pause often helps with anxiety.",
-        "Use a visual schedule for sessions.",
-        "AAC cards 'Toilet' and 'Water' are confirmed by the child."
-      ],
-      "recentTitle": "My recent observations",
-      "recentEmpty": "No observations today yet",
-      "childProfileBtn": "Child profile",
-      "reportBtn": "Report to parent"
-    },
-    "voice": {
-      "title": "Observation recording",
-      "subtitle": "Speak in plain language",
-      "startAria": "Start recording",
-      "stopAria": "Stop recording",
-      "hint": "Describe what happened during the session. AI will suggest a structure.",
-      "examplesTitle": "Example observations",
-      "examples": [
-        "Used the visual schedule, transitions were calmer",
-        "Covered ears with loud music, headphones helped",
-        "Asked for a pause — it helped"
-      ]
-    },
-    "aiReview": {
-      "processing": "AI is processing…",
-      "transcript": "Transcript",
-      "whatHappened": "What happened",
-      "noEvents": "AI did not extract events. You can save a general note.",
-      "defaultInsight": "This is an observation, not a diagnosis. You can discuss it with a specialist.",
-      "save": "Save to Event Timeline",
-      "toReport": "To report",
-      "skip": "Don't save",
-      "savedToast": "Saved to Event Timeline",
-      "noDataToast": "No data to save",
-      "skippedToast": "Without saving"
-    },
-    "report": {
-      "title": "Report to parent",
-      "subtitle": "Summary for 7 days",
-      "total": "Total",
-      "positive": "Positive",
-      "attention": "Needs attention",
-      "eventsTitle": "Events",
-      "empty": "No events yet",
-      "whatHelped": "What helped",
-      "whatHelpedDemo": "examples (demo)",
-      "toClarify": "What to confirm at home",
-      "disclaimer": "Formulations are neutral. These are observations, not an assessment. Not a medical diagnosis.",
-      "copy": "Copy report",
-      "send": "Send to parent",
-      "sendInDevelopment": "Send will be available in the next version. Copy the report and send it to the parent manually.",
-      "copied": "Report copied to clipboard",
-      "copyFailed": "Could not copy",
-      "reportHeader": "📋 Tutor report for {{date}}\n\n",
-      "reportTotal": "Total events: {{count}}\n",
-      "reportPositive": "Positive moments: {{count}}\n",
-      "reportAttention": "Needs attention: {{count}}\n",
-      "reportEventsHeader": "📅 Events:\n",
-      "reportEventLine": "• {{time}} — {{title}}\n",
-      "reportFooter": "\n💡 The child seemed to use pauses and visual cues well. This is an observation, not a diagnosis.\n---\nSent via Qoldau AI",
-      "pause": "Pause",
-      "quietPlace": "Quiet place",
-      "visualSchedule": "Visual schedule",
-      "toClarifyNoise": "Connection between noise and covering ears",
-      "toClarifySchedule": "Effect of the visual schedule",
-      "toClarifyAac": "How often AAC 'Water' is used"
-    },
-    "childProfile": {
-      "profile": "Profile",
-      "keySignals": "Key signals",
-      "whatHelps": "What helps",
-      "avoid": "What to avoid",
-      "preferences": "Preferences",
-      "whatHelpsList": [
-        "2–3 min pause",
-        "Quiet place",
-        "Visual schedule",
-        "Headphones with quiet music",
-        "AAC cards"
-      ],
-      "avoidList": [
-        "Abrupt transitions between activities",
-        "Loud group sessions without headphones",
-        "Long instructions without visual support"
-      ],
-      "preferencesList": [
-        "Likes construction sets",
-        "Prefers short tasks",
-        "Responds well to praise",
-        "Calmer in the first half of the day"
-      ],
-      "commProfile": "Communication profile →",
-      "disclaimer": "This is an observation profile, not a medical diagnosis. All formulations are cautious.",
-      "confirmedCount": "{{count}} times"
-    }
+  "recordings": {
+    "title": "Voice recordings",
+    "subtitle": "All phrases the child dictated via \"Speak\".",
+    "empty": "No recordings yet",
+    "emptyHint": "The child hasn't pressed \"Speak\" yet. Recordings will appear here automatically.",
+    "play": "Play",
+    "pause": "Pause",
+    "delete": "Delete",
+    "confirmDelete": "Confirm delete",
+    "noAudio": "no audio",
+    "listAria": "Recordings list",
+    "backToHome": "Back to home"
   }
 }

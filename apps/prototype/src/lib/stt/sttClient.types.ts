@@ -13,7 +13,7 @@
 export type STTLanguage = 'ru' | 'kk' | 'en';
 export type STTSpeakerRole = 'parent' | 'tutor' | 'child';
 
-export type STTSource = 'mock' | 'manual' | 'future_stt';
+export type STTSource = 'mock' | 'manual' | 'future_stt' | 'real_stt' | 'webspeech';
 
 export interface STTInput {
   /** Аудио-блоб от записи (опционально — для mock/manual не требуется). */

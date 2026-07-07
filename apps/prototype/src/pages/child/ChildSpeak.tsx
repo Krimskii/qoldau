@@ -8,6 +8,8 @@ import { DEMO_PRIMARY_CHILD } from '@/data/demoDataset';
 import { useSpeechRecognition } from '@/lib/stt/useSpeechRecognition';
 import { speak } from '@/lib/tts/speak';
 import { DemoBadge } from '@/components/ui/DemoBadge';
+import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { audioBlobStore, generateAudioId } from '@/lib/audio/audioBlobStore';
 
 const MAX_RECORDING_SEC = 30;
 
@@ -84,10 +86,16 @@ export const ChildSpeak: React.FC = () => {
   const { addEvent } = useEventStore();
 
   // === Recording state ===
+  // v1.6 F1.3: реальный MediaRecorder (через useAudioRecorder) — звук
+  // сохраняется в IndexedDB (audioBlobStore) для parent/tutor playback.
+  // Параллельно Web Speech API для in-browser interim transcript.
+  const recorder = useAudioRecorder();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordingTimeRef = useRef(0);
+  // Копим transcript, который накапливается через Web Speech interim-ы.
+  const transcriptRef = useRef('');
 
   // === Web Speech API (v0.6.9) — реальное распознавание голоса ребёнка.
   const speech = useSpeechRecognition({
@@ -135,10 +143,14 @@ export const ChildSpeak: React.FC = () => {
     setIsRecording(true);
     setRecordingTime(0);
     recordingTimeRef.current = 0;
+    transcriptRef.current = '';
     speech.start();
+    // F1.3: запустить реальный MediaRecorder. Если нет микрофона/permission —
+    // recorder.error заполнится, но UI не сломается (запись сохранится без blob).
+    void recorder.startRecording();
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
     speech.stop();
     if (!isRecording) return;
@@ -152,11 +164,33 @@ export const ChildSpeak: React.FC = () => {
     // Озвучиваем что распознали — feedback для ребёнка.
     speak(label);
 
+    // F1.3: остановить реальный MediaRecorder и сохранить blob в IndexedDB.
+    // Ошибка квоты/permission → audioId=null, запись сохранится без звука
+    // (parent увидит metadata+transcript, но без playback).
+    let blob = recorder.audioBlob;
+    try {
+      blob = await recorder.stopRecording();
+    } catch {
+      // recorder.error уже выставлен; ничего не делаем — save пойдёт без blob.
+    }
+    let audioId: string | null = null;
+    if (blob && blob.size > 0 && audioBlobStore.isAvailable()) {
+      const id = generateAudioId();
+      const result = await audioBlobStore.put(id, blob);
+      if (result.ok) {
+        audioId = id;
+      }
+    }
+
     // Сохранить в recordings store
     const newRec = addRecording({
       childId: DEMO_PRIMARY_CHILD.id,
       label,
       durationSec: duration,
+      audioId,
+      transcript: recognized || undefined,
+      mimeType: blob?.type,
+      sizeBytes: blob?.size,
     });
 
     // Создать event для parent timeline
@@ -168,7 +202,12 @@ export const ChildSpeak: React.FC = () => {
       timestamp: newRec.timestamp,
       sourceRole: 'child',
       status: 'confirmed',
-      payload: { recordingId: newRec.id, durationSec: duration, label },
+      payload: {
+        recordingId: newRec.id,
+        durationSec: duration,
+        label,
+        hasAudio: audioId !== null,
+      },
     });
 
     setRecordingTime(0);
@@ -176,7 +215,7 @@ export const ChildSpeak: React.FC = () => {
   };
 
   const toggleRecord = () => {
-    if (isRecording) stopRecording();
+    if (isRecording) void stopRecording();
     else startRecording();
   };
 

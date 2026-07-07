@@ -10,6 +10,7 @@ import {
   MessageCircle,
   Zap,
   Sparkles,
+  AudioLines,
   type LucideIcon,
 } from 'lucide-react';
 import { QoldauCard } from '@/components/ui/QoldauCard';
@@ -40,7 +41,7 @@ import type { StatusKind } from '@/components/ui/StatusBadge';
  * Тач-таргеты: adult ≥48px, icon-button ≥44px (в отличие от child ≥112px).
  */
 
-type ActionTone = 'coral' | 'blue' | 'purple' | 'yellow';
+type ActionTone = 'coral' | 'blue' | 'purple' | 'yellow' | 'teal';
 
 interface QuickAction {
   id: string;
@@ -65,6 +66,8 @@ const QUICK_ACTIONS: QuickAction[] = [
   { id: 'sleep',  label: 'Сон',           Icon: Moon,          tone: 'blue',    path: '/parent/care' },
   { id: 'behav',  label: 'Поведение',     Icon: Zap,           tone: 'yellow',  path: '/parent/behavior' },
   { id: 'comms',  label: 'Коммуникация',  Icon: MessageCircle, tone: 'purple',  path: '/parent/events' },
+  // v1.6 F1.7: записи голоса ребёнка — отдельная страница со playback.
+  { id: 'recs',   label: 'Записи',        Icon: AudioLines,    tone: 'teal',    path: '/parent/recordings' },
 ];
 
 const TONE_BG: Record<ActionTone, string> = {
@@ -72,6 +75,7 @@ const TONE_BG: Record<ActionTone, string> = {
   blue: 'bg-blue-soft',
   purple: 'bg-purple-soft',
   yellow: 'bg-yellow-soft',
+  teal: 'bg-teal-soft',
 };
 
 const TONE_TEXT: Record<ActionTone, string> = {
@@ -79,6 +83,7 @@ const TONE_TEXT: Record<ActionTone, string> = {
   blue: 'text-blue',
   purple: 'text-purple',
   yellow: 'text-yellow',
+  teal: 'text-teal-dark',
 };
 
 /** Маппинг currentState ребёнка → StatusKind (без хардкода 'ok'). */

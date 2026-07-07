@@ -25,6 +25,7 @@ import { ClarifyingQuestions } from '@/pages/parent/ClarifyingQuestions';
 // Parent Pages (lazy — large/heavy)
 const VoiceObservation = lazy(() => import('@/pages/parent/VoiceObservation').then((m) => ({ default: m.VoiceObservation })));
 const AIReview = lazy(() => import('@/pages/parent/AIReview').then((m) => ({ default: m.AIReview })));
+const RecordingsPage = lazy(() => import('@/pages/parent/RecordingsPage').then((m) => ({ default: m.RecordingsPage })));
 
 // Child Pages (eager)
 import { ChildHome } from '@/pages/child/ChildHome';
@@ -162,6 +163,10 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/parent/voice"
           element={<AppShell showNav={false}><Suspense fallback={<PageLoader />}><VoiceObservation /></Suspense></AppShell>}
+        />
+        <Route
+          path="/parent/recordings"
+          element={<AppShell showNav={false}><Suspense fallback={<PageLoader />}><RecordingsPage /></Suspense></AppShell>}
         />
         <Route
           path="/parent/ai-review"
